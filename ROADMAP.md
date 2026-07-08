@@ -23,13 +23,13 @@ To build the **Infrastructure of AI Labor** by decoupling revenue growth from in
     - [CON-1425] Implement CXD Stability Module & Peg Mechanism.
     - [CON-1439] Implement DAO Governance Contracts to replace Admin Keys.
 
-## 3. EPIC: The "AI Office" Standard
+## 3. EPIC: The "AI Office" Standard (BOS)
 **Status:** PROPOSED | **Priority:** HIGH
-- **Objective:** Enable "Sovereign OS" logic to run full businesses.
+- **Objective:** Enable "Sovereign OS" logic to run full businesses using "Business Rules."
 - **Key Tasks:**
-    - Define "Conxian-Flavor" Business Rule Specification (YAML/JSON).
-    - Build ZK-Compliant Financial Auditor Module.
-    - Integrate "Supply Chain Swarm" adapters in Nexus.
+    - Standardize the "Commercial Packaging Doctrine" into on-chain logic.
+    - Define "Operating Lane Boundaries" for declarative agent constraints.
+    - Integrate "Supply Chain Swarm" adapters in Nexus for industrial revenue.
 
 ## 4. EPIC: Developer-Led Growth
 **Status:** STARTED | **Priority:** HIGH
@@ -37,7 +37,7 @@ To build the **Infrastructure of AI Labor** by decoupling revenue growth from in
 - **Key Tasks:**
     - [CON-1437] Launch Developer Sandbox (TTFV < 15 mins).
     - [CON-1440] Publish TypeScript SDK to npm.
-    - Create "Builder Royalty" dashboard in the Marketplace UI.
+    - Implement "Trust and Readiness Verification" for Marketplace publishing.
 
 ---
-*Note: This roadmap aligns the Daemon-Dynamics (DD) blueprint with the Conxian Marketplace implementation.*
+*Note: This roadmap aligns the Daemon-Dynamics (DD) blueprint and conxian-business rules with the Conxian Marketplace implementation.*
