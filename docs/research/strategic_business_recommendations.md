@@ -4,24 +4,25 @@
 To avoid the industry "Capex Trap" where costs rise with revenue:
 - **Strategy:** Move AI inference to the "Edge" (User's local machine or decentralized GPU network).
 - **Implementation:** Conxian Hub acts as a "Thin Orchestrator" (low overhead) while the agents run on "Local Nodes" (BYO Compute).
-- **Result:** Revenue scales with Marketplace transaction volume, but Conxian's infrastructure costs remain flat.
+- **Update:** This also solves the "High Inference Cost" bear case by removing the cost from Conxian's balance sheet entirely.
 
-## 2. Revenue Areas for Conxian Marketplace
-We should target "High-Value / Low-Churn" industrial and business sectors:
-- **AI Financial Auditor:** Automated, ZK-compliant auditing for crypto-native businesses (The "On-Chain Blackrock").
-- **Supply Chain Swarm:** Agents that manage inventory, shipping, and cross-border payments for e-commerce.
-- **The "Business Operating System" (AI Office):** A subscription/license for the "Sovereign OS" logic that manages an entire company's digital operations.
+## 2. Hardening the Value Capture Core
+Based on the organizational audit (Linear), our immediate priority is fixing the "Economic Engines":
+- **FIX: Protocol Fee Collection (CON-1427):** Ensure that transactions in the marketplace actually generate revenue for the treasury.
+- **FIX: CXD Stability (CON-1425):** Implement the stability mechanism for the Conxian Dollar to enable it as a reliable unit of account for the "AI Office."
+- **FIX: Access Control (CON-1438):** Remove the "Admin Key" single point of failure to align with the "Sovereign" ethos.
 
-## 3. Moat Construction: Orchestration & Escrow
-In a world of commoditized models (DeepSeek R1), our moats are:
-- **The Orchestration Layer:** The "Swarm Logic" that makes multiple agents work together better than any single model.
-- **The Escrow Layer (ERC-8183):** The "Trust Infrastructure" that ensures builders get paid and users get what they paid for.
+## 3. Revenue Areas: The "Productive AI" Marketplace
+Leverage the "China Affect" by building modules for the "Real Economy":
+- **Industrial Logistics Swarm:** Agents that manage supply chain data using the "Nexus" adapters.
+- **ZK-Compliant Auditor:** Capitalize on the "Institutional Rails" vision to provide low-cost, high-trust financial oversight.
+- **The "Builder SDK":** Monetize the *platform* by providing the tools (CON-1440) for others to build and sell agents.
 
-## 4. Aligning with the "China Affect"
-- **Deflationary Strategy:** We should market Conxian as the "High-Efficiency, Low-Cost" alternative to expensive Western AI SaaS.
-- **Open-Source Integration:** Prioritize integration with open-weight models (R1, Llama 3) as the default intelligence layer.
+## 4. Competitive Moat: Orchestration as a Service
+- **Focus:** Don't compete on "Model Size." Compete on **"Swarm Orchestration"** (the logic that coordinates multiple efficient models like DeepSeek R1).
+- **Market Positioning:** Conxian is the "Operating System of AI Labor"—the place where business gets *done*, not just where questions get answered.
 
-## 5. Road Map to Implementation
-- **Step 1:** Finalize the "Marketplace" protocol in `conxian_market`.
-- **Step 2:** Integrate the "Builder Network" publish/deploy mechanics.
-- **Step 3:** Launch the "AI Office" (DD) as the first "Full-Business OS" bundle in the Marketplace.
+## 5. Execution Road Map (Revised)
+1. **Hardening (Months 1-2):** Fix critical security and economic bugs (CON-1438, CON-1427).
+2. **Productivity (Months 3-4):** Convert "Stubs" into "Functional Modules" for the AI Office.
+3. **Growth (Months 5+):** Launch the Developer Sandbox (CON-1437) to scale the "Builder Network."

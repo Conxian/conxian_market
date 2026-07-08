@@ -1,20 +1,20 @@
 # Conxian Organization Audit: Repository Mapping and Gap Analysis
 
 ## 1. Technical Audit of Key Repositories
-- **lib-conxian-core:** The foundation. Must be optimized for "multi-provider" AI routing (e.g., DeepSeek, Gemini) to avoid cloud lock-in.
-- **conxian-gateway:** Currently acts as the ingress. Recommendation: Evolve this into the "Autonomous Agent Routing Layer" that can fall back to local LLMs (Ollama) if cloud APIs are unavailable.
-- **conxian_ui:** Needs a "Professional/Brutalist" mode (CLI-inspired) to cater to the "AI Power User" demographic identified in the DD vision.
-- **conxius-wallet / conxius-platform:** The settlement layer. Must be prioritized for integration with the Marketplace to enable automated agent payments.
+- **lib-conxian-core:** The foundation. **Issue Alert:** Needs better cryptographic audit (CON-1333) and security hardening.
+- **conxian-gateway:** Currently acts as the ingress. **Issue Alert:** Significant protocol gaps (Fedimint/Citrea) must be filled to make the "Universal Verifier" real.
+- **conxian-nexus:** The orchestration layer. **Issue Alert:** Currently undergoing "Multidimensional Audit" (CON-1436) to realign with the v1.9.5 vision.
 
-## 2. Analysis of Business Logic (PR 875 context)
-- **Sub-repo Integration:** PR 875's inclusion of a sub-repo suggests a move toward a modular "App Store" model for business logic.
-- **Business Rules:** The "AI Office" needs a declarative way to ingest "Business Rules" (e.g., YAML/JSON policies) that the agents must follow.
+## 2. The "Stub" Problem (Depth vs. Breadth)
+- **Reality:** 33% of contracts are placeholders (CON-1434).
+- **Recommendation:** We must prioritize **Functional Depth** in the "Core Economics" (Fee collection, Stablecoin backing) over further **Breadth** (adding more experimental adapters).
 
-## 3. The "Ethos" Check
-- **Decentralization:** Current repos are centralized on GitHub. The "Sovereign OS" vision suggests we should prepare for decentralized hosting/orchestration.
-- **Cost Efficiency:** We must ensure that our "Hub" (Orchestrator) is not a massive centralized server, but a lightweight coordinator.
+## 3. The "Ethos" Check (Centralization Risk)
+- **Reality:** Single deployer key control (CON-1422) and missing access controls (CON-1424, CON-1412) contradict the "Sovereign" ethos.
+- **Action:** Accelerate the "DAO Governance" (CON-1439) and "Secure Access Pattern" (CON-1438) implementation.
 
-## 4. Gaps and Rebuilds
-- **REBUILD:** `conxian-nexus` should be evaluated against the "Swarm Logic" in DD. If Nexus is too rigid/imperative, it should be rebuilt as a declarative Swarm Orchestrator.
-- **DISCARD:** Any "heavyweight" centralized database dependencies that prevent "Local-First" operation should be phased out in favor of ZK-proofs and local state syncing.
-- **NEW:** A dedicated `mcp-sdk-conxian` to standardize how external agents (e.g., Bittensor) plug into our Hub.
+## 4. Gap Analysis: The Developer Path
+- **Status:** Improving. The "Developer Sandbox" (CON-1437) and "npm SDK" (CON-1440) plans are exactly what is needed to move from a private research project to a public marketplace.
+
+## 5. Synthesis: The Marketplace Pivot
+The `conxian_market` (this repo) must be the "Proven Production" environment. It should only host agents and logic that are **Non-Stubbed**, **Security-Audited**, and **Revenue-Generating**.
