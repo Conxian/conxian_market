@@ -8,6 +8,7 @@ Every module and agent in the Conxian Marketplace must adhere to the **Multi-Dim
 ## 2. Sovereign Infrastructure Requirements
 To be listed as a "Sovereign" module, the following mandates must be fulfilled:
 - **BYOK (Bring Your Own Key):** The module must allow users to provide their own API keys (e.g., DeepSeek, Gemini, AWS) or point to a local Ollama node.
+- **Deployment Optionality:** Codebases must be portable across Cloud, Edge, and **Behind-Firewall Sovereign Servers** to ensure client choice and data sovereignty.
 - **MCP Native:** All agent-to-agent and hub-to-agent communication must use the **Model Context Protocol (MCP)** to ensure interoperability and state portability.
 - **Edge-Ready:** The code must be capable of running in a TEE (Trusted Execution Environment) or locally on the user's hardware.
 - **ZK-Compliant:** Financial transactions must generate ZK-proofs of correctness to ensure "Auditing without Surveillance."

@@ -18,15 +18,16 @@ We build the **Orchestration** and **Settlement** layers for a world where "Inte
 ## 🤖 Phase 2: The "AI Office" & Federated Integration (Months 3-4)
 **Goal:** Launch the Sovereign OS (DD) as the interface for coordinating specialized federated agents.
 - [ ] **Deploy the 'Thin Orchestrator':** Refactor the Hub to coordinate MCP handoffs between external AI providers (Bittensor, Fetch.ai, etc.) without bearing inference costs.
-- [ ] **Integrate External Agent Networks:** Connect the Hub to Bittensor subnets and Fetch.ai agents to enable discovery of diverse AI skills.
+- [ ] **npm SDK Release (CON-1440):** Publish the canonical `@conxian/sdk` to npm with production-ready interfaces for hardware-backed signing and MCP discovery.
 - [ ] **Standardize 'Operating Lane' Specification:** Declarative YAML rules that agents must ingest to operate under business constraints.
 - [ ] **Launch Reputation Registry:** Implement on-chain tracking of agent performance and reliability to guide user discovery.
 
-## 🏭 Phase 3: Industrial Scaling (Months 5+)
-**Goal:** Capture high-MRR industrial revenue areas identified in China research.
+## 🏭 Phase 3: Industrial Scaling & Client Optionality (Months 5+)
+**Goal:** Capture high-MRR industrial revenue areas and enable sovereign on-prem deployment.
+- [ ] **Sovereign On-Prem Bundle:** Package the Hub, Gateway, and Nexus as a dockerized "Sovereign Server" for behind-firewall enterprise deployment.
+- [ ] **Reduce Wallet to Reference App (CON-1135):** Constrain the Conxius Wallet to a minimal reference client to prove the SDK/security model without competing with integrators.
 - [ ] **Supply Chain Swarm Adapters:** Implement Nexus adapters for logistics protocols (Fedimint, Citrea).
 - [ ] **Developer Sandbox (CON-1437):** Frictionless onboarding (TTFV < 15 mins) for builders to publish to the Marketplace.
-- [ ] **npm SDK Release (CON-1440):** Standardize how 3rd party agents plug into the Conxian settlement layer.
 
 ---
 ## 🛑 The "Discard" Mandate
