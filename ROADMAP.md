@@ -10,9 +10,9 @@ We build the **Orchestration** and **Settlement** layers for a world where "Inte
 
 ## 🏗 Phase 1: Hardening the Economic & Federated Core (Months 1-2)
 **Goal:** Activate value capture and build the trust infrastructure for external agents.
-- [ ] **Activate Protocol Fee Collection (CON-1427):** Implement the 80/10/10 yield matrix. No more no-ops.
+- [ ] **Activate Protocol Fee Collection (CON-1427):** Implement actual token transfers for CLP, swap-aggregator, and alex-adapter to replace no-op fee extraction and enable the 80/10/10 yield matrix.
 - [ ] **Build the Escrow Layer (ERC-8183):** Functional programmable settlement to ensure builders (internal/external) are paid and users are protected.
-- [ ] **Establish CXD Stability (CON-1425):** Create a functional unit of account for the AI Office.
+- [ ] **Establish CXD Stability (CON-1425):** Implement oracle-driven peg mechanism, collateralization vaults, and redemption/arbitrage paths to move beyond a simple mintable token.
 - [ ] **DAO-Governed Access (CON-1439):** Transition from Admin-Key control to on-chain governance to fulfill the "Sovereign" promise.
 
 ## 🤖 Phase 2: The "AI Office" & Federated Integration (Months 3-4)
@@ -24,7 +24,7 @@ We build the **Orchestration** and **Settlement** layers for a world where "Inte
 
 ## 🏭 Phase 3: Industrial Scaling (Months 5+)
 **Goal:** Capture high-MRR industrial revenue areas identified in China research.
-- [ ] **Supply Chain Swarm Adapters:** Implement Nexus adapters for logistics protocols (CIPS, mBridge).
+- [ ] **Supply Chain Swarm Adapters:** Implement Nexus adapters for logistics protocols (Fedimint, Citrea).
 - [ ] **Developer Sandbox (CON-1437):** Frictionless onboarding (TTFV < 15 mins) for builders to publish to the Marketplace.
 - [ ] **npm SDK Release (CON-1440):** Standardize how 3rd party agents plug into the Conxian settlement layer.
 
