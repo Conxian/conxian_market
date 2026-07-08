@@ -3,6 +3,7 @@
 *This roadmap aligns the Daemon-Dynamics (DD) blueprint, the Federated Agent Network strategy, and the China 'Productive AI' model.*
 
 ## 🌟 Strategic Vision: The Infrastructure of AI Labor
+We operate as a **Data-First** organization, prioritizing the remediation of high-impact technical debt (stubs, security gaps) that directly blocks economic vitality.
 We build the **Orchestration** and **Settlement** layers for a world where "Intelligence" is a free commodity and "Labor" is the only value remaining. We scale Multi-Dimensionally by moving compute to the Edge and capturing value through decentralized Escrow in a Federated Agent Network.
 
 ---

@@ -9,6 +9,7 @@ The Conxian Marketplace is the primary infrastructure for the discovery, deploym
 - **Sovereign AI (BYOK):** Intelligence must be decoupled from cloud monopolies. Users Bring-Your-Own-Keys and control their data.
 - **Productive AI (Real Economy):** We prioritize "Productive" modules (logistics, finance, industrial management) over consumer chatbots.
 - **Federated Agent Network:** We don't build agents—we build the **Marketplace** for them. By incentivizing external AI agents (Bittensor, Fetch.ai, etc.), we provide access to diverse AI capabilities without the burden of proprietary maintenance.
+- **Data-First Execution:** We prioritize execution based on quantitative ecosystem audits. We remediate stubs and technical debt that block real-world revenue and security.
 - **Multi-Dimensional Scaling:** Our infrastructure costs (compute/gas) remain flat even as transaction volume grows. This is achieved through **Edge Inference** and **Thin Orchestration.**
 
 ### 🛠 Core Architecture
