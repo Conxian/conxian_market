@@ -1,18 +1,17 @@
 # Conxian Strategic Roadmap: From Research to Economic Vitality
 
-*This roadmap aligns the Daemon-Dynamics (DD) blueprint, the Federated Agent Network strategy, and the China 'Productive AI' model.*
+*This roadmap aligns the Daemon-Dynamics (DD) blueprint, the Federated Agent Network strategy, and the pivot to DeFi-Agnostic Orchestration.*
 
 ## 🌟 Strategic Vision: The Infrastructure of AI Labor
-We operate as a **Data-First** organization, prioritizing the remediation of high-impact technical debt (stubs, security gaps) that directly blocks economic vitality.
-We build the **Orchestration** and **Settlement** layers for a world where "Intelligence" is a free commodity and "Labor" is the only value remaining. We scale Multi-Dimensionally by moving compute to the Edge and capturing value through decentralized Escrow in a Federated Agent Network.
+We operate as a **Data-First** organization. We do not waste resources building proprietary DeFi systems (conxian/conxian). Instead, we build the **Orchestration** and **Settlement** layers that allow autonomous labor to utilize *existing* global financial primitives. We scale Multi-Dimensionally by moving compute to the Edge and capturing value through decentralized Escrow in a Federated Agent Network.
 
 ---
 
-## 🏗 Phase 1: Hardening the Economic & Federated Core (Months 1-2)
-**Goal:** Activate value capture and build the trust infrastructure for external agents.
-- [ ] **Activate Protocol Fee Collection (CON-1427):** Implement actual token transfers for CLP, swap-aggregator, and alex-adapter to replace no-op fee extraction and enable the 80/10/10 yield matrix.
-- [ ] **Build the Escrow Layer (ERC-8183):** Functional programmable settlement to ensure builders (internal/external) are paid and users are protected.
-- [ ] **Establish CXD Stability (CON-1425):** Implement oracle-driven peg mechanism, collateralization vaults, and redemption/arbitrage paths to move beyond a simple mintable token.
+## 🏗 Phase 1: Hardening the Orchestration & Integration Core (Months 1-2)
+**Goal:** Activate value capture through external rail integration and build trust infrastructure.
+- [ ] **External Settlement Integration (CON-1427 REDIRECT):** Implement functional adapters for established DeFi protocols (ALEX, Uniswap) to replace no-op internal fee placeholders.
+- [ ] **Build the Escrow Layer (ERC-8183):** Functional programmable settlement to ensure builders (internal/external) are paid using external liquidity.
+- [ ] **Unit of Account Standardization:** Standardize on external stablecoins (USDC, USDT, sBTC) for the AI Office rather than building a proprietary stablecoin (CON-1425 PIVOT).
 - [ ] **DAO-Governed Access (CON-1439):** Transition from Admin-Key control to on-chain governance to fulfill the "Sovereign" promise.
 
 ## 🤖 Phase 2: The "AI Office" & Federated Integration (Months 3-4)
@@ -25,12 +24,12 @@ We build the **Orchestration** and **Settlement** layers for a world where "Inte
 ## 🏭 Phase 3: Industrial Scaling & Client Optionality (Months 5+)
 **Goal:** Capture high-MRR industrial revenue areas and enable sovereign on-prem deployment.
 - [ ] **Sovereign On-Prem Bundle:** Package the Hub, Gateway, and Nexus as a dockerized "Sovereign Server" for behind-firewall enterprise deployment.
-- [ ] **Reduce Wallet to Reference App (CON-1135):** Constrain the Conxius Wallet to a minimal reference client to prove the SDK/security model without competing with integrators.
+- [ ] **Reduce Wallet to Reference App (CON-1135):** Constrain the Conxius Wallet to a minimal reference client to prove the SDK/security model across any external rail.
 - [ ] **Supply Chain Swarm Adapters:** Implement Nexus adapters for logistics protocols (Fedimint, Citrea).
 - [ ] **Developer Sandbox (CON-1437):** Frictionless onboarding (TTFV < 15 mins) for builders to publish to the Marketplace.
 
 ---
 ## 🛑 The "Discard" Mandate
-- **Discard** any non-functional adapters that do not directly support the "Productive AI" or "Economic Core" goals.
-- **Stop** building broad architectural concepts. Every new line of code must contribute to **Functional Depth.**
+- **Discard** any proprietary DeFi development (conxian/conxian). We orchestrate, we don't recreate.
+- **Stop** building broad architectural concepts. Every new line of code must contribute to **Functional Depth** in orchestration and settlement.
 - **Don't Build Agents:** Stop building proprietary agents that compete with the open market. Focus on **Orchestration** and **Marketplace Infrastructure**.
