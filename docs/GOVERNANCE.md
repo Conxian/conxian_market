@@ -18,5 +18,40 @@ Conxian implements a default **80/10/10** yield matrix:
 - **10%:** To the Platform Treasury (The "Hub Fee" for orchestration).
 - **10%:** To Ecosystem Stakeholders (Governance/Incentives).
 
-## 4. Discarding the Stubs & Proprietary Debt
+### 3.1 Protocol Fee Structure (Revenue Standards)
+| Fee Component | Rate | Allocation |
+|:--------------|:----:|:-----------|
+| **Total Protocol Fee** | 2% | Launch rate (governance-adjustable) |
+| **Operations Treasury** | 50% | CI/CD, SDKs, Nexus, Audits |
+| **Founder Compensation** | 30% | 4-year vesting schedule |
+| **Ecosystem Growth** | 20% | Grants, Liquidity Mining, Bug Bounties |
+
+### 3.2 Fee Adjustment Governance
+- **Rate Changes:** Require 60% DAO approval with 7-day voting period
+- **Emergency Pause:** Multisig can pause fees with 48-hour notice
+- **Automatic Decay:** After 36-month stabilization, 1% floor minimum
+
+## 4. Treasury Management Governance
+### 4.1 Asset Standards
+| Asset Class | Target % | Purpose |
+|:------------|:--------:|:--------|
+| Stablecoins | 40% | Operations runway |
+| RWA/T-Bills | 30% | Low-vol yield |
+| Liquid Staking | 20% | Yield generation |
+| Native Token | 10% | Governance alignment |
+
+### 4.2 Controls
+- **Multisig:** 3-of-5 SAFE multisig for treasury operations
+- **Timelock:** 48-hour delay for transactions >$50,000
+- **Veto Rights:** DAO can pause via 60% vote
+- **Transparency:** Monthly treasury reporting required
+
+## 5. Settlement Rail Standards
+Governance prioritizes these settlement rails:
+1. **ALEX (Stacks/Bitcoin):** Primary launchpad and sBTC settlement
+2. **ERC-8183 Escrow:** Programmable settlement for EVM chains
+3. **Fedimint/Citrea:** Bitcoin L2 industrial adapters
+4. **Uniswap/ALEX:** Liquidity pooling for stable settlement
+
+## 6. Discarding the Stubs & Proprietary Debt
 Governance will actively vote to **Discard** any proprietary DeFi development (conxian/conxian) in favor of external rail adapters. We prioritize **Functional Depth** in orchestration and settlement security over architectural breadth.
