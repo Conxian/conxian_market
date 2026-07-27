@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+jspm_packages/
+web_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Build and production outputs
+build/
+dist/
+target/
+bin/
+obj/
+out-tsc/
+
+# Log files and databases
+*.log
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Environment variables & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.pfx
+*.cert
+*.crt
+credentials.json
+secrets.json
+
+# Test results and coverage
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# OS and system files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# Runtime and lockfiles generated during development (if any)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Temporal files
+*.patch
+*.diff
+test.txt
