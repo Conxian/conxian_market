@@ -2,7 +2,7 @@
 
 > **Purpose:** Permanent operational memory for AI agents working on the Conxian ecosystem.  
 > **Scope:** This file defines the canonical ethos, patterns, and boundaries for all agentic sessions.  
-> **Owner:** Conxian Labs | **Version:** 1.2 | **Last Updated:** 2026-08-01 (Session 48)
+> **Owner:** Conxian Labs | **Version:** 1.3 | **Last Updated:** 2026-08-01 (Session 48 — Enhancement Complete)
 
 ---
 
@@ -267,8 +267,9 @@ discovery, escrow, and treasury automation.
 ### conxian_market (THIS REPO)
 - **Role:** The Value Layer - PRIMARY revenue mechanism
 - **Ethos:** Settlement core, marketplace, treasury
-- **Standards:** MCP-native, ERC-8183, 2% protocol fee
-- **Guided by:** FUNDING_AND_ECONOMICS.md, FULL_SYSTEM_ARCHITECTURE.md
+- **Standards:** MCP-native, ERC-8183, 2% protocol fee, 4-tier TrustTier pricing
+- **Enhancement:** Phase 1–3 complete — 6 settlement rails, SLA bounty system, tiered pricing middleware
+- **Guided by:** FUNDING_AND_ECONOMICS.md, SETTLEMENT_RAILS.md, FULL_SYSTEM_ARCHITECTURE.md
 
 ### conxian-business (PRIVATE)
 - **Role:** CNS - Business Operations System
@@ -335,12 +336,26 @@ discovery, escrow, and treasury automation.
 ## 12. RESEARCH DOCUMENT CHAIN
 
 For economic decisions, ALWAYS reference in order:
-1. `docs/research/FUNDING_AND_ECONOMICS.md` - Fee model
-2. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` - Integration
-3. `docs/research/MARKET_UNIFIED_POSITIONING.md` - Enhancement
-4. `docs/knowledge_base/operating_manual.md` - Operations
-5. `docs/GOVERNANCE.md` - Governance rules
-6. `ROADMAP.md` - Current milestones
+1. `docs/research/FUNDING_AND_ECONOMICS.md` — Fee model, revenue streams, break-even (§3.4 Session 48)
+2. `docs/research/SETTLEMENT_RAILS.md` — 6 rails: Statechain, sBTC, RGB, Babylon, Fedimint, Lightning
+3. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` — Integration map, 17 modules, 4-tier TrustTier
+4. `docs/research/MARKET_UNIFIED_POSITIONING.md` — Enhancement matrix, 13 rows, gap closure log
+5. `docs/knowledge_base/monitoring.md` — sBTC, Fedimint, Babylon, SLA watcher, treasury dashboard
+6. `docs/knowledge_base/sla_bounty_system.md` — CJCS gap cards, auto-bounty templates, reputation
+7. `docs/knowledge_base/trust_tier_pricing.md` — Tier detection, fee calc, rail routing, SLA templates
+8. `docs/knowledge_base/operating_manual.md` — Operations
+9. `docs/GOVERNANCE.md` — Governance rules
+10. `ROADMAP.md` — Current milestones
+
+### Session 48 Enhancement Status (Phase 1–3 Complete)
+
+| Phase | Issues | Docs Created | Status |
+|:-----:|--------|-------------|:------:|
+| **P1** | MARKET-010, MARKET-011 | SETTLEMENT_RAILS.md, monitoring.md | ✅ Closed |
+| **P2** | MARKET-012–014 | sla_bounty_system.md, SETTLEMENT_RAILS §4-5, FUNDING §3.4 | ✅ Closed |
+| **P3** | MARKET-015, MARKET-016 | trust_tier_pricing.md, SETTLEMENT_RAILS §6 | ✅ Closed |
+
+> All 7 enhancement issues implemented in conxian_market@39136c0 (1,097 lines across 5 docs).
 
 ---
 
