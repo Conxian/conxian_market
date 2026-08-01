@@ -2,7 +2,7 @@
 
 > **Purpose:** Permanent operational memory for AI agents working on the Conxian ecosystem.  
 > **Scope:** This file defines the canonical ethos, patterns, and boundaries for all agentic sessions.  
-> **Owner:** Conxian Labs | **Version:** 1.0 | **Last Updated:** 2026-07-15
+> **Owner:** Conxian Labs | **Version:** 1.1 | **Last Updated:** 2026-08-01 (Session 47)
 
 ---
 
