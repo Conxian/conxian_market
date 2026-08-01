@@ -2,7 +2,7 @@
 
 > **Purpose:** Permanent operational memory for AI agents working on the Conxian ecosystem.  
 > **Scope:** This file defines the canonical ethos, patterns, and boundaries for all agentic sessions.  
-> **Owner:** Conxian Labs | **Version:** 1.1 | **Last Updated:** 2026-08-01 (Session 47)
+> **Owner:** Conxian Labs | **Version:** 1.2 | **Last Updated:** 2026-08-01 (Session 48)
 
 ---
 
@@ -39,9 +39,68 @@ A_S → Maximize (System Autonomy)
 - **conxius-enclave-sdk:** Hardware enclave SDK (v2.0.12 - Production)
 
 ### Infrastructure
-- **conxian-gateway:** Rust middleware, ISO 20022, industrial bridge
-- **conxian-nexus:** Glass Node, MMR proofs, multi-chain verification
-- **conxian_ui:** Public web interface
+- **conxian-gateway:** Rust middleware, ISO 20022, industrial bridge (v0.1.5+, 17 commits ahead)
+- **conxian-nexus:** Glass Node, MMR proofs, multi-chain verification (v0.4.0, all 13 core modules)
+
+---
+
+## 1a. SDK CAPABILITY INTEGRATION MAP (Session 48)
+
+Every Conxian SDK capability that the market layer can leverage for settlement,
+discovery, escrow, and treasury automation.
+
+### Core Module → Market Enhancement
+
+| Core Module | Market Use Case | Status |
+|-------------|----------------|--------|
+| **control_model** (TrustTier) | Tiered settlement: ObserverOnly (free) → Expedient → Managed → Strict (premium) | ✅ Wired |
+| **cjcs** (JobCard, WorkIntent) | Autonomous bounty creation, SLA enforcement, gap job card generation | ✅ Wired (Platform) |
+| **verifier** | ZK-verified settlement proofs for premium tier escrow (ERC-8183) | ✅ Wired (Nexus) |
+| **stacks** (SBTCBridge) | sBTC peg lifecycle monitoring for settlement liquidity tracking | ✅ Wired (Gateway) |
+| **rgb** (RGBAdapter) | Contract-backed asset settlement, RGB-20/21 token registry | ✅ Wired (Gateway) |
+| **babylon** (StakingIntent) | BTC staking yield → market treasury diversification | ✅ Wired (Gateway) |
+| **fedimint** (FedimintMint) | Federation-based community settlement pools | ✅ Wired (Gateway) |
+| **enclave** (AttestationCertificate) | Hardware-attested settlement for institutional clients | ✅ Wired (Nexus) |
+| **deployment** (DeploymentPlan) | Contract rollout tracking, Nakamoto integrity hash | ✅ Wired (Orbit) |
+| **lightning** (LightningAdapter) | SRL-1 Lightning resilience for micro-settlement | ✅ Wired (Nexus) |
+| **bitcoin** (taproot, bip322) | Silent payments, PSBT, Taproot settlement scripts | ✅ Wired (Nexus) |
+
+### Enclave-SDK Protocol → Market Enhancement
+
+| SDK Module | Market Use Case | Status |
+|------------|----------------|--------|
+| **statechain** (Spark VTXO) | Off-chain BTC settlement with 1-of-n trust — new rail for AI labor | ✅ v2.0.12 |
+| **frost** | Threshold signing for SAB multisig treasury operations | ✅ |
+| **dlc** | Discreet Log Contracts for prediction-market settlement | ✅ |
+| **ark** | Ark VTXO-based payment pools for agent-to-agent settlement | ✅ |
+| **swap_router** | Cross-rail yield optimization (ALEX ↔ Uniswap ↔ Fedimint) | ✅ |
+| **settlement_service** | Multi-rail settlement orchestration | ✅ |
+| **stablecoin_orchestrator** | USDC/USDT/sBTC yield routing for treasury | ✅ |
+| **solver** | Fill-or-Kill solver network for best-execution settlement | ✅ |
+| **economy** | M2M machine economy settlement — AI agent payments | ✅ |
+| **job_card** | CJCS integration with SLA enforcement | ✅ |
+| **identity** | DID-based builder reputation and discovery | ✅ |
+| **zkml** | ZK-ML proof verification for AI labor quality attestation | ✅ |
+| **opportunity** | Yield opportunity discovery for treasury yield optimization | ✅ |
+| **credit** | Agent credit scoring for escrow risk assessment | ✅ |
+| **intent** | Intent-based settlement (user declares intent, solver executes) | ✅ |
+| **sidl** | Sovereign IDL for cross-protocol contract interoperability | ✅ |
+
+### Trust Tier → Market Pricing Model
+
+| Trust Tier | Verification | Market Pricing | Use Case |
+|------------|-------------|---------------|----------|
+| **Strict** | TEE + ZK proof | Premium (negotiated) | Institutional settlement, treasury |
+| **Managed** | Enclave attestation | Standard (0.5% premium) | Professional builders, SAB operations |
+| **Expedient** | Light client verification | Basic (2% protocol fee) | Standard agent settlement |
+| **ObserverOnly** | No verification | Free tier | Discovery, reputation browsing |
+
+### Research Coverage (BTC L2 Ecosystem)
+
+| Status | Protocols |
+|--------|-----------|
+| **Covered (11)** | Lightning, Stacks, Rootstock, Liquid, RGB, BitVM2/Citrea, DLC, Ark, **Spark**, Fedimint, Babylon |
+| **Not Covered (4)** | Merlin Chain, SatoshiVM, Botanix/Spiderchain, Bitlayer (all EVM-compatible → ethereum.rs bridge) |
 
 ---
 
@@ -218,15 +277,15 @@ A_S → Maximize (System Autonomy)
 
 ### conxius-enclave-sdk (Production v2.0.12)
 - **Role:** Hardware security primitives
-- **Features:** TEE, FROST DKG, BitVM2, MuSig2, BYOK
+- **Features:** TEE, FROST DKG, BitVM2, MuSig2, Statechain (Spark), BYOK, 46 modules
 
-### conxian-gateway (Active v0.1.4)
+### conxian-gateway (Active v0.1.5+)
 - **Role:** Industrial middleware
-- **Features:** ISO 20022, Fedimint, Citrea, X402
+- **Features:** ISO 20022, Fedimint, Babylon, sBTC Monitoring, RGB Adapter, Persistence (SovereignBackend)
 
-### conxian-nexus (Active v0.4.19)
+### conxian-nexus (Active v0.4.0+)
 - **Role:** Glass Node, verification layer
-- **Features:** MMR proofs, multi-chain, SRL-1
+- **Features:** MMR proofs, multi-chain, SRL-1, Enclave Attestation (PR #196 merged), 13/17 core modules
 
 ---
 

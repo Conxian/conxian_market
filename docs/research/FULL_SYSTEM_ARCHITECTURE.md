@@ -18,14 +18,14 @@ This document provides a comprehensive audit of the **entire Conxian ecosystem**
 | Repository | Language | Purpose | Status |
 |:-----------|:--------:|:--------|:-------|
 | **Conxian/Conxian** | Clarity | Protocol primitives, DeFi logic, DAO governance | Mainnet-Ready |
-| **lib-conxian-core** | Rust | Shared protocol primitives, chain adapters | v0.2.12 Stable |
+| **lib-conxian-core** | Rust | Shared protocol primitives, chain adapters | v0.3.x Stable (17 modules, all wired) |
 
 ### 1.2 Infrastructure Layer
 
 | Repository | Language | Purpose | Status |
 |:-----------|:--------:|:--------|:-------|
-| **conxian-gateway** | Rust | Middleware bridging Bitcoin/Stacks with enterprise compliance | v0.1.4 Active |
-| **conxian-nexus** | Rust | Glass Node - verification, synchronization, proof layer | v0.4.19 Active |
+| **conxian-gateway** | Rust | Middleware bridging Bitcoin/Stacks with enterprise compliance | v0.1.5+ Active (stacks, rgb, babylon, fedimint adapters) |
+| **conxian-nexus** | Rust | Glass Node - verification, synchronization, proof layer | v0.4.0+ Active (enclave attestation, 13 core modules) |
 | **conxius-enclave-sdk** | Rust | Hardware enclave, FROST DKG, BitVM2, Attestation | **v2.0.12 Production** |
 
 ### 1.3 Access & Client Layer
@@ -152,10 +152,16 @@ This document provides a comprehensive audit of the **entire Conxian ecosystem**
 | **Stacks L2** | ✅ Native | ✅ | Primary |
 | **ALEX (Stacks)** | ✅ Native | ✅ | Launchpad |
 | **EVM (Eth/L2)** | ✅ Via Gateway | ✅ | ERC-8183 |
-| **Fedimint** | ✅ v2.0.7 | ⚠️ Partial | Federation |
-| **Ark** | ✅ v2.0.7 | ⚠️ Partial | vTXO |
-| **Babylon** | ✅ Native | ✅ | BTC staking |
-| **Lightning** | ⚠️ SRL-1 | ⚠️ Partial | Nexus layer |
+| **Fedimint** | ✅ Wired (Session 48) | ✅ T2 Managed | FedimintMint in gateway engine |
+| **Babylon** | ✅ Wired (Session 48) | ✅ T2 Managed | StakingIntent in gateway engine |
+| **RGB** | ✅ Wired (Session 48) | ✅ T2 Managed | GatewayRgbAdapter bridged to core types |
+| **sBTC** | ✅ Wired (Session 48) | ✅ T2 Managed | SBTCBridge + Emily API lifecycle |
+| **Statechain (Spark)** | ✅ v2.0.12 | ✅ T2 Managed | FROST-based 1-of-n VTXO protocol |
+| **Ark** | ✅ v2.0.12 | ✅ | vTXO payment pools |
+| **Lightning** | ✅ SRL-1 | ✅ | Nexus LightningAdapter |
+
+> **Session 48:** All 17 core modules wired. 11 BTC L2 protocols covered via enclave-sdk.
+> See `docs/research/RESEARCH_BTC_L2_2026.md` for full L2 coverage map.
 
 ---
 
@@ -163,16 +169,17 @@ This document provides a comprehensive audit of the **entire Conxian ecosystem**
 
 ### 4.1 Trust Tier Architecture (CON-791)
 
-| Tier | Requirements | Protocol Fee | Use Case |
+| Tier | Verification | Protocol Fee | Use Case |
 |:----:|:------------|:------------:|:---------|
-| **Strict** | TEE + ZK | 2% full | Institutional AI labor |
-| **Standard** | Enclave attestation | 2% full | Production agents |
-| **Basic** | API key only | 2% full | Experimental |
+| **Strict** | TEE + ZK proof | Premium (negotiated) | Institutional settlement, treasury |
+| **Managed** | Enclave attestation | Standard (2% + 0.5% premium) | Professional builders, SAB ops |
+| **Expedient** | Light client | Basic (2% protocol fee) | Standard agent settlement |
+| **ObserverOnly** | None | Free tier | Discovery, reputation browsing |
 
 ### 4.2 conxius-enclave-sdk Integration
 
-```rust
-// Fee collection through enclave attestation
+The SDK provides hardware-backed signing and attestation through 46 modules including
+FROST DKG, MuSig2, BitVM2, Statechain (Spark), and 37 protocol modules.
 use conxius_enclave_sdk::{Attestation, PolicyEngine};
 
 // Verify AI labor provider before fee distribution

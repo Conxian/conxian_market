@@ -1,6 +1,6 @@
 # Conxian Market: Unified Ecosystem Positioning & Enhancement Blueprint
 
-> **Status:** Unified Research | **Last Updated:** 2026-07-15  
+> **Status:** Unified Research | **Last Updated:** 2026-08-01 (Session 48)  
 > **Version:** 1.0 | **Purpose:** Synthesis of all ecosystem research
 
 ---
@@ -108,20 +108,36 @@ This document unifies all existing research to establish the **definitive positi
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 Enhancement Matrix
+### 2.2 Enhancement Matrix (Updated Session 48)
 
 | Market Feature | Enabled By | Integration Type | Status |
 |:---------------|:-----------|:---------------:|:-------|
 | **Agent Discovery** | Nexus (Trust) | MCP Registry | ⚠️ Required |
-| **Settlement Rails** | Gateway | X402/ISO 20022 | ⚠️ Required |
-| **ZK Verification** | Nexus | MMR Proofs | ✅ Ready |
-| **Hardware Security** | Enclave SDK | TEE Attestation | ✅ Ready |
-| **Multi-chain** | lib-conxian-core | Chain Adapters | ✅ Ready |
+| **Settlement Rails** | Gateway | X402/ISO 20022 → Fedimint, Babylon, sBTC, RGB | ✅ Wired |
+| **ZK Verification** | Nexus | MMR Proofs + Enclave Attestation | ✅ Wired |
+| **Hardware Security** | Enclave SDK | TEE Attestation + Statechain (Spark) | ✅ Wired |
+| **Multi-chain** | lib-conxian-core | 17 modules, all wired across 5 consumers | ✅ Wired |
 | **User Wallets** | Conxius Wallet | BYOK Signing | ✅ Ready |
 | **Fee Collection** | Conxian Protocol | Clarity | ⚠️ CON-1427 |
-| **Treasury Mgmt** | Platform | CI/CD Pipeline | ⚠️ Dashboard |
-| **Deployments** | Orbit CLI | Contract Mgmt | ✅ Ready |
-| **Business Rules** | conxian-business | YAML Schema | ⚠️ Define |
+| **Treasury Mgmt** | Platform | CJCS SLA enforcement + sBTC monitoring | ⚠️ Dashboard |
+| **Deployments** | Orbit CLI | 247 contracts + Nakamoto hash | ✅ Ready |
+| **Business Rules** | conxian-business | BOS Doctrine | ✅ Updated S48 |
+| **CJCS Bounties** | Platform | JobCard + WorkIntent → autonomous gap cards | ✅ Wired |
+| **BTC Staking** | Gateway | Babylon StakingIntent → treasury diversification | ✅ Wired |
+| **Community Pools** | Gateway | FedimintMint → federation settlement | ✅ Wired |
+
+### 2.3 Session 48 Capability Audit: All Gaps Closed
+
+Full cross-repo ground-truth audit against actual `lib.rs` declarations:
+
+| Gap | Before (Session 47) | After (Session 48) |
+|-----|---------------------|-------------------|
+| Nexus enclave attestation | PR #196 blocked (CI fail) | Merged — AttestationCertificate in ExecutionRequest |
+| Stacks SBTCBridge | Not consumed | Gateway stacks/sbtc.rs + Emily API lifecycle |
+| RGB adapter | Not consumed | GatewayRgbAdapter bridged to core RGB types |
+| Statechain (Spark) | Not covered | Enclave-SDK statechain.rs — FROST 1-of-n VTXO |
+| CJCS types | Mismatched core schema | Platform cjcs.ts mirrors {context, type, work_intent} |
+| TrustTier | 3 variants (missing ObserverOnly) | 4 variants — observer mode for free tier |
 
 ---
 
