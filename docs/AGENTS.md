@@ -374,6 +374,21 @@ For economic decisions, ALWAYS reference in order:
 > Market operates at **Expedient tier only** (Lightning + Fedimint, flat 2%) until P0-1 through P0-4 resolve.
 > Revenue model is **theoretical** until P0-7 (CON-1427) ships.
 
+### CON-1427 Status (Protocol Fee Collection)
+
+| Component | Status | File |
+|-----------|:------:|------|
+| Implementation plan | ✅ Done | `docs/research/CON1427_IMPLEMENTATION_PLAN.md` |
+| Market FeeCalculator | ✅ Done | `src/fee_calculator.ts` (280 lines) — tier detection, rail routing, fee report |
+| Gateway ProtocolFee bridge | ✅ Done | `conxian-gateway:billing.rs` (+247 lines) — `ProtocolFeeRecord`, `ProtocolFeeReport`, 5 tests |
+| Clarity contract activation | ⬜ Phase C | `contracts/vaults/fee-manager.clar` (stub → production) |
+| Contract-bridge wire-up | ⬜ Phase C | Gateway → `protocol-fee-collector.clar` integration |
+| Treasury auto-staking | ⬜ Phase D | Babylon staking of collected fees |
+
+> **Phase A+B shipped.** Fee calculation + gateway bridge implemented with tests.
+> **Phase C** (contract activation) requires Stacks testnet deployment keys.
+> **Revenue unlock:** $15,000/mo → $20,600/mo when Phases A-C complete.
+
 ---
 
 ## 13. QUICK REFERENCE

@@ -1,0 +1,18 @@
+{
+  "name": "@conxian/fee-calculator",
+  "version": "0.1.0",
+  "description": "CON-1427 Protocol Fee Calculator — tier detection, rail routing, fee computation, and revenue projection for the Conxian settlement layer.",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "src/fee_calculator.ts",
+  "types": "src/fee_calculator.ts",
+  "files": ["src/"],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["conxian", "protocol-fee", "settlement", "trust-tier", "bitcoin"],
+  "engines": {
+    "node": ">=18"
+  }
+}
