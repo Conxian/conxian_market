@@ -340,12 +340,13 @@ For economic decisions, ALWAYS reference in order:
 2. `docs/research/SETTLEMENT_RAILS.md` — 6 rails: Statechain, sBTC, RGB, Babylon, Fedimint, Lightning
 3. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` — Integration map, 17 modules, 4-tier TrustTier
 4. `docs/research/MARKET_UNIFIED_POSITIONING.md` — Enhancement matrix, 13 rows, gap closure log
-5. `docs/knowledge_base/monitoring.md` — sBTC, Fedimint, Babylon, SLA watcher, treasury dashboard
-6. `docs/knowledge_base/sla_bounty_system.md` — CJCS gap cards, auto-bounty templates, reputation
-7. `docs/knowledge_base/trust_tier_pricing.md` — Tier detection, fee calc, rail routing, SLA templates
-8. `docs/knowledge_base/operating_manual.md` — Operations
-9. `docs/GOVERNANCE.md` — Governance rules
-10. `ROADMAP.md` — Current milestones
+5. `docs/research/market_enhancement_strategy.md` — Phase 1-3 complete report, 5-stream revenue, before/after
+6. `docs/research/CROSS_REPO_GAP_ANALYSIS_SESSION_48.md` — 60 open issues, 23 code gaps, P0→P2 severity
+7. `docs/knowledge_base/monitoring.md` — sBTC, Fedimint, Babylon, SLA watcher, treasury dashboard
+8. `docs/knowledge_base/sla_bounty_system.md` — CJCS gap cards, auto-bounty templates, reputation
+9. `docs/knowledge_base/trust_tier_pricing.md` — Tier detection, fee calc, rail routing, SLA templates
+10. `docs/knowledge_base/operating_manual.md` — Operations
+11. `docs/GOVERNANCE.md` — Governance rules
 
 ### Session 48 Enhancement Status (Phase 1–3 Complete)
 
@@ -356,6 +357,22 @@ For economic decisions, ALWAYS reference in order:
 | **P3** | MARKET-015, MARKET-016 | trust_tier_pricing.md, SETTLEMENT_RAILS §6 | ✅ Closed |
 
 > All 7 enhancement issues implemented in conxian_market@39136c0 (1,097 lines across 5 docs).
+
+### Current P0 Gap Status (from CROSS_REPO_GAP_ANALYSIS)
+
+| # | Gap | Repo | Blocks |
+|---|-----|------|--------|
+| P0-1 | AWS Nitro attestation (#242) | enclave-sdk | Managed/Strict tiers |
+| P0-2 | Android KeyMint (#241) | enclave-sdk | Mobile attestation |
+| P0-3 | Attestation roots (#240) | enclave-sdk | Trust chain verification |
+| P0-4 | CCTP fail-closed (#198) | enclave-sdk | Cross-chain security |
+| P0-5 | Dev sandbox (#480) | Conxian | Builder onboarding |
+| P0-6 | Value-op gate (#444) | wallet | Settlement verification |
+| P0-7 | Protocol fee (#488) | Conxian | 5-stream revenue |
+| P0-8 | CI validation (#1082) | platform | Green CI (BOS Gate 1) |
+
+> Market operates at **Expedient tier only** (Lightning + Fedimint, flat 2%) until P0-1 through P0-4 resolve.
+> Revenue model is **theoretical** until P0-7 (CON-1427) ships.
 
 ---
 

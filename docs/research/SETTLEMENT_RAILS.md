@@ -319,4 +319,33 @@ Builder can: hold (off-chain), transfer (to another agent), withdraw (to L1)
 
 ---
 
+## 10. Gateway Adapter Readiness (Session 48 Gap Analysis)
+
+Each rail depends on a gateway adapter. Production readiness varies:
+
+| Rail | Gateway Adapter | File | Readiness | Issue |
+|------|:---------------|:-----|:---------:|:------|
+| sBTC | `stacks/sbtc.rs` | `engine/src/stacks/sbtc.rs` | ✅ Production | — |
+| Lightning | Nexus bridge | N/A (Nexus) | ✅ Production | — |
+| ALEX/Stacks | `stacks/alex.rs` | `engine/src/stacks/alex.rs` | ✅ Production | — |
+| Babylon | `bitcoin/babylon_adapter.rs` | `engine/src/bitcoin/babylon_adapter.rs` | ✅ Production | — |
+| Fedimint | `bitcoin/fedimint_adapter.rs` | `engine/src/bitcoin/fedimint_adapter.rs` | ✅ Production | — |
+| RGB | `bitcoin/rgb_adapter.rs` | `engine/src/bitcoin/rgb_adapter.rs` | ⚠️ Partial | [#228](https://github.com/Conxian/conxian-gateway/issues/228) — stash resolver needed |
+| Statechain | Via enclave-sdk | `conxius-enclave-sdk` | ⛔ Gated | [#260](https://github.com/Conxian/conxius-enclave-sdk/issues/260) — FROST `ProtocolUnsupported` |
+| DLC | `bitcoin/dlc_oracle.rs` | `engine/src/bitcoin/dlc_oracle.rs` | 🟡 Stub | [#220](https://github.com/Conxian/conxian-gateway/issues/220) — CET path not built |
+| BitVM3 | `bitcoin/bitvm_adapter.rs` | `engine/src/bitcoin/bitvm_adapter.rs` | 🔬 Research | [#189](https://github.com/Conxian/conxian-gateway/issues/189) — garbled circuits |
+
+### Adapter Legend
+- ✅ **Production** — Adapter wired, tested, CI green
+- ⚠️ **Partial** — Core adapter exists, integration edge incomplete
+- 🟡 **Stub** — Type scaffolding exists, no execution path
+- 🔬 **Research** — Evaluation-phase, no production code
+- ⛔ **Gated** — Protocol exists but crypto ops behind `ProtocolUnsupported`
+
+> **4 rails are production-ready** (sBTC, Lightning, ALEX, Babylon, Fedimint).
+> **Statechain** is the most strategically important rail but entirely gated on enclave-sdk #260.
+> **DLC** and **BitVM3** remain research-phase; not part of the 6-rail settlement catalog.
+
+---
+
 *"Architecting the rails where the user owns the train."*

@@ -433,4 +433,44 @@ User Payment ($100)
 
 ---
 
+## 5. Revenue Model Risk Assessment (Session 48 Gap Analysis)
+
+### 5.1 Current Blockers
+
+The 5-stream revenue model is **theoretical** until these P0 gaps close:
+
+| Stream | Status | Blocker | Revenue at Risk |
+|--------|:------:|---------|:---------------:|
+| Protocol fee (2%) | ⛔ Blocked | CON-1427 not implemented (#488) | 50% of revenue |
+| Premium surcharge (+0.5%) | ⛔ Blocked | No enclave attestation (#240-#242) | 15% of revenue |
+| Institutional (negotiated) | ⛔ Blocked | No TEE+ZK proof chain (#198, #202) | 10% of revenue |
+| Community pools (1%) | ✅ Ready | Fedimint adapter wired | 5% of revenue |
+| Staking yield (3-5% APY) | ✅ Ready | Babylon adapter wired | 5% of revenue |
+
+> **Current realizable revenue:** ~$1,500/mo (Fedimint + Babylon only) vs. **target** $21,100/mo at launch.
+> **Revenue gap:** 93% of projected revenue is blocked on 3 P0 issues.
+
+### 5.2 Degraded Revenue Scenarios
+
+| Scenario | What Works | Monthly Revenue | vs. Target |
+|----------|-----------|----------------:|:----------:|
+| **Expedient-only** (current) | Fedimint pools + Babylon staking | $1,500 | 7% |
+| **+CON-1427** (fee collection live) | Expedient rails at 2% | $15,000 | 71% |
+| **+Attestation P0** (Managed tier) | All rails at tiered rates | $20,600 | 98% |
+| **Full 5-stream** (all P0 closed) | Institutional + premiums | $21,100 | 100% |
+
+### 5.3 Break-Even Timeline Impact
+
+| Scenario | Monthly Burn | Revenue | Runway (w/o raise) |
+|----------|:-----------:|:------:|:------------------:|
+| Expedient-only | $20,000 | $1,500 | 6 months |
+| +CON-1427 | $20,000 | $15,000 | 14 months |
+| +Attestation | $20,000 | $20,600 | **Break-even** |
+| Full 5-stream (at $10M vol) | $30,000 | $220,800 | **Sustainable** |
+
+> **Action:** CON-1427 (#488) is the single highest-leverage P0. It alone recovers 71% of revenue.
+> Attestation P0s (#240-#242) unlock the remaining 27% and achieve break-even.
+
+---
+
 *This document is a living specification. All changes require DAO governance approval.*
