@@ -142,7 +142,57 @@ The builder revenue matrix remains unchanged:
 
 ---
 
-## 4. Sustainable Operations Model
+### 3.4 Session 48: New Revenue Streams (2026-08-01)
+
+All 17 core modules wired across 5 consumers. New settlement rails unlocked:
+
+#### Tiered Pricing Revenue
+
+| Tier | Verification | Fee | Revenue Mix Target |
+|:----:|:------------|:---:|:------------------:|
+| **Strict** | TEE + ZK | Negotiated | 10% of volume (high value) |
+| **Managed** | Enclave attestation | 2% + 0.5% premium | 40% of volume |
+| **Expedient** | Light client | 2% flat | 50% of volume |
+| **ObserverOnly** | None | Free | 0% (discovery only) |
+
+> Premium tier (+0.5% on Managed, negotiated on Strict) funds enclave attestation infrastructure.
+
+#### Babylon Treasury Staking (MARKET-014)
+
+| Parameter | Value |
+|-----------|-------|
+| Max treasury allocation | 25% |
+| Expected APY | 3–5% BTC-denominated |
+| Yield destination | 50% ops / 30% founders / 20% ecosystem |
+| Monthly yield (@5 BTC staked) | 0.0125–0.0208 BTC |
+
+#### Fedimint Community Pools (MARKET-015)
+
+| Fee | Rate | Set By |
+|-----|-----:|--------|
+| Mint fee (e-cash issue) | 0.1–0.5% | Community governance |
+| Market protocol fee | 1% (reduced) | Conxian treasury |
+
+> Reduced to 1% (vs 2%) because community bears operational costs. Revenue from ecosystem-scale adoption.
+
+#### Statechain VTXO Fees (MARKET-010)
+
+| Operation | Fee | Revenue Impact |
+|-----------|----:|---------------|
+| VTXO creation | 0.1% of amount | Micro — low margin, high volume |
+| VTXO transfer | Flat 100 sats | Near-zero — infrastructure play |
+| Market protocol fee | 2% | Standard settlement revenue |
+
+#### Updated Revenue Projections
+
+| Scenario | Volume | 2% Base | +0.5% Premium | Staking Yield | Fedimint 1% | **Total** |
+|----------|-------:|--------:|:------------:|:------------:|:----------:|----------:|
+| Launch (mo 1–3) | $1M/mo | $20K | $450 | $150 | $500 | **$21.1K** |
+| Growth (mo 4–6) | $3M/mo | $60K | $3K | $400 | $1.5K | **$64.9K** |
+| Mature (mo 7–12) | $10M/mo | $200K | $15K | $800 | $5K | **$220.8K** |
+
+> Break-even ($240K/year = $20K/mo) achieved at $1M monthly volume.
+> Full operational sustainability at $10M/mo with 3 revenue streams contributing.
 
 ### 4.1 Minimum Viable Treasury (MVT)
 
