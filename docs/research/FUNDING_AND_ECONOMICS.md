@@ -192,7 +192,53 @@ All 17 core modules wired across 5 consumers. New settlement rails unlocked:
 | Mature (mo 7–12) | $10M/mo | $200K | $15K | $800 | $5K | **$220.8K** |
 
 > Break-even ($240K/year = $20K/mo) achieved at $1M monthly volume.
-> Full operational sustainability at $10M/mo with 3 revenue streams contributing.
+> Full operational sustainability at $10M/mo with contributions from all 5 streams.
+
+#### Per-Rail Revenue Breakdown
+
+| Rail | Volume Share | Rate | Monthly Rev (@$1M vol) | Monthly Rev (@$10M vol) |
+|------|:-----------:|-----:|----------------------:|------------------------:|
+| ALEX/Stacks | 35% | 2% | $7,000 | $70,000 |
+| sBTC | 25% | 2% | $5,000 | $50,000 |
+| Lightning | 15% | 1% | $1,500 | $15,000 |
+| Fedimint | 10% | 1% | $1,000 | $10,000 |
+| EVM (ERC-8183) | 10% | 2% | $2,000 | $20,000 |
+| Statechain (Spark) | 3% | 2% | $600 | $6,000 |
+| RGB | 2% | 2% | $400 | $4,000 |
+| Premium surcharge | (25% of vol) | +0.5% | $1,250 | $12,500 |
+| Babylon yield | N/A | 3-5% APY | $150 | $800 |
+| **Total** | **100%** | | **$21,100** | **$220,800** |
+
+#### Revenue Distribution (50/30/20)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                  REVENUE DISTRIBUTION                         │
+│                                                               │
+│  $21.1K/mo (Launch)           $220.8K/mo (Mature)            │
+│                                                               │
+│  ┌──────────────┐              ┌──────────────┐              │
+│  │ Ops (50%)    │              │ Ops (50%)    │              │
+│  │ $10,550/mo   │              │ $110,400/mo  │              │
+│  │ CI/CD+Nexus+ │              │ CI/CD+Nexus+ │              │
+│  │ SDK+Audit    │              │ SDK+Audit    │              │
+│  └──────────────┘              └──────────────┘              │
+│  ┌──────────────┐              ┌──────────────┐              │
+│  │ Founders(30%)│              │ Founders(30%)│              │
+│  │ $6,330/mo    │              │ $66,240/mo   │              │
+│  │ 4yr vesting  │              │ 4yr vesting  │              │
+│  └──────────────┘              └──────────────┘              │
+│  ┌──────────────┐              ┌──────────────┐              │
+│  │ Ecosystem    │              │ Ecosystem    │              │
+│  │ (20%)        │              │ (20%)        │              │
+│  │ $4,220/mo    │              │ $44,160/mo   │              │
+│  │ Grants+Liq   │              │ Grants+Liq   │              │
+│  └──────────────┘              └──────────────┘              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+> Distribution via Clarity contract (CON-1427) with 48-hour timelock on governance changes.
+> All rail revenue flows through the same 50/30/20 split regardless of source.
 
 ### 4.1 Minimum Viable Treasury (MVT)
 

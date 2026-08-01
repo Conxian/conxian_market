@@ -161,51 +161,139 @@ This document provides a comprehensive audit of the **entire Conxian ecosystem**
 | **Lightning** | ✅ SRL-1 | ✅ | Nexus LightningAdapter |
 
 > **Session 48:** All 17 core modules wired. 11 BTC L2 protocols covered via enclave-sdk.
-> See `docs/research/RESEARCH_BTC_L2_2026.md` for full L2 coverage map.
+> See `docs/research/SETTLEMENT_RAILS.md` for full 6-rail catalog with fee models and flow diagrams.
+
+### 3.3 Six-Rail Settlement Architecture (Session 48)
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                    CONXIAN 6-RAIL SETTLEMENT LAYER                        │
+│                                                                            │
+│  ┌──────────────────────┐              ┌──────────────────────┐           │
+│  │   MANAGED TIER (T2)  │              │  EXPEDIENT TIER (T1) │           │
+│  │  Enclave Attestation │              │  Light Client Proof  │           │
+│  ├──────────────────────┤              ├──────────────────────┤           │
+│  │ ① Statechain (Spark) │              │ ④ Lightning (SRL-1)  │           │
+│  │   VTXO off-chain BTC │              │   Instant payments   │           │
+│  │   1-of-n FROST trust │              │   LN routing fees    │           │
+│  │                      │              │                      │           │
+│  │ ② sBTC (Stacks)      │              │ ⑤ Fedimint (e-cash)  │           │
+│  │   BTC peg-in/out     │              │   Community pools    │           │
+│  │   Emily API lifecycle│              │   3-of-5 guardians   │           │
+│  │                      │              │                      │           │
+│  │ ③ RGB (contract)     │              │ ⑥ ALEX/Stacks (AMM)  │           │
+│  │   RGB-20/21 assets   │              │   Swap settlement    │           │
+│  │   OP_RETURN anchors  │              │   Orderbook + Staking│           │
+│  └──────────────────────┘              └──────────────────────┘           │
+│           │                                       │                       │
+│           └───────────────┬───────────────────────┘                       │
+│                           ▼                                               │
+│                  ┌─────────────────┐                                      │
+│                  │  TrustTier Gate │  ObserverOnly→Expedient→Managed      │
+│                  │  Fee Calculator │  0%→2%→2.5%→Negotiated              │
+│                  └────────┬────────┘                                      │
+│                           ▼                                               │
+│                  ┌─────────────────┐                                      │
+│                  │  SLA Enforcer   │  7 rules, auto-bounty generation     │
+│                  └────────┬────────┘                                      │
+│                           ▼                                               │
+│         ┌─────────────────┼─────────────────┐                            │
+│         ▼                 ▼                  ▼                             │
+│  ┌────────────┐   ┌────────────┐    ┌────────────┐                       │
+│  │  Builder   │   │  Protocol  │    │  Treasury  │                       │
+│  │  (80%)    │   │  Fee (2%)  │    │  (18%)    │                       │
+│  └────────────┘   └────────────┘    └────────────┘                       │
+│                                                                            │
+│  Babylon staking yield (3-5% APY) → 50% ops / 30% founders / 20% eco     │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.4 Rail Selection Logic
+
+```typescript
+function selectRail(
+  amount: bigint,
+  tier: TrustTier,
+  preference?: 'cost' | 'speed' | 'privacy'
+): SettlementRail {
+  const rails = RAIL_ROUTING[tier];
+  // ObserverOnly: [] (no settlement)
+  // Expedient:  [Lightning, Fedimint, ALEX, EVM]
+  // Managed:    [+ Statechain, sBTC, RGB, Babylon]
+  // Strict:     [+ EnclaveAttested] (all rails)
+
+  switch (preference) {
+    case 'cost':     return cheapestRail(rails, amount);
+    case 'speed':    return fastestRail(rails);
+    case 'privacy':  return mostPrivateRail(rails);
+    default:         return cheapestRail(rails, amount);
+  }
+}
+```
+
+> Full rail comparison: `SETTLEMENT_RAILS.md` §9 — finality, throughput, privacy, min amount, fee.
 
 ---
 
 ## 4. Security Model Integration
 
-### 4.1 Trust Tier Architecture (CON-791)
+### 4.1 Trust Tier Architecture (Session 48)
 
-| Tier | Verification | Protocol Fee | Use Case |
-|:----:|:------------|:------------:|:---------|
-| **Strict** | TEE + ZK proof | Premium (negotiated) | Institutional settlement, treasury |
-| **Managed** | Enclave attestation | Standard (2% + 0.5% premium) | Professional builders, SAB ops |
-| **Expedient** | Light client | Basic (2% protocol fee) | Standard agent settlement |
-| **ObserverOnly** | None | Free tier | Discovery, reputation browsing |
+| Tier | Verification | Protocol Fee | Settlement Rails | SLA Template |
+|:----:|:------------|:------------:|:----------------|:------------|
+| **Strict** | TEE + ZK proof | Negotiated | All 6 rails | 99.99% uptime, 100ms P95, ZK proof, 1h dispute |
+| **Managed** | Enclave attestation | 2% + 0.5% premium | Statechain, sBTC, RGB, Babylon, +Expedient rails | 99.9% uptime, 500ms P95, enclave proof, 4h dispute |
+| **Expedient** | Light client | 2% flat | Lightning, Fedimint, ALEX, EVM | 99% uptime, 2s P95, light proof, 24h dispute |
+| **ObserverOnly** | None | Free | None (discovery only) | N/A |
 
-### 4.2 conxius-enclave-sdk Integration
+> Tier detection: `trust_tier_pricing.md` §2. SLA templates: `trust_tier_pricing.md` §5.
+> Nexus `ExecutionRequest` carries TrustTier via PR #196 (enclave attestation).
 
-The SDK provides hardware-backed signing and attestation through 46 modules including
-FROST DKG, MuSig2, BitVM2, Statechain (Spark), and 37 protocol modules.
-use conxius_enclave_sdk::{Attestation, PolicyEngine};
+### 4.2 Enclave SDK Attestation Flow (Updated)
 
-// Verify AI labor provider before fee distribution
-let attestation = Attestation::verify(&provider_tee_report)?;
-let policy = PolicyEngine::enforce_trust_tier(
-    TrustTier::Standard,
-    &attestation
-)?;
+```typescript
+// Tier detection middleware — trust_tier_pricing.md §2
+async function detectTrustTier(req: SettlementRequest): Promise<TrustTier> {
+  const teeProof = req.headers['x-conxian-tee-proof'];
+  const zkProof = req.headers['x-conxian-zk-proof'];
+  if (teeProof && zkProof && await verifyTeeZkProof(teeProof, zkProof))
+    return TrustTier.Strict;
 
-// Protocol fee collection with attestation
-if policy.fee_eligible() {
-    // Collect 2% protocol fee
-    // Distribute via Clarity contract
+  const enclaveProof = req.headers['x-conxian-enclave-attestation'];
+  if (enclaveProof && await verifyEnclaveAttestation(enclaveProof))
+    return TrustTier.Managed;
+
+  const lightProof = req.headers['x-conxian-light-proof'];
+  if (lightProof && await verifyLightClientProof(lightProof))
+    return TrustTier.Expedient;
+
+  return TrustTier.ObserverOnly;
+}
+
+// Fee calculation by tier
+function calculateFee(amount: bigint, tier: TrustTier): bigint {
+  switch (tier) {
+    case TrustTier.Strict:   return 0n;  // Negotiated separately
+    case TrustTier.Managed:  return (amount * 250n) / 10000n;  // 2.5%
+    case TrustTier.Expedient: return (amount * 200n) / 10000n; // 2%
+    case TrustTier.ObserverOnly: return 0n;
+  }
 }
 ```
 
-### 4.3 Security Controls
+### 4.3 CJCS SLA Enforcement (Session 48)
 
-| Control | Component | Status | Notes |
-|:--------|:----------|:------:|:------|
-| **BYOK** | All agents | ✅ Enforced | User keys |
-| **TEE Attestation** | conxius-enclave-sdk | ✅ v2.0.12 | Production |
-| **FROST DKG** | conxius-enclave-sdk | ✅ v2.0.12 | Distributed keys |
-| **BitVM2** | conxius-enclave-sdk | ✅ | Optimistic proofs |
-| **Multi-sig** | Treasury | ⚠️ Required | 3-of-5 SAFE |
-| **Timelock** | Governance | ⚠️ Required | 48hr delay |
+```
+JobCard → SLA Watcher (60s poll) → 7 gap detection rules
+    │                                    │
+    ├── Deadline exceeded + 1h   → Gap Card (Managed+ auto)
+    ├── Builder idle 48h         → Reopen + warn flag
+    ├── TrustTier mismatch       → Reject settlement
+    ├── Fee shortfall <95%       → Hold + notify treasury
+    └── 3+ quality disputes      → Suspend builder
+```
+
+> Full SLA system: `sla_bounty_system.md`. TrustTier gating: auto-execution for Managed+, manual for Expedient/ObserverOnly.
 
 ---
 
