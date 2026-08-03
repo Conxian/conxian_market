@@ -358,6 +358,7 @@ discovery, escrow, and treasury automation. **Now wired through `ConxianMarketSD
 
 For economic decisions, ALWAYS reference in order:
 0. `docs/adr/ADR_001_FEE_MODEL.md` — **AUTHORITATIVE** — Fee basis, percentages, custody, exposure caps, pause/exit (resolves Gateway #247 conflict)
+0a. `docs/research/ECOSYSTEM_GRAPH.md` — **Full ecosystem map** — 16 repos, 55 issues, cross-repo dependencies, 5-phase roadmap
 1. `docs/research/FUNDING_AND_ECONOMICS.md` — Fee model, revenue streams, break-even (§3.4 Session 48)
 2. `docs/research/SETTLEMENT_RAILS.md` — 6 rails: Statechain, sBTC, RGB, Babylon, Fedimint, Lightning
 3. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` — Integration map, 17 modules, 4-tier TrustTier
