@@ -24,6 +24,7 @@
 
 Research chain (in order):
 0. `docs/adr/ADR_001_FEE_MODEL.md` — **AUTHORITATIVE** — Fee basis, percentages, custody, exposure caps, pause/exit
+0a. `docs/research/ECOSYSTEM_GRAPH.md` — **Full ecosystem map** — 16 repos, 55 issues, 5-phase roadmap
 1. `docs/research/FUNDING_AND_ECONOMICS.md` — Fee model, revenue streams, break-even
 2. `docs/research/SETTLEMENT_RAILS.md` — 6 rails, bridge status
 3. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` — Integration map, 17 modules
