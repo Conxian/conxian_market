@@ -358,6 +358,8 @@ export function projectRevenue(scenario: RevenueScenario): RevenueProjection {
     totalMonthlyUsd: Math.round(
       v * 0.02 * 0.50 + v * 0.005 * 0.15 + v * 0.01 * 0.05
     ),
-    pctOfTarget: 0,
+    pctOfTarget: Math.round(
+      ((v * 0.02 * 0.50 + v * 0.005 * 0.15 + v * 0.01 * 0.05) / TARGET_MONTHLY_USD) * 100
+    ),
   };
 }
