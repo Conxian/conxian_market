@@ -2,10 +2,16 @@
  * CON-1427: Protocol Fee Calculator
  *
  * Implements tier detection and fee calculation as specified in
- * `docs/knowledge_base/trust_tier_pricing.md` §2-3.
+ * `docs/knowledge_base/trust_tier_pricing.md` §2-3 and
+ * `docs/adr/ADR_001_FEE_MODEL.md`.
  *
  * Part of the 4-component fee collection pipeline:
  *   SettlementEvent → FeeCalculator → billing.rs → Clarity contracts
+ *
+ * Now wired into the ConxianMarketSDK bridge (src/sdk_bridge.ts)
+ * which connects all 27 SDK capabilities through the Gateway REST API.
+ * Use `ConxianMarketSDK.connect()` for live verification instead of
+ * the stub verifier callbacks below.
  */
 
 // ── Trust Tier (matches enclave-sdk + trust_tier_pricing.md §2) ──

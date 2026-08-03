@@ -16,8 +16,8 @@
 | Settlement Rails | Lightning, Fedimint, Stacks/ALEX, Citrea, RGB, Statechain (Spark) |
 | Trust Tiers | Strict (TEE+ZK) / Managed (Enclave) / Expedient (Light) / ObserverOnly (Free) |
 | Wallet Custody | SAB multisigs (3-of-5 deployer, 3-of-5 payout, 2-of-3 emergency) |
-| Key Package | `src/fee_calculator.ts` — CON-1427 tier/rail/fee computation |
-| Auth Docs | `docs/AGENTS.md` (canonical), `docs/research/` (economic decisions) |
+| Key Package | `src/sdk_bridge.ts` — ConxianMarketSDK: 27 capabilities, gateway client, verification, settlement |
+| Auth Docs | `docs/AGENTS.md` (canonical), `docs/adr/` (decisions), `docs/research/` (economic decisions) |
 | Governance | Issue #9 — repository disposition pending |
 
 ## Authoritative Documents
@@ -36,7 +36,12 @@ Research chain (in order):
 | Component | Status |
 |-----------|--------|
 | Implementation plan | ✅ `docs/research/CON1427_IMPLEMENTATION_PLAN.md` |
-| FeeCalculator (src) | ✅ 280 lines — tier detection, rail routing, fee report |
+| FeeCalculator (src) | ✅ 366 lines — tier detection, rail routing, fee report |
+| SDK Bridge (src) | ✅ 1,595 lines across 6 modules — `ConxianMarketSDK` wires all 27 capabilities |
+| Core Types (src) | ✅ 281 lines — TypeScript mirror of lib-conxian-core + enclave-sdk |
+| Gateway Client (src) | ✅ 202 lines — typed HTTP client for 50+ gateway endpoints |
+| Verification (src) | ✅ 117 lines — Gateway-backed verifier, P0-aware degradation |
+| Settlement (src) | ✅ 211 lines — Multi-rail settlement orchestrator (8 rails) |
 | Gateway bridge | ✅ `conxian-gateway:billing.rs` — ProtocolFeeRecord + 5 tests |
 | Clarity contract | ⬜ Phase C — needs testnet deploy keys |
 | Contract-bridge wire-up | ⬜ Phase C |
