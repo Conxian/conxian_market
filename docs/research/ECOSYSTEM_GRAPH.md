@@ -283,3 +283,152 @@ conxian_market (fee_calculator.ts)
 ---
 
 *This graph is the authoritative cross-repo reference. Update on each phase completion.*
+
+---
+
+## 7. Per-Repo Needs Analysis — What Each Repo Gets From SDK Alignment
+
+### 🟢 HIGH IMPACT (SDK alignment directly enables or significantly helps)
+
+#### `lib-conxian-core` — THE SDK ALIGNMENT ITSELF
+| Dimension | Detail |
+|-----------|--------|
+| What it does | Canonical shared type system, protocol primitives |
+| What SDK alignment delivered | `src/sdk.rs` re-exports all 50 enclave-sdk modules across 6 feature-gated categories; `full-sdk` meta-feature |
+| What it still needs | Issue #233 (chain transport adapter isolation); 6 underutilized modules need consumers (`crypto`, `enclave`, `deployment`, `cjcs`, `babylon`, `fedimint`) |
+| Next action | Mark `full-sdk` as default feature; create consumer wiring for 6 underutilized modules |
+
+#### `conxian_market` — PRIMARY CONSUMER
+| Dimension | Detail |
+|-----------|--------|
+| What it does | AI labor marketplace, SDK bridge, fee calculation, settlement orchestration |
+| What SDK alignment delivered | `ConxianMarketSDK` with 27 capabilities wired through Gateway REST; real verification (not stubs); 8-rail settlement |
+| What it still needs | P0-gated capabilities (TEE+ZK verification, Statechain, Ark, DLC CET); RGB adapter (gateway #228); issue #9 (repo disposition governance) |
+| Next action | Resolve issue #9 (merge into gateway vs. standalone); add CI/CD baseline; publish npm package |
+
+#### `conxian-gateway` — INFRASTRUCTURE CONSUMER
+| Dimension | Detail |
+|-----------|--------|
+| What it does | Runtime orchestration, REST API (50+ endpoints), 8 settlement rails, billing engine |
+| What SDK alignment delivered | Can use `lib-conxian-core = { features = ["full-sdk"] }` instead of separate enclave-sdk dependency; billing.rs wired to ProtocolFeeRecord |
+| What it still needs | Issue #228 (RGB stash resolver); #220 (DLC CET construction); #306 (MRR billing tracking); #189 (BitVM3 research); #245 (BIP-110 fee market impact) |
+| Next action | Reduce dependency count by switching to `full-sdk`; wire `sdk::cross_cutting::economy` for MRR billing; implement DLC CET path |
+
+#### `conxian-nexus` — VERIFICATION CONSUMER
+| Dimension | Detail |
+|-----------|--------|
+| What it does | Universal chain node & proof layer, observation/sync/verification |
+| What SDK alignment delivered | Can access all enclave-sdk modules through lib-conxian-core without direct enclave-sdk dependency; resolves license boundary question for #174 |
+| What it still needs | Isuse #174 (license policy blocked); attestation types should upgrade from X.509 stubs to `sdk::enclave_sdk::attestation`; 5 of 17 core modules not yet consumed |
+| Next action | Switch to `full-sdk` feature; add enclave attestation verifier using `sdk::enclave_sdk::attestation`; resolve license boundary |
+
+#### `conxian-business` — GOVERNANCE
+| Dimension | Detail |
+|-----------|--------|
+| What it does | BOS handoff gates 0-6, strategic/legal/operational documents |
+| What SDK alignment delivered | Single audit surface for enclave capabilities via `sdk::enclave_sdk::*` re-exports; simplifies Gates 4-6 attestation verification chain |
+| What it still needs | Gates 0-6 progression; enclave-sdk P0 attestation issues must be resolved before Gate 4 (HW attestation); issue #943 (Linear→GitHub migration) |
+| Next action | Update gate documents to reference the single `full-sdk` attestation path; add SDK alignment as a Gate 0 checkpoint |
+
+#### `Conxian/Conxian` — SMART CONTRACTS
+| Dimension | Detail |
+|-----------|--------|
+| What it does | 218 Clarity contracts: protocol primitives, DeFi logic, DAO governance, fee collection |
+| What SDK alignment delivered | Type system + fee logic (Phase A+B); ProtocolFeeRecord type and fee calculation ready for contract wire-up |
+| What it still needs | Issue #488 (2% fee collection — deploy `fee-manager.clar`); #496 (partnership fee contracts); #480 (dev sandbox P0); testnet deploy keys |
+| Next action | Deploy `fee-manager.clar` on testnet; wire to gateway billing endpoint; create `fee-orchestrator.clar` for 50/30/20 split |
+
+#### `conxius-orbit` — DEPLOYMENT CLI
+| Dimension | Detail |
+|-----------|--------|
+| What it does | CLI for deploying Stacks contracts, builder toolkit |
+| What SDK alignment delivered | Makes `contract_bridge` and `deployment` types from lib-conxian-core accessible; enables planned integrations that have been documented but not implemented |
+| What it still needs | Issue #279 (dependency review not restored); consume `contract_bridge` (ClarityCall, ContractBridge, SignedContractCall); consume `DeploymentPlan` |
+| Next action | Add `lib-conxian-core` dependency; integrate `contract_bridge` for typed principal deployment; wire `DeploymentPlan` for deploy orchestration |
+
+### 🟡 INDIRECT IMPACT (SDK alignment simplifies but doesn't directly change)
+
+#### `.github` — ORG-WIDE POLICY
+- **What SDK alignment does:** Simplifies CI dependency graph — one source of truth for SDK types means fewer CI verification targets
+- **Next action:** Update CODEOWNERS and workflow templates to reflect single `full-sdk` dependency path
+
+#### `conxius-platform` — CI/CD SCAFFOLDING
+- **What SDK alignment does:** Makes CI validation simpler — scripts verify `lib-conxian-core` with `full-sdk` instead of checking both crates independently
+- **Next action:** Write CI validation script for `full-sdk` feature; add org-wide GitHub ruleset for SDK dependency paths
+
+#### `conxius-wallet` — SOVEREIGN WALLET
+- **What SDK alignment does:** Wallet uses enclave-sdk directly for signing — SDK alignment matters only for control_model types. The `sdk::enclave_sdk::replay_guard` provides primitives to help fix issue #444 (value-op gate)
+- **Next action:** Investigate using `sdk::enclave_sdk::replay_guard` for settlement verification in the value-op gate
+
+#### `demo-repository` — BUILDER TEMPLATE
+- **What SDK alignment does:** If used as a builder onboarding template, should reference `lib-conxian-core` with `full-sdk` instead of direct enclave-sdk dependency
+- **Next action:** Update template to use canonical `full-sdk` path
+
+### ⚪ NO IMPACT (Not relevant to SDK alignment)
+
+- **`conxian_ui`** — Frontend that talks to gateway's HTTP API. No SDK types consumed.
+- **`conxian-labs-site`** — Static marketing site. Zero code dependencies.
+- **`conxian.github.io`** — GitHub Pages documentation. No SDK relevance.
+- **`.github-private`** — Secrets/config store. No relevance.
+
+---
+
+## 8. Remaining Gaps — What's Still Blocked
+
+### Enclave-SDK P0 Attestation (5 issues → blocks 4 repos)
+
+| Issue | Blocks | Revenue Impact |
+|-------|--------|:-------------:|
+| #240 Attestation roots + revocation | lib-core, gateway, nexus, market | Managed/Strict tiers |
+| #241 Android KeyMint qualification | wallet, enclave-sdk | Mobile attestation |
+| #242 AWS Nitro attestation | gateway, nexus | Cloud TEE |
+| #198 CCTP fail-closed | gateway, Conxian | Cross-chain security |
+| #202 Security review acceptance | ALL repos | Production deploy gate |
+
+### Contract Deployment Gaps (4 issues → blocks 3 repos)
+
+| Issue | Blocks | Revenue Impact |
+|-------|--------|:-------------:|
+| #488 2% Protocol Fee Collection | Conxian | $15K/mo |
+| #496 Partnership Fee Contracts | Conxian | $3K/mo |
+| #529 Partner usage ledger | Conxian, gateway | $2K/mo |
+| #480 Dev sandbox | Conxian | Builder onboarding |
+
+### Gateway Implementation Gaps (5 issues → blocks 2 repos)
+
+| Issue | Blocks | Feature |
+|-------|--------|---------|
+| #228 RGB stash resolver | gateway, market | RGB rail |
+| #220 DLC CET construction | gateway, market | Prediction markets |
+| #306 MRR billing | gateway | Revenue tracking |
+| #189 BitVM3 adapter | gateway, nexus | Recursive proof verification |
+| #245 BIP-110 fee market impact | gateway | Fee optimization |
+
+### Governance & CI Gaps (7 issues → blocks all repos)
+
+| Issue | Repo | Type |
+|-------|------|------|
+| #43 Operating model alignment | .github | Org-wide |
+| #47 Security boundary verification | .github | Security |
+| #53 Repo presentation metadata | .github | Presentation |
+| #174 License policy | nexus | Legal |
+| #1082 CI validation scripts | platform | CI/CD |
+| #854 GitHub rulesets | platform | CI/CD |
+| #444 Wallet value-op gate | wallet | Security |
+
+---
+
+## 9. Consumer Wiring — Current vs. Target
+
+| Consumer | Current SDK Path | Target SDK Path | Effort |
+|----------|:----------------:|:---------------:|:------:|
+| lib-conxian-core | 5 types via `enclave` feature | 50 modules via `full-sdk` | ✅ Done |
+| conxian_market | Fee calculator only | ConxianMarketSDK (27 caps) | ✅ Done |
+| conxian-gateway | Separate enclave-sdk dep | `full-sdk` on lib-core | S — switch dep |
+| conxian-nexus | 12/17 core modules, no enclave | `full-sdk` + attestation | M — add attestation |
+| Conxian/Conxian | No SDK dep | Market SDK for fee types | L — deploy contracts |
+| conxius-orbit | No core dep | contract_bridge + deployment | M — add dep + wire |
+| conxius-wallet | Direct enclave-sdk | Keep direct + replay_guard | S — investigate |
+| conxius-platform | No SDK dep | CI validation of full-sdk | S — add CI check |
+| conxian_ui | No SDK dep | Optional: npm SDK pkg | S — optional |
+| conxian-business | No SDK dep | Reference full-sdk path | S — docs update |
