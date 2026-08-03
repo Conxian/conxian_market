@@ -44,47 +44,68 @@ A_S → Maximize (System Autonomy)
 
 ---
 
-## 1a. SDK CAPABILITY INTEGRATION MAP (Session 48)
+## 1a. SDK CAPABILITY INTEGRATION MAP (Session 52 — Real Wiring)
 
 Every Conxian SDK capability that the market layer can leverage for settlement,
-discovery, escrow, and treasury automation.
+discovery, escrow, and treasury automation. **Now wired through `ConxianMarketSDK`**
+(`src/sdk_bridge.ts`) which connects to the Gateway REST API.
 
 ### Core Module → Market Enhancement
 
-| Core Module | Market Use Case | Status |
-|-------------|----------------|--------|
-| **control_model** (TrustTier) | Tiered settlement: ObserverOnly (free) → Expedient → Managed → Strict (premium) | ✅ Wired |
-| **cjcs** (JobCard, WorkIntent) | Autonomous bounty creation, SLA enforcement, gap job card generation | ✅ Wired (Platform) |
-| **verifier** | ZK-verified settlement proofs for premium tier escrow (ERC-8183) | ✅ Wired (Nexus) |
-| **stacks** (SBTCBridge) | sBTC peg lifecycle monitoring for settlement liquidity tracking | ✅ Wired (Gateway) |
-| **rgb** (RGBAdapter) | Contract-backed asset settlement, RGB-20/21 token registry | ✅ Wired (Gateway) |
-| **babylon** (StakingIntent) | BTC staking yield → market treasury diversification | ✅ Wired (Gateway) |
-| **fedimint** (FedimintMint) | Federation-based community settlement pools | ✅ Wired (Gateway) |
-| **enclave** (AttestationCertificate) | Hardware-attested settlement for institutional clients | ✅ Wired (Nexus) |
-| **deployment** (DeploymentPlan) | Contract rollout tracking, Nakamoto integrity hash | ✅ Wired (Orbit) |
-| **lightning** (LightningAdapter) | SRL-1 Lightning resilience for micro-settlement | ✅ Wired (Nexus) |
-| **bitcoin** (taproot, bip322) | Silent payments, PSBT, Taproot settlement scripts | ✅ Wired (Nexus) |
+| Core Module | Market Use Case | SDK Bridge | Gateway |
+|-------------|----------------|:----------:|:-------:|
+| **control_model** (TrustTier) | Tiered settlement: ObserverOnly (free) → Expedient → Managed → Strict (premium) | ✅ `sdk.detectTrustTier()` | ✅ |
+| **cjcs** (JobCard, WorkIntent) | Autonomous bounty creation, SLA enforcement, gap job card generation | ✅ `sdk.toggleBountyPayouts()` | ✅ |
+| **verifier** | ZK-verified settlement proofs for premium tier escrow (ERC-8183) | ⚠️ P0-gated `sdk.verifyAttestation()` | 🔒 P0-1..3 |
+| **stacks** (SBTCBridge) | sBTC peg lifecycle monitoring for settlement liquidity tracking | ✅ `sdk.getStacksHeight()` | ✅ |
+| **rgb** (RGBAdapter) | Contract-backed asset settlement, RGB-20/21 token registry | ⚠️ Gateway #228 pending | ⚠️ |
+| **babylon** (StakingIntent) | BTC staking yield → market treasury diversification | ✅ `sdk.getYieldOpportunities()` | ✅ |
+| **fedimint** (FedimintMint) | Federation-based community settlement pools | ✅ `sdk.availableRails()` | ✅ |
+| **enclave** (AttestationCertificate) | Hardware-attested settlement for institutional clients | ⚠️ P0-gated `sdk.verifyCbtcAttestation()` | 🔒 P0-1..3 |
+| **deployment** (DeploymentPlan) | Contract rollout tracking, Nakamoto integrity hash | ✅ `sdk.requestReleaseApproval()` | ✅ |
+| **lightning** (LightningAdapter) | SRL-1 Lightning resilience for micro-settlement | ✅ Rail routing | ✅ |
+| **bitcoin** (taproot, bip322) | Silent payments, PSBT, Taproot settlement scripts | ✅ `sdk.getMempoolTelemetry()` | ✅ |
 
 ### Enclave-SDK Protocol → Market Enhancement
 
-| SDK Module | Market Use Case | Status |
-|------------|----------------|--------|
-| **statechain** (Spark VTXO) | Off-chain BTC settlement with 1-of-n trust — new rail for AI labor | ✅ v2.0.12 |
-| **frost** | Threshold signing for SAB multisig treasury operations | ✅ |
-| **dlc** | Discreet Log Contracts for prediction-market settlement | ✅ |
-| **ark** | Ark VTXO-based payment pools for agent-to-agent settlement | ✅ |
-| **swap_router** | Cross-rail yield optimization (ALEX ↔ Uniswap ↔ Fedimint) | ✅ |
-| **settlement_service** | Multi-rail settlement orchestration | ✅ |
-| **stablecoin_orchestrator** | USDC/USDT/sBTC yield routing for treasury | ✅ |
-| **solver** | Fill-or-Kill solver network for best-execution settlement | ✅ |
-| **economy** | M2M machine economy settlement — AI agent payments | ✅ |
-| **job_card** | CJCS integration with SLA enforcement | ✅ |
-| **identity** | DID-based builder reputation and discovery | ✅ |
-| **zkml** | ZK-ML proof verification for AI labor quality attestation | ✅ |
-| **opportunity** | Yield opportunity discovery for treasury yield optimization | ✅ |
-| **credit** | Agent credit scoring for escrow risk assessment | ✅ |
-| **intent** | Intent-based settlement (user declares intent, solver executes) | ✅ |
-| **sidl** | Sovereign IDL for cross-protocol contract interoperability | ✅ |
+| SDK Module | Market Use Case | SDK Bridge |
+|------------|----------------|:----------:|
+| **statechain** (Spark VTXO) | Off-chain BTC settlement with 1-of-n trust | 🔒 `ProtocolUnsupported` gate |
+| **frost** | Threshold signing for SAB multisig treasury | ⚠️ `sdk.aggregateKeys()` → MuSig2 (not FROST DKG) |
+| **dlc** | Discreet Log Contracts for prediction-market settlement | ⚠️ `sdk.createDlcBond()` — CET stub |
+| **ark** | Ark VTXO-based payment pools for agent-to-agent settlement | 🔒 `ProtocolUnsupported` gate |
+| **swap_router** | Cross-rail yield optimization (ALEX ↔ Uniswap ↔ Fedimint) | ✅ `sdk.executeAlexSwap()` |
+| **settlement_service** | Multi-rail settlement orchestration | ✅ `sdk.executeSettlement()` |
+| **stablecoin_orchestrator** | USDC/USDT/sBTC yield routing for treasury | ✅ `sdk.getStablecoinRoute()` |
+| **solver** | Fill-or-Kill solver network for best-execution settlement | ✅ `sdk.findBestRoute()` |
+| **economy** | M2M machine economy settlement — AI agent payments | ✅ `sdk.settleM2M()` |
+| **job_card** | CJCS integration with SLA enforcement | ✅ `sdk.toggleBountyPayouts()` |
+| **identity** | DID-based builder reputation and discovery | ✅ `sdk.resolveIdentity()` |
+| **zkml** | ZK-ML proof verification for AI labor quality attestation | ✅ `sdk.verifyStateProof()` |
+| **opportunity** | Yield opportunity discovery for treasury yield optimization | ✅ `sdk.getYieldOpportunities()` |
+| **credit** | Agent credit scoring for escrow risk assessment | ✅ `sdk.computeCreditScore()` |
+| **intent** | Intent-based settlement (user declares intent, solver executes) | ✅ `sdk.routeIntent()` + `sdk.findBestRoute()` |
+| **sidl** | Sovereign IDL for cross-protocol contract interoperability | ✅ `sdk.prepareCrossChainTx()` |
+
+### Legend
+
+| Symbol | Meaning |
+|:------:|---------|
+| ✅ | Wired through SDK bridge → Gateway REST API |
+| ⚠️ | Partially wired — blocked by P0 gap or gateway stub |
+| 🔒 | Blocked — requires P0 resolution in enclave-sdk or gateway |
+
+### Implementation Status (Session 52)
+
+| Component | Lines | Status |
+|-----------|------:|:------:|
+| `src/fee_calculator.ts` | 366 | ✅ Tier detection, fee calc, rail routing, revenue projection |
+| `src/core_types.ts` | 281 | ✅ TypeScript mirror of all lib-conxian-core + enclave-sdk types |
+| `src/gateway_client.ts` | 202 | ✅ Typed HTTP client for all 50+ gateway REST endpoints |
+| `src/verification.ts` | 117 | ✅ Gateway-backed verifier + P0-aware tier degradation |
+| `src/settlement.ts` | 211 | ✅ Multi-rail settlement orchestrator (8 rails) |
+| `src/sdk_bridge.ts` | 347 | ✅ Comprehensive bridge: 27 capabilities, `connect()` + `offline()` |
+| `src/index.ts` | 71 | ✅ Barrel export with full type surface |
 
 ### Trust Tier → Market Pricing Model
 

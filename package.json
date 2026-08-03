@@ -1,17 +1,30 @@
 {
-  "name": "@conxian/fee-calculator",
-  "version": "0.1.0",
-  "description": "CON-1427 Protocol Fee Calculator — tier detection, rail routing, fee computation, and revenue projection for the Conxian settlement layer.",
+  "name": "@conxian/market-sdk",
+  "version": "0.2.0",
+  "description": "Conxian Market SDK — full integration bridge: fee calculator, gateway client, verification, settlement, and SDK capability wiring for all 27 enclave-sdk + lib-conxian-core modules.",
   "license": "UNLICENSED",
   "private": true,
-  "main": "src/fee_calculator.ts",
-  "types": "src/fee_calculator.ts",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "files": ["src/"],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build": "tsc"
   },
-  "keywords": ["conxian", "protocol-fee", "settlement", "trust-tier", "bitcoin"],
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "@types/node": "^22.0.0"
+  },
+  "keywords": [
+    "conxian", "protocol-fee", "settlement", "trust-tier", "bitcoin",
+    "gateway", "sdk-bridge", "verification", "enclave"
+  ],
   "engines": {
     "node": ">=18"
   }
