@@ -1,0 +1,117 @@
+name: Documentation CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.md'
+      - '**.yml'
+      - '**.yaml'
+      - '**.json'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Markdown & YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Lint markdown
+        uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          config: |
+            {
+              "default": true,
+              "line-length": false,
+              "no-duplicate-heading": false,
+              "no-inline-html": false,
+              "first-line-heading": false
+            }
+          globs: '**/*.md'
+        continue-on-error: true
+      - name: Validate YAML
+        run: |
+          python3 -c "
+          import yaml, sys, os
+          errors = 0
+          for root, dirs, files in os.walk('.'):
+              if '.git' in root:
+                  continue
+              for f in files:
+                  if f.endswith(('.yml', '.yaml')):
+                      path = os.path.join(root, f)
+                      try:
+                          with open(path) as fh:
+                              yaml.safe_load(fh)
+                          print(f'✅ {path}')
+                      except Exception as e:
+                          print(f'❌ {path}: {e}')
+                          errors += 1
+          sys.exit(1 if errors else 0)
+          "
+
+  links:
+    name: Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Check internal markdown links
+        run: |
+          errors=0
+          for f in $(find . -name '*.md' -not -path './.git/*'); do
+            # Extract markdown links: [text](path) — skip absolute URLs
+            links=$(grep -oP '(?<=\]\()[^)]*\.md(?=[)#]?)' "$f" 2>/dev/null || true)
+            for link in $links; do
+              # Skip absolute URLs (http:// or https://)
+              case "$link" in
+                http://*|https://*) continue ;;
+              esac
+              # Resolve relative to file's directory
+              dir=$(dirname "$f")
+              target="$dir/$link"
+              if [ ! -f "$target" ]; then
+                echo "❌ BROKEN: $f -> $link (resolved: $target)"
+                errors=1
+              fi
+            done
+          done
+          if [ $errors -eq 0 ]; then echo "✅ All internal links valid"; fi
+          exit $errors
+
+  validate:
+    name: Schema & Structure Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Verify required files exist
+        run: |
+          required=("README.md" "LICENSE" "SECURITY.md" "CONTRIBUTING.md" "ROADMAP.md" "docs/AGENTS.md")
+          missing=0
+          for f in "${required[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "❌ Missing required file: $f"
+              missing=1
+            else
+              echo "✅ $f"
+            fi
+          done
+          exit $missing
+      - name: Verify no secrets in docs
+        run: |
+          patterns=('BEGIN PRIVATE KEY' '-----BEGIN RSA' 'ghp_[a-zA-Z0-9]{36}' 'xox[baprs]-[a-zA-Z0-9-]+')
+          found=0
+          for pattern in "${patterns[@]}"; do
+            matches=$(grep -rn "$pattern" docs/ 2>/dev/null || true)
+            if [ -n "$matches" ]; then
+              echo "❌ Potential secret found: $matches"
+              found=1
+            fi
+          done
+          if [ $found -eq 0 ]; then echo "✅ No secrets detected"; fi
+          exit $found

@@ -142,7 +142,103 @@ The builder revenue matrix remains unchanged:
 
 ---
 
-## 4. Sustainable Operations Model
+### 3.4 Session 48: New Revenue Streams (2026-08-01)
+
+All 17 core modules wired across 5 consumers. New settlement rails unlocked:
+
+#### Tiered Pricing Revenue
+
+| Tier | Verification | Fee | Revenue Mix Target |
+|:----:|:------------|:---:|:------------------:|
+| **Strict** | TEE + ZK | Negotiated | 10% of volume (high value) |
+| **Managed** | Enclave attestation | 2% + 0.5% premium | 40% of volume |
+| **Expedient** | Light client | 2% flat | 50% of volume |
+| **ObserverOnly** | None | Free | 0% (discovery only) |
+
+> Premium tier (+0.5% on Managed, negotiated on Strict) funds enclave attestation infrastructure.
+
+#### Babylon Treasury Staking (MARKET-014)
+
+| Parameter | Value |
+|-----------|-------|
+| Max treasury allocation | 25% |
+| Expected APY | 3–5% BTC-denominated |
+| Yield destination | 50% ops / 30% founders / 20% ecosystem |
+| Monthly yield (@5 BTC staked) | 0.0125–0.0208 BTC |
+
+#### Fedimint Community Pools (MARKET-015)
+
+| Fee | Rate | Set By |
+|-----|-----:|--------|
+| Mint fee (e-cash issue) | 0.1–0.5% | Community governance |
+| Market protocol fee | 1% (reduced) | Conxian treasury |
+
+> Reduced to 1% (vs 2%) because community bears operational costs. Revenue from ecosystem-scale adoption.
+
+#### Statechain VTXO Fees (MARKET-010)
+
+| Operation | Fee | Revenue Impact |
+|-----------|----:|---------------|
+| VTXO creation | 0.1% of amount | Micro — low margin, high volume |
+| VTXO transfer | Flat 100 sats | Near-zero — infrastructure play |
+| Market protocol fee | 2% | Standard settlement revenue |
+
+#### Updated Revenue Projections
+
+| Scenario | Volume | 2% Base | +0.5% Premium | Staking Yield | Fedimint 1% | **Total** |
+|----------|-------:|--------:|:------------:|:------------:|:----------:|----------:|
+| Launch (mo 1–3) | $1M/mo | $20K | $450 | $150 | $500 | **$21.1K** |
+| Growth (mo 4–6) | $3M/mo | $60K | $3K | $400 | $1.5K | **$64.9K** |
+| Mature (mo 7–12) | $10M/mo | $200K | $15K | $800 | $5K | **$220.8K** |
+
+> Break-even ($240K/year = $20K/mo) achieved at $1M monthly volume.
+> Full operational sustainability at $10M/mo with contributions from all 5 streams.
+
+#### Per-Rail Revenue Breakdown
+
+| Rail | Volume Share | Rate | Monthly Rev (@$1M vol) | Monthly Rev (@$10M vol) |
+|------|:-----------:|-----:|----------------------:|------------------------:|
+| ALEX/Stacks | 35% | 2% | $7,000 | $70,000 |
+| sBTC | 25% | 2% | $5,000 | $50,000 |
+| Lightning | 15% | 1% | $1,500 | $15,000 |
+| Fedimint | 10% | 1% | $1,000 | $10,000 |
+| EVM (ERC-8183) | 10% | 2% | $2,000 | $20,000 |
+| Statechain (Spark) | 3% | 2% | $600 | $6,000 |
+| RGB | 2% | 2% | $400 | $4,000 |
+| Premium surcharge | (25% of vol) | +0.5% | $1,250 | $12,500 |
+| Babylon yield | N/A | 3-5% APY | $150 | $800 |
+| **Total** | **100%** | | **$21,100** | **$220,800** |
+
+#### Revenue Distribution (50/30/20)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                  REVENUE DISTRIBUTION                         │
+│                                                               │
+│  $21.1K/mo (Launch)           $220.8K/mo (Mature)            │
+│                                                               │
+│  ┌──────────────┐              ┌──────────────┐              │
+│  │ Ops (50%)    │              │ Ops (50%)    │              │
+│  │ $10,550/mo   │              │ $110,400/mo  │              │
+│  │ CI/CD+Nexus+ │              │ CI/CD+Nexus+ │              │
+│  │ SDK+Audit    │              │ SDK+Audit    │              │
+│  └──────────────┘              └──────────────┘              │
+│  ┌──────────────┐              ┌──────────────┐              │
+│  │ Founders(30%)│              │ Founders(30%)│              │
+│  │ $6,330/mo    │              │ $66,240/mo   │              │
+│  │ 4yr vesting  │              │ 4yr vesting  │              │
+│  └──────────────┘              └──────────────┘              │
+│  ┌──────────────┐              ┌──────────────┐              │
+│  │ Ecosystem    │              │ Ecosystem    │              │
+│  │ (20%)        │              │ (20%)        │              │
+│  │ $4,220/mo    │              │ $44,160/mo   │              │
+│  │ Grants+Liq   │              │ Grants+Liq   │              │
+│  └──────────────┘              └──────────────┘              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+> Distribution via Clarity contract (CON-1427) with 48-hour timelock on governance changes.
+> All rail revenue flows through the same 50/30/20 split regardless of source.
 
 ### 4.1 Minimum Viable Treasury (MVT)
 
@@ -334,6 +430,46 @@ User Payment ($100)
 | 2-3 | 50% | 66% | 100% |
 | 3-4 | 75% | 100% | N/A |
 | 4+ | 100% | N/A | N/A |
+
+---
+
+## 5. Revenue Model Risk Assessment (Session 48 Gap Analysis)
+
+### 5.1 Current Blockers
+
+The 5-stream revenue model is **theoretical** until these P0 gaps close:
+
+| Stream | Status | Blocker | Revenue at Risk |
+|--------|:------:|---------|:---------------:|
+| Protocol fee (2%) | ⛔ Blocked | CON-1427 not implemented (#488) | 50% of revenue |
+| Premium surcharge (+0.5%) | ⛔ Blocked | No enclave attestation (#240-#242) | 15% of revenue |
+| Institutional (negotiated) | ⛔ Blocked | No TEE+ZK proof chain (#198, #202) | 10% of revenue |
+| Community pools (1%) | ✅ Ready | Fedimint adapter wired | 5% of revenue |
+| Staking yield (3-5% APY) | ✅ Ready | Babylon adapter wired | 5% of revenue |
+
+> **Current realizable revenue:** ~$1,500/mo (Fedimint + Babylon only) vs. **target** $21,100/mo at launch.
+> **Revenue gap:** 93% of projected revenue is blocked on 3 P0 issues.
+
+### 5.2 Degraded Revenue Scenarios
+
+| Scenario | What Works | Monthly Revenue | vs. Target |
+|----------|-----------|----------------:|:----------:|
+| **Expedient-only** (current) | Fedimint pools + Babylon staking | $1,500 | 7% |
+| **+CON-1427** (fee collection live) | Expedient rails at 2% | $15,000 | 71% |
+| **+Attestation P0** (Managed tier) | All rails at tiered rates | $20,600 | 98% |
+| **Full 5-stream** (all P0 closed) | Institutional + premiums | $21,100 | 100% |
+
+### 5.3 Break-Even Timeline Impact
+
+| Scenario | Monthly Burn | Revenue | Runway (w/o raise) |
+|----------|:-----------:|:------:|:------------------:|
+| Expedient-only | $20,000 | $1,500 | 6 months |
+| +CON-1427 | $20,000 | $15,000 | 14 months |
+| +Attestation | $20,000 | $20,600 | **Break-even** |
+| Full 5-stream (at $10M vol) | $30,000 | $220,800 | **Sustainable** |
+
+> **Action:** CON-1427 (#488) is the single highest-leverage P0. It alone recovers 71% of revenue.
+> Attestation P0s (#240-#242) unlock the remaining 27% and achieve break-even.
 
 ---
 
