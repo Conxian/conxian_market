@@ -8,12 +8,12 @@
 
 | # | Action | Repo | Issue | Owner | Status |
 |---|--------|------|-------|-------|:------:|
-| S1-1 | Complete Linear→GitHub migration map | business | [#943](https://github.com/Conxian/conxian-business/issues/943) | Ops | ⬜ |
-| S1-2 | Retire Linear-first references | business | [#944](https://github.com/Conxian/conxian-business/issues/944) | Ops | ⬜ |
+| S1-1 | Complete Linear→GitHub migration map | business | [#943](https://github.com/Conxian/conxian-business/issues/943) | Ops | ✅ |
+| S1-2 | Retire Linear-first references | business | [#944](https://github.com/Conxian/conxian-business/issues/944) | Ops | ✅ |
 | S1-3 | Implement CI validation scripts | platform | [#1082](https://github.com/Conxian/conxius-platform/issues/1082) | CI/CD | ⬜ |
 | S1-4 | Enforce org-wide GitHub rulesets | platform | [#854](https://github.com/Conxian/conxius-platform/issues/854) | Security | ⬜ |
 | S1-5 | Resolve Gitleaks false positives | nexus | [#178](https://github.com/Conxian/conxian-nexus/issues/178) | CI/CD | ⬜ |
-| S1-6 | Enforce strict CI/CD baseline | gateway | [#222](https://github.com/Conxian/conxian-gateway/issues/222) | CI/CD | ⬜ |
+| S1-6 | Enforce strict CI/CD baseline | gateway | [#222](https://github.com/Conxian/conxian-gateway/issues/222) | CI/CD | ✅ |
 | S1-7 | Enforce CI/CD baseline | wallet | [#356](https://github.com/Conxian/conxius-wallet/issues/356) | CI/CD | ⬜ |
 
 **Gate:** BOS Gate 1 (Green CI) — all repos passing.
@@ -53,10 +53,10 @@
 
 | # | Action | Repo | Issue | Owner | Status |
 |---|--------|------|-------|-------|:------:|
-| S4-1 | Developer sandbox TTFV < 15 min | Conxian | [#480](https://github.com/Conxian/Conxian/issues/480) | DX | ⬜ |
+| S4-1 | Developer sandbox TTFV < 15 min | Conxian | [#480](https://github.com/Conxian/Conxian/issues/480) | DX | ✅ |
 | S4-2 | Centralized wallet value-operation gate | wallet | [#444](https://github.com/Conxian/conxius-wallet/issues/444) | Mobile | ⬜ |
 | S4-3 | Treasury dashboard frontend | market | [#8](https://github.com/Conxian/conxian_market/issues/8) | Market | ⬜ |
-| S4-4 | Repository governance disposition | market | [#9](https://github.com/Conxian/conxian_market/issues/9) | Governance | ⬜ |
+| S4-4 | Repository governance disposition | market | [#9](https://github.com/Conxian/conxian_market/issues/9) | Governance | ✅ |
 
 **Gate:** BOS Gate 5 (Security acceptance) — independent review complete.
 
@@ -66,7 +66,7 @@
 
 | # | Action | Repo | Issue | Owner | Status |
 |---|--------|------|-------|-------|:------:|
-| S5-1 | FROST statechain operations audit | enclave-sdk | [#260](https://github.com/Conxian/conxius-enclave-sdk/issues/260) | Crypto | ⬜ |
+| S5-1 | FROST statechain operations audit | enclave-sdk | [#260](https://github.com/Conxian/conxius-enclave-sdk/issues/260) | Crypto | ✅ |
 | S5-2 | RGB stash resolver integration | gateway | [#228](https://github.com/Conxian/conxian-gateway/issues/228) | Gateway | ⬜ |
 | S5-3 | DLC CET construction path | gateway | [#220](https://github.com/Conxian/conxian-gateway/issues/220) | Gateway | ⬜ |
 | S5-4 | sBTC vault implementation | Conxian | [#507](https://github.com/Conxian/Conxian/issues/507) | Protocol | ⬜ |
@@ -97,11 +97,11 @@
 
 | Sprint | Items | Complete | Remaining |
 |:------:|:-----:|:--------:|:---------:|
-| S1 — Foundation | 7 | 0 | 7 |
+| S1 — Foundation | 7 | 3 | 4 |
 | S2 — Attestation | 5 | 0 | 5 |
 | S3 — Revenue | 6 | 0 | 6 |
-| S4 — Builders | 4 | 0 | 4 |
-| S5 — Protocol | 8 | 0 | 8 |
-| **Total** | **30** | **0** | **30** |
+| S4 — Builders | 4 | 2 | 2 |
+| S5 — Protocol | 8 | 1 | 7 |
+| **Total** | **30** | **6** | **24** |
 
-> **Updated:** 2026-08-01 (Session 48). Tracked from `CROSS_REPO_GAP_ANALYSIS_SESSION_48.md`.
+> **Updated:** 2026-08-05 (Session 56+ — cross-repo verification sweep). Tracked from `CROSS_REPO_GAP_ANALYSIS_SESSION_48.md`.
