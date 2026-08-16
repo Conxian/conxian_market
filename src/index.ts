@@ -33,16 +33,16 @@
  * ```
  */
 
-export { ConxianMarketSDK } from "./sdk_bridge.ts";
-export type { CapabilitySummary } from "./sdk_bridge.ts";
+export { ConxianMarketSDK } from "./sdk_bridge";
+export type { CapabilitySummary } from "./sdk_bridge";
 
-export { GatewayClient } from "./gateway_client.ts";
-export type { GatewayConfig } from "./gateway_client.ts";
+export { GatewayClient } from "./gateway_client";
+export type { GatewayConfig } from "./gateway_client";
 
-export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification.ts";
+export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification";
 
-export { SettlementOrchestrator, RAIL_CAPABILITIES } from "./settlement.ts";
-export type { RailCapability } from "./settlement.ts";
+export { SettlementOrchestrator, RAIL_CAPABILITIES } from "./settlement";
+export type { RailCapability } from "./settlement";
 
 export {
   detectTrustTier,
@@ -53,14 +53,14 @@ export {
   toWireHeaders,
   TrustTier,
   SettlementRail,
-} from "./fee_calculator.ts";
+} from "./fee_calculator";
 export type {
   AttestationHeaders,
   FeeResult,
   FeeReport,
   RailPreference,
   SettlementEvent,
-} from "./fee_calculator.ts";
+} from "./fee_calculator";
 
 export {
   TrustTier as TrustTierEnum,
@@ -68,7 +68,7 @@ export {
   ChainId,
   JobCardStatus,
   DlcBondStatus,
-} from "./core_types.ts";
+} from "./core_types";
 export type {
   FeatureFlags,
   AttestationCertificate,
@@ -93,4 +93,4 @@ export type {
   MrrReport,
   RevenueScenario,
   RevenueProjection,
-} from "./core_types.ts";
+} from "./core_types";

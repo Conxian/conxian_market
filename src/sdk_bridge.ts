@@ -42,8 +42,8 @@ import type {
   TrustTier,
   UsageMetrics,
   YieldOpportunity,
-} from "./core_types.ts";
-import { DEFAULT_FEATURE_FLAGS, TrustTier as Tier } from "./core_types.ts";
+} from "./core_types";
+import { DEFAULT_FEATURE_FLAGS, TrustTier as Tier } from "./core_types";
 import {
   detectTrustTier as detectTier,
   calculateRailFee,
@@ -51,19 +51,19 @@ import {
   generateFeeReport,
   projectRevenue,
   toWireHeaders,
-} from "./fee_calculator.ts";
+} from "./fee_calculator";
 import type {
   AttestationHeaders,
   FeeReport,
   FeeResult,
   RailPreference,
   SettlementEvent,
-} from "./fee_calculator.ts";
-import { GatewayClient } from "./gateway_client.ts";
-import type { GatewayConfig } from "./gateway_client.ts";
-import { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification.ts";
-import { RAIL_CAPABILITIES, SettlementOrchestrator } from "./settlement.ts";
-import type { RailCapability } from "./settlement.ts";
+} from "./fee_calculator";
+import { GatewayClient } from "./gateway_client";
+import type { GatewayConfig } from "./gateway_client";
+import { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification";
+import { RAIL_CAPABILITIES, SettlementOrchestrator } from "./settlement";
+import type { RailCapability } from "./settlement";
 
 // ── Main SDK Bridge ──
 
@@ -74,60 +74,33 @@ export class ConxianMarketSDK {
   readonly flags: FeatureFlags;
 
   private constructor(
-    gateway: GatewayClient,
-    flags: FeatureFlags,
+    config: GatewayConfig,
+    flags: FeatureFlags = DEFAULT_FEATURE_FLAGS,
   ) {
-    this.gateway = gateway;
     this.flags = flags;
-    this.verifier = new GatewayVerifier(gateway, flags);
-    this.settlement = new SettlementOrchestrator(gateway, this.verifier, flags);
+    this.gateway = new GatewayClient(config);
+    this.verifier = new GatewayVerifier(this.gateway, flags);
+    this.settlement = new SettlementOrchestrator(this.gateway, this.verifier, flags);
   }
 
-  /** Create SDK instance connected to a live gateway */
-  static async connect(config: GatewayConfig, flags?: FeatureFlags): Promise<ConxianMarketSDK> {
-    const client = new GatewayClient(config);
-    const ff = flags ?? DEFAULT_FEATURE_FLAGS;
-
-    // Verify connection
-    const health = await client.health();
-    if (health.status !== "ok") {
-      throw new Error(`Gateway unhealthy: ${JSON.stringify(health)}`);
-    }
-
-    return new ConxianMarketSDK(client, ff);
+  /** Connect to gateway and create SDK bridge instance */
+  static async connect(
+    config: GatewayConfig,
+    flags: FeatureFlags = DEFAULT_FEATURE_FLAGS,
+  ): Promise<ConxianMarketSDK> {
+    const sdk = new ConxianMarketSDK(config, flags);
+    return sdk;
   }
 
-  /** Create SDK instance in offline mode (no gateway connection) */
-  static offline(flags?: FeatureFlags): ConxianMarketSDK {
-    const noopConfig: GatewayConfig = { baseUrl: "http://localhost:0", apiToken: "offline" };
-    return new ConxianMarketSDK(new GatewayClient(noopConfig), flags ?? DEFAULT_FEATURE_FLAGS);
+  // ── Core Module: fee_calculator (CON-1427) ──
+
+  /** Detect trust tier from attestation headers */
+  detectTrustTier(headers: AttestationHeaders): TrustTier {
+    const detected = detectTier(headers);
+    return degradeTierForP0Gaps(detected, this.flags);
   }
 
-  // ── Core Module: control_model (TrustTier) ──
-
-  /** Detect trust tier from attestation headers, with live verification */
-  async detectTrustTier(headers: AttestationHeaders): Promise<TrustTier> {
-    return detectTier(
-      headers,
-      (tee, zk) => this.verifier.verifyTeeZk(tee, zk),
-      (p) => this.verifier.verifyEnclave(p),
-      (p) => this.verifier.verifyLight(p),
-    );
-  }
-
-  /** Detect trust tier statically (no verification) */
-  detectTrustTierStatic(headers: AttestationHeaders): TrustTier {
-    return detectTrustTierStatic(headers);
-  }
-
-  /** Degrade tier for P0 gaps */
-  degradeTier(tier: TrustTier): TrustTier {
-    return degradeTierForP0Gaps(tier, this.flags);
-  }
-
-  // ── Core Module: Fee Calculator (CON-1427) ──
-
-  /** Calculate protocol fee for a settlement */
+  /** Calculate protocol fee for a settlement amount, tier, and rail */
   calculateFee(amountSat: bigint, tier: TrustTier, rail: SettlementRail): FeeResult {
     return calculateRailFee(amountSat, tier, rail);
   }
@@ -159,29 +132,57 @@ export class ConxianMarketSDK {
     return this.verifier.detectTier(cert);
   }
 
-  // ── Core Module: stacks (SBTCBridge) ──
+  // ── Core Module: cjcs (Cross-Journal Consensual Settlement) ──
 
-  /** Get chain height for Stacks */
-  async getStacksHeight() {
-    return this.gateway.getChainHeight("stacks" as ChainId);
+  /** Submit job card for CJCS settlement */
+  async settleJobCard(card: JobCard): Promise<SettlementResult> {
+    return this.gateway.settleJobCard(card);
   }
 
-  // ── Core Module: bitcoin (taproot, bip322) ──
+  // ── Core Module: stacks / sbtc ──
 
-  /** Get mempool telemetry */
-  async getMempoolTelemetry() {
-    return this.gateway.getMempoolTelemetry();
+  /** Check sBTC bridge status */
+  async isSbtcReady(): Promise<boolean> {
+    try {
+      const state = await this.gateway.getState();
+      return Boolean(state.sbtcReady);
+    } catch {
+      return false;
+    }
   }
 
-  /** Get Bitcoin Core shadow observation */
-  async getShadowObservation() {
-    return this.gateway.getShadowObservation();
+  // ── Core Module: rgb ──
+
+  /** Check RGB protocol readiness */
+  isRgbReady(): boolean {
+    return RAIL_CAPABILITIES.find((r) => r.rail === ("RGB" as SettlementRail))?.ready ?? false;
   }
 
-  // ── Core Module: lightning (LightningAdapter) ──
+  // ── Core Module: babylon ──
 
-  /** List supported chains (includes Lightning) */
-  async listSupportedChains() {
+  /** Check Babylon BTC staking status */
+  async isBabylonActive(): Promise<boolean> {
+    return RAIL_CAPABILITIES.find((r) => r.rail === ("BABYLON" as SettlementRail))?.ready ?? false;
+  }
+
+  // ── Core Module: fedimint ──
+
+  /** Check Fedimint federation availability */
+  isFedimintAvailable(): boolean {
+    return RAIL_CAPABILITIES.find((r) => r.rail === ("FEDIMINT" as SettlementRail))?.ready ?? false;
+  }
+
+  // ── Core Module: lightning ──
+
+  /** Check Lightning resilience status */
+  isLightningReady(): boolean {
+    return RAIL_CAPABILITIES.find((r) => r.rail === ("LIGHTNING" as SettlementRail))?.ready ?? false;
+  }
+
+  // ── Core Module: bitcoin (multi-chain) ──
+
+  /** List all supported chains */
+  async listSupportedChains(): Promise<ChainId[]> {
     return this.gateway.listSupportedChains();
   }
 
@@ -498,9 +499,9 @@ export interface CapabilitySummary {
 
 // ── Re-exports for convenience ──
 
-export { GatewayClient } from "./gateway_client.ts";
-export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification.ts";
-export { SettlementOrchestrator, RAIL_CAPABILITIES } from "./settlement.ts";
+export { GatewayClient } from "./gateway_client";
+export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification";
+export { SettlementOrchestrator, RAIL_CAPABILITIES } from "./settlement";
 export {
   detectTrustTier,
   calculateRailFee,
@@ -508,17 +509,17 @@ export {
   generateFeeReport,
   projectRevenue,
   toWireHeaders,
-} from "./fee_calculator.ts";
+} from "./fee_calculator";
 export {
-  Tier as TrustTierEnum,
+  TrustTier as TrustTierEnum,
   DEFAULT_FEATURE_FLAGS,
-} from "./core_types.ts";
+} from "./core_types";
 export type {
   AttestationHeaders,
   FeeReport,
   FeeResult,
   RailPreference,
   SettlementEvent,
-} from "./fee_calculator.ts";
-export type { GatewayConfig } from "./gateway_client.ts";
-export type { RailCapability } from "./settlement.ts";
+} from "./fee_calculator";
+export type { GatewayConfig } from "./gateway_client";
+export type { RailCapability } from "./settlement";
