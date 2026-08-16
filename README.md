@@ -4,8 +4,8 @@
 
 This repository is the Conxian Marketplace and orchestration layer for the broader Conxian ecosystem. It is not the standalone public SDK, npm package root, or a generic client library for external consumption.
 
-The market layer coordinates discovery, settlement, escrow, and treasury logic across the ecosystem and integrates with adjacent Conxian repos such as:
-- Conxian/Conxian — protocol/core contracts and on-chain governance
+The market layer coordinates discovery, settlement, escrow, and treasury logic across the ecosystem and integrates with adjacent Conxian repos such as
+
 - lib-conxian-core — shared protocol primitives and chain adapters
 - conxian-gateway — settlement rail and compliance middleware
 - conxian-nexus — verification, proof, and state synchronization
@@ -30,7 +30,7 @@ The marketplace repo is intentionally designed to consume the Conxian org stack 
 
 | Dependency | Status in this repo | Evidence | Notes |
 |:-----------|:-------------------|:---------|:------|
-| **Conxian/Conxian** | Indirect / protocol boundary | Shared ecosystem architecture and fee/governance docs | This repo does not own the protocol core itself; it coordinates settlement and marketplace logic around it. |
+| **Conxian/Conxian** | Historical / archived reference only | Shared ecosystem architecture and legacy fee/governance docs | This repo does not own the protocol core or active protocol roadmap; it coordinates settlement and marketplace logic without expanding into consumer-facing DeFi work. |
 | **lib-conxian-core** | **Directly used** | Shared trust-tier, chain, rail, and settlement type definitions in [src/core_types.ts](src/core_types.ts) | This is the main primitive dependency used by fee, settlement, and verification logic. |
 | **conxian-gateway** | **Directly used** | Gateway REST client and settlement execution pipeline in [src/gateway_client.ts](src/gateway_client.ts) and [src/settlement.ts](src/settlement.ts) | This is the primary live integration point for settlement and routing. |
 | **conxian-nexus** | **Partial integration** | Verification and trust-tier logic in [src/verification.ts](src/verification.ts) and bridge references in [src/sdk_bridge.ts](src/sdk_bridge.ts) | The repo depends on nexus concepts and proof semantics, but the actual implementation remains gateway-oriented and feature-gated by upstream maturity. |

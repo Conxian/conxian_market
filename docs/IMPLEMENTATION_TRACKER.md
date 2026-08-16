@@ -7,9 +7,9 @@
 
 ## Current org issue reality
 
-The live issue set shows this direct implementation path is active and relevant:
+The live issue set shows the active implementation path for the current org is:
 
-1. **Conxian/Conxian** — active priority work: [#488](https://github.com/Conxian/Conxian/issues/488), [#527](https://github.com/Conxian/Conxian/issues/527), [#530](https://github.com/Conxian/Conxian/issues/530), [#532](https://github.com/Conxian/Conxian/issues/532), [#507](https://github.com/Conxian/Conxian/issues/507), [#500](https://github.com/Conxian/Conxian/issues/500), [#515](https://github.com/Conxian/Conxian/issues/515)
+1. **Conxian/Conxian** — archived historical reference only; not an active workstream for this market repo and not a reason to expand into protocol-core or DeFi development in this layer.
 2. **conxian-gateway** — previously completed follow-on work includes [#306](https://github.com/Conxian/conxian-gateway/issues/306), [#228](https://github.com/Conxian/conxian-gateway/issues/228), and [#220](https://github.com/Conxian/conxian-gateway/issues/220); no active blocker remains in this repo for the market layer from that list.
 3. **conxius-platform** — active org hardening work: [#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854), [#1223](https://github.com/Conxian/conxius-platform/issues/1223), [#1212](https://github.com/Conxian/conxius-platform/issues/1212)
 4. **conxius-enclave-sdk** — active P0 blockers: [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242), [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241), [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240), [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202), [#200](https://github.com/Conxian/conxius-enclave-sdk/issues/200), [#267](https://github.com/Conxian/conxius-enclave-sdk/issues/267), [#271](https://github.com/Conxian/conxius-enclave-sdk/issues/271)
@@ -25,7 +25,7 @@ This repo should remain focused on the value layer while upstream repos resolve 
 
 The current live execution chain is:
 
-1. **Revenue activation**: [#488](https://github.com/Conxian/Conxian/issues/488), [#527](https://github.com/Conxian/Conxian/issues/527), [#530](https://github.com/Conxian/Conxian/issues/530), [#532](https://github.com/Conxian/Conxian/issues/532)
+1. **Archived reference only**: Conxian/Conxian is not an active implementation target for this repo; it is not the basis for building protocol-core or consumer DeFi in this layer.
 2. **Org enforcement**: [#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854), [#1223](https://github.com/Conxian/conxius-platform/issues/1223)
 3. **Trust chain hardening**: [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242), [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241), [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240), [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202)
 4. **Wallet gate enforcement**: [#444](https://github.com/Conxian/conxius-wallet/issues/444), [#356](https://github.com/Conxian/conxius-wallet/issues/356)
@@ -37,13 +37,7 @@ The current live execution chain is:
 
 | Repo | Issue | Status | Notes |
 |:-----|:------|:------:|:------|
-| Conxian | [#488](https://github.com/Conxian/Conxian/issues/488) | OPEN | 2% protocol fee collection is the main revenue activation item. |
-| Conxian | [#527](https://github.com/Conxian/Conxian/issues/527) | OPEN | Partnership fee policy and legal model remain open. |
-| Conxian | [#530](https://github.com/Conxian/Conxian/issues/530) | OPEN | Gateway SDK + event indexing still needs completion. |
-| Conxian | [#532](https://github.com/Conxian/Conxian/issues/532) | OPEN | Security / commercialization launch gate is still open. |
-| Conxian | [#507](https://github.com/Conxian/Conxian/issues/507) | OPEN | sBTC vault work remains downstream of the fee activation chain. |
-| Conxian | [#500](https://github.com/Conxian/Conxian/issues/500) | OPEN | Oracle/DEX deployment wiring is still pending. |
-| Conxian | [#515](https://github.com/Conxian/Conxian/issues/515) | OPEN | Merge gate enforcement remains a governance issue. |
+| Conxian/Conxian | archived reference only | HISTORICAL | Legacy issues are not an active implementation target for this repo and are not a reason to build protocol-core or consumer DeFi here. |
 | conxius-platform | [#1082](https://github.com/Conxian/conxius-platform/issues/1082) | OPEN | CI validation scripts still need to be enforced in the unified workflow. |
 | conxius-platform | [#854](https://github.com/Conxian/conxius-platform/issues/854) | OPEN | Org-wide rulesets and push protection remain active. |
 | conxius-platform | [#1223](https://github.com/Conxian/conxius-platform/issues/1223) | OPEN | Rulesets still evaluate-only; this is still active. |

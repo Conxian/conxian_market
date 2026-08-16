@@ -21,7 +21,7 @@ All contributors are expected to uphold a professional, safe, and collaborative 
 
 This repository is the Conxian Marketplace and orchestration layer, not the standalone SDK package root for the entire organization. Contributions should stay aligned with the marketplace, settlement, treasury, and gateway coordination responsibilities of this repo unless a separate repo or package is explicitly designated for a different boundary.
 
-The market layer depends on adjacent Conxian repos including Conxian/Conxian, lib-conxian-core, conxian-gateway, conxian-nexus, conxius-platform, and conxian-business. When proposing a change, confirm whether the work belongs in the market repo itself or in one of those adjacent components or SDK packages.
+The market layer depends on adjacent Conxian repos including lib-conxian-core, conxian-gateway, conxian-nexus, conxius-platform, and conxian-business. Conxian/Conxian is treated as an archived historical reference repo and not an active implementation target for this market repo. When proposing a change, confirm whether the work belongs in the market repo itself or in one of those adjacent components or SDK packages.
 
 ## Dependency and Integration Ownership
 
@@ -29,7 +29,7 @@ This repo should only consume Conxian dependencies at the appropriate layer. In 
 - lib-conxian-core for protocol primitives and shared types
 - conxian-gateway for settlement and API orchestration
 - conxian-nexus for verification and proof semantics
-- Conxian/Conxian for protocol-level boundaries and contract governance
+- archived protocol reference material only from Conxian/Conxian; not an active contract, governance, or DeFi workstream for this repo
 
 Platform and business concerns are adjacent layers owned elsewhere. If a change is actually a platform CI issue, a business governance issue, or a protocol-core issue, it should be proposed in the corresponding repo rather than folded into this marketplace repository.
 ### Org Handoff Rules
