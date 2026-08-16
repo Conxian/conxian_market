@@ -16,6 +16,31 @@ All contributors are expected to uphold a professional, safe, and collaborative 
 2. **Zero Secret Egress (ZSE):** Never commit secrets, configuration variables, or private files to git. Run the verification steps before pushing your code.
 3. **DeFi-Agnostic Orchestration:** Focus on routing payments and managing escrows cleanly through external protocols (e.g., ALEX, Uniswap) rather than attempting to build proprietary, duplicative decentralized exchanges or lending rails.
 
+## Repository Scope
+
+This repository is the Conxian Marketplace and orchestration layer, not the standalone SDK package root for the entire organization. Contributions should stay aligned with the marketplace, settlement, treasury, and gateway coordination responsibilities of this repo unless a separate repo or package is explicitly designated for a different boundary.
+
+The market layer depends on adjacent Conxian repos including Conxian/Conxian, lib-conxian-core, conxian-gateway, conxian-nexus, conxius-platform, and conxian-business. When proposing a change, confirm whether the work belongs in the market repo itself or in one of those adjacent components or SDK packages.
+
+## Dependency and Integration Ownership
+
+This repo should only consume Conxian dependencies at the appropriate layer. In practice, the market layer depends most directly on:
+- lib-conxian-core for protocol primitives and shared types
+- conxian-gateway for settlement and API orchestration
+- conxian-nexus for verification and proof semantics
+- Conxian/Conxian for protocol-level boundaries and contract governance
+
+Platform and business concerns are adjacent layers owned elsewhere. If a change is actually a platform CI issue, a business governance issue, or a protocol-core issue, it should be proposed in the corresponding repo rather than folded into this marketplace repository.
+### Org Handoff Rules
+
+When a proposal is not clearly market-layer work, use this decision rule:
+- If the work is about shared protocol types, chain adapters, or settlement primitives → route to lib-conxian-core or the protocol repo.
+- If the work is about rail execution, API orchestration, or settlement ingress/egress → route to conxian-gateway.
+- If the work is about proof verification, attestation trust, or MMR-based assurance → route to conxian-nexus or the enclave SDK depending on the layer.
+- If the work is about CI/CD, operational enforcement, or release policy → route to conxius-platform.
+- If the work is about business rules, governance approvals, or BOS logic → route to conxian-business.
+
+This repo should remain focused on value capture, settlement orchestration, fee logic, and marketplace composition while upstream repos mature.
 ---
 
 ## Branching & Workflow Policy

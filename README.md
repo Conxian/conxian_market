@@ -1,5 +1,59 @@
 # Conxian Marketplace (conxian_market)
 
+## Repository scope and boundaries
+
+This repository is the Conxian Marketplace and orchestration layer for the broader Conxian ecosystem. It is not the standalone public SDK, npm package root, or a generic client library for external consumption.
+
+The market layer coordinates discovery, settlement, escrow, and treasury logic across the ecosystem and integrates with adjacent Conxian repos such as:
+- Conxian/Conxian — protocol/core contracts and on-chain governance
+- lib-conxian-core — shared protocol primitives and chain adapters
+- conxian-gateway — settlement rail and compliance middleware
+- conxian-nexus — verification, proof, and state synchronization
+- conxius-platform — CI/CD and control-plane orchestration
+- conxian-business — governance and operating model work
+
+This repo is the value-layer coordination mechanism for the marketplace, not the canonical SDK distribution point or the entire Conxian stack.
+
+## Dependency and integration coverage
+
+The marketplace repo is intentionally designed to consume the Conxian org stack at the correct abstraction layer:
+
+| Dependency | Status in this repo | Evidence | Notes |
+|:-----------|:-------------------|:---------|:------|
+| **Conxian/Conxian** | Indirect / protocol boundary | Shared ecosystem architecture and fee/governance docs | This repo does not own the protocol core itself; it coordinates settlement and marketplace logic around it. |
+| **lib-conxian-core** | **Directly used** | Shared trust-tier, chain, rail, and settlement type definitions in [src/core_types.ts](src/core_types.ts) | This is the main primitive dependency used by fee, settlement, and verification logic. |
+| **conxian-gateway** | **Directly used** | Gateway REST client and settlement execution pipeline in [src/gateway_client.ts](src/gateway_client.ts) and [src/settlement.ts](src/settlement.ts) | This is the primary live integration point for settlement and routing. |
+| **conxian-nexus** | **Partial integration** | Verification and trust-tier logic in [src/verification.ts](src/verification.ts) and bridge references in [src/sdk_bridge.ts](src/sdk_bridge.ts) | The repo depends on nexus concepts and proof semantics, but the actual implementation remains gateway-oriented and feature-gated by upstream maturity. |
+| **conxius-platform** | Indirect / orchestration boundary | CI/CD and control-plane references in the org docs and roadmap | This repo does not own platform infrastructure; it consumes platform-grade operations and release scaffolding as an adjacent layer. |
+| **conxian-business** | Governance / policy boundary | BOS and governance references in [docs/AGENTS.md](docs/AGENTS.md) and [docs/research/conxian_business_logic_analysis.md](docs/research/conxian_business_logic_analysis.md) | Business doctrine informs the repo, but this repo does not directly import business workflow modules. |
+
+### Current assessment
+
+This repo is already aligned to the org role it should play:
+- It uses the shared core primitives and the gateway settlement layer aggressively.
+- It partially consumes the trust/proof model represented by nexus.
+- It does not absorb the business or platform repos as direct runtime dependencies; those are separate governance and platform layers.
+- Remaining gaps are primarily upstream/infrastructure maturity issues, not missing imports inside this repo.
+
+### Org dependency gaps to track
+
+| Area | Current state | Dependency owner | Repo-level implication |
+|:-----|:--------------|:----------------|:----------------------|
+| **Core primitives** | Strong direct usage | lib-conxian-core | Market logic depends on shared trust tiers, rail definitions, and chain metadata. |
+| **Settlement rails** | Strong direct usage | conxian-gateway | Market flow is intentionally built around gateway APIs and settlement routing. |
+| **Proof verification** | Partial integration | conxian-nexus | The repo expects nexus-backed proof semantics, but actual runtime checks remain gateway-driven and feature-gated. |
+| **TEE attestation** | Upstream blocker | conxius-enclave-sdk | Strict trust tiers remain gated by unresolved P0 attestation issues. |
+| **CI/CD enforcement** | Upstream blocker | conxius-platform | Release quality gates and repo automation should come from platform-level enforcement. |
+| **Business rules / BOS** | Governance boundary | conxian-business | Business rationale is consumed conceptually, not as a runtime code dependency in this repo. |
+
+### Recommended next org actions
+
+1. Keep this repo focused on marketplace orchestration, fee routing, escrow logic, and settlement integration.
+2. Treat gateway and core as the active runtime dependencies this repo must keep aligned with.
+3. Treat nexus as the trust/proof enhancement layer to deepen integration when upstream verification services mature.
+4. Keep business and platform concerns in their own repos unless a direct runtime dependency is explicitly required.
+5. Track the remaining strict-tier blockers as upstream work, not as a reason to broaden this repo beyond its market role.
+
 ## ⚡ The Production Settlement Core of the Conxian Ecosystem
 
 The Conxian Marketplace is the **primary value capture mechanism** for the entire Conxian ecosystem. It provides discovery, deployment, settlement, and escrow for autonomous AI labor.
