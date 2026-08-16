@@ -15,6 +15,7 @@ All contributors are expected to uphold a professional, safe, and collaborative 
 1. **Hardening the Core:** Prioritize functional settlement, fee collection, and stability mechanisms over adding new, unverified experimental contract stubs.
 2. **Zero Secret Egress (ZSE):** Never commit secrets, configuration variables, or private files to git. Run the verification steps before pushing your code.
 3. **DeFi-Agnostic Orchestration:** Focus on routing payments and managing escrows cleanly through external protocols (e.g., ALEX, Uniswap) rather than attempting to build proprietary, duplicative decentralized exchanges or lending rails.
+4. **Boundary Discipline:** Do not compete with consumer-owned custody, wallet execution, data ownership, or native chain-side products. This repo stays in the market orchestration layer and only adds chain-native enforcement when a rail requires minimal settlement truth enforcement.
 
 ## Repository Scope
 
