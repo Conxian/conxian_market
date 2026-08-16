@@ -14,6 +14,16 @@ The market layer coordinates discovery, settlement, escrow, and treasury logic a
 
 This repo is the value-layer coordination mechanism for the marketplace, not the canonical SDK distribution point or the entire Conxian stack.
 
+### Chain-native boundary and anti-competition rule
+
+The marketplace must remain an orchestration and value-capture layer. It must not become a consumer-facing custody, wallet, data, or full DeFi platform that competes with the users and infrastructure owners it serves.
+
+The repo should only take on chain-native enforcement when it is the minimal, required settlement boundary for a chosen rail. In practice, this means:
+- universal chain support is an abstraction layer for routing, verification, and compatibility
+- consumer-owned custody, execution, and data remain outside this repo
+- any chain-native contract work is limited to the minimum required to enforce settlement truth on a specific rail
+- Stacks or any other chain is integrated only when it serves the market’s settlement and verification flow, not when it would expand into a competing ecosystem product
+
 ## Dependency and integration coverage
 
 The marketplace repo is intentionally designed to consume the Conxian org stack at the correct abstraction layer:
