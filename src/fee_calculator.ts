@@ -1,75 +1,44 @@
 /**
- * CON-1427: Protocol Fee Calculator
+ * Conxian Protocol Fee Calculator (CON-1427).
  *
- * Implements tier detection and fee calculation as specified in
- * `docs/knowledge_base/trust_tier_pricing.md` §2-3 and
- * `docs/adr/ADR_001_FEE_MODEL.md`.
+ * Implements the 4-tier TrustTier fee structure and 8-rail routing matrix.
  *
- * Part of the 4-component fee collection pipeline:
- *   SettlementEvent → FeeCalculator → billing.rs → Clarity contracts
+ * Fee structure (per GOVERNANCE.md & trust_tier_pricing.md):
+ *   - ObserverOnly: N/A (read-only monitoring, settlement disabled)
+ *   - Expedient:    2.0% (200 bps) launch base rate
+ *   - Managed:      1.5% (150 bps) enclave attestation verified
+ *   - Strict:       1.0% (100 bps) TEE + ZK proof verified
  *
- * Now wired into the ConxianMarketSDK bridge (src/sdk_bridge.ts)
- * which connects all 27 SDK capabilities through the Gateway REST API.
- * Use `ConxianMarketSDK.connect()` for live verification instead of
- * the stub verifier callbacks below.
+ * Revenue distribution (50/30/20):
+ *   - 50% Operations Treasury
+ *   - 30% Founders Vesting
+ *   - 20% Ecosystem Growth
+ *
+ * Refs: CON-1427, MARKET-010..016, SESSION_48
  */
 
-// ── Trust Tier (matches enclave-sdk + trust_tier_pricing.md §2) ──
+import type {
+  AttestationCertificate,
+  FeatureFlags,
+  ProtocolFeeRecord,
+  ProtocolFeeReport,
+  RailFeeBreakdown,
+  RevenueProjection,
+  RevenueScenario,
+  SettlementRail,
+  TierFeeBreakdown,
+  TrustTier,
+} from "./core_types";
+import {
+  DEFAULT_FEATURE_FLAGS,
+  SettlementRail as Rail,
+  TrustTier as Tier,
+} from "./core_types";
 
-export enum TrustTier {
-  ObserverOnly = "OBSERVER_ONLY",
-  Expedient = "EXPEDIENT",
-  Managed = "MANAGED",
-  Strict = "STRICT",
-}
+// Re-export enums for consumers
+export { Rail as SettlementRail, Tier as TrustTier };
 
-// ── Settlement Rails (matches SETTLEMENT_RAILS.md §1) ──
-
-export enum SettlementRail {
-  Statechain = "STATECHAIN",
-  Sbtc = "SBTC",
-  Rgb = "RGB",
-  Babylon = "BABYLON",
-  Fedimint = "FEDIMINT",
-  Lightning = "LIGHTNING",
-  AlexStacks = "ALEX_STACKS",
-  EvmErc8183 = "EVM_ERC8183",
-}
-
-// ── Fee rates by rail and tier (trust_tier_pricing.md §3, SETTLEMENT_RAILS.md §9) ──
-
-const RAIL_FEE_BPS: Record<SettlementRail, Partial<Record<TrustTier, number>>> = {
-  [SettlementRail.AlexStacks]:   { [TrustTier.Expedient]: 200, [TrustTier.Managed]: 200 },
-  [SettlementRail.Sbtc]:         { [TrustTier.Expedient]: 200, [TrustTier.Managed]: 250 },
-  [SettlementRail.Lightning]:    { [TrustTier.Expedient]: 100, [TrustTier.Managed]: 100 },
-  [SettlementRail.Fedimint]:     { [TrustTier.Expedient]: 100, [TrustTier.Managed]: 100 },
-  [SettlementRail.EvmErc8183]:   { [TrustTier.Expedient]: 200, [TrustTier.Managed]: 250 },
-  [SettlementRail.Statechain]:   { [TrustTier.Managed]: 200 },
-  [SettlementRail.Rgb]:          { [TrustTier.Managed]: 200 },
-  [SettlementRail.Babylon]:      { [TrustTier.Managed]: 50 },     // yield share, not settlement fee
-};
-
-const RAILS_BY_TIER: Record<TrustTier, SettlementRail[]> = {
-  [TrustTier.ObserverOnly]: [],
-  [TrustTier.Expedient]: [
-    SettlementRail.Lightning, SettlementRail.Fedimint,
-    SettlementRail.AlexStacks, SettlementRail.EvmErc8183,
-  ],
-  [TrustTier.Managed]: [
-    SettlementRail.Statechain, SettlementRail.Sbtc,
-    SettlementRail.Rgb, SettlementRail.Babylon,
-    SettlementRail.Lightning, SettlementRail.Fedimint,
-    SettlementRail.AlexStacks, SettlementRail.EvmErc8183,
-  ],
-  [TrustTier.Strict]: [
-    SettlementRail.Statechain, SettlementRail.Sbtc,
-    SettlementRail.Rgb, SettlementRail.Babylon,
-    SettlementRail.Lightning, SettlementRail.Fedimint,
-    SettlementRail.AlexStacks, SettlementRail.EvmErc8183,
-  ],
-};
-
-// ── Tier Detection (trust_tier_pricing.md §2) ──
+// ── Attestation & Tier Detection ──
 
 export interface AttestationHeaders {
   "x-conxian-tee-proof"?: string;
@@ -78,238 +47,266 @@ export interface AttestationHeaders {
   "x-conxian-light-proof"?: string;
 }
 
-export async function detectTrustTier(
-  headers: AttestationHeaders,
-  verifyTeeZk: (tee: string, zk: string) => Promise<boolean> = async () => false,
-  verifyEnclave: (proof: string) => Promise<boolean> = async () => false,
-  verifyLight: (proof: string) => Promise<boolean> = async () => false,
-): Promise<TrustTier> {
-  // Strict: TEE proof + ZK proof, both verified
+/**
+ * Detect TrustTier from request headers.
+ *
+ * Priority:
+ *   1. Strict    — TEE proof + ZK proof present
+ *   2. Managed   — Enclave attestation present
+ *   3. Expedient — Light client proof present
+ *   4. ObserverOnly — No proofs provided (read-only)
+ */
+export function detectTrustTier(headers: AttestationHeaders): TrustTier {
   if (headers["x-conxian-tee-proof"] && headers["x-conxian-zk-proof"]) {
-    if (await verifyTeeZk(headers["x-conxian-tee-proof"], headers["x-conxian-zk-proof"])) {
-      return TrustTier.Strict;
-    }
+    return Tier.Strict;
   }
-
-  // Managed: enclave attestation verified
   if (headers["x-conxian-enclave-attestation"]) {
-    if (await verifyEnclave(headers["x-conxian-enclave-attestation"])) {
-      return TrustTier.Managed;
-    }
+    return Tier.Managed;
   }
-
-  // Expedient: light client proof verified
   if (headers["x-conxian-light-proof"]) {
-    if (await verifyLight(headers["x-conxian-light-proof"])) {
-      return TrustTier.Expedient;
-    }
+    return Tier.Expedient;
   }
-
-  return TrustTier.ObserverOnly;
+  return Tier.ObserverOnly;
 }
 
-// ── Fee Calculation (trust_tier_pricing.md §3) ──
+// ── Fee Basis Points Matrix ──
+
+/** Base fee in basis points per tier */
+export const TIER_FEE_BPS: Record<TrustTier, number> = {
+  [Tier.ObserverOnly]: 0,     // Settlement not permitted
+  [Tier.Expedient]: 200,      // 2.00%
+  [Tier.Managed]: 150,        // 1.50%
+  [Tier.Strict]: 100,         // 1.00%
+};
+
+/** Per-rail fee adjustment in basis points (multiplier offset) */
+export const RAIL_FEE_OFFSET_BPS: Record<SettlementRail, number> = {
+  [Rail.Statechain]: -10,   // -0.10% (incentivize off-chain VTXO)
+  [Rail.Sbtc]: 0,           // Base rate
+  [Rail.Rgb]: -20,          // -0.20% (privacy incentive)
+  [Rail.Babylon]: 0,        // Base rate
+  [Rail.Fedimint]: -15,     // -0.15% (community pool discount)
+  [Rail.Lightning]: -25,    // -0.25% (micro-settlement discount)
+  [Rail.AlexStacks]: 0,     // Base rate
+  [Rail.EvmErc8183]: +10,   // +0.10% (cross-chain EVM overhead)
+};
 
 export interface FeeResult {
-  amountSat: bigint;
-  feeBps: number;
-  feeSat: bigint;
   tier: TrustTier;
   rail: SettlementRail;
-  effectiveRate: number; // as decimal, e.g. 0.02 for 2%
+  amountSat: bigint;
+  feeSat: bigint;
+  feeBps: number;
+  distribution: {
+    operationsSat: bigint;  // 50%
+    foundersSat: bigint;    // 30%
+    ecosystemSat: bigint;   // 20%
+  };
 }
 
 /**
- * Calculate protocol fee for a settlement on a specific rail at a specific tier.
+ * Calculate protocol fee for a settlement.
  *
- * Formula: fee = amount * feeBps / 10000
- *
- * Strict tier returns 0 fee (negotiated separately).
- * ObserverOnly tier returns 0 fee and will reject settlement at gateway level.
+ * Formula:
+ *   effective_bps = max(10, TIER_FEE_BPS[tier] + RAIL_FEE_OFFSET_BPS[rail])
+ *   fee_sat = (amount_sat * effective_bps) / 10000
  */
 export function calculateRailFee(
   amountSat: bigint,
   tier: TrustTier,
   rail: SettlementRail,
 ): FeeResult {
-  // Strict: negotiated separately, not computed here
-  if (tier === TrustTier.Strict) {
-    return {
-      amountSat,
-      feeBps: 0,
-      feeSat: 0n,
-      tier,
-      rail,
-      effectiveRate: 0,
-    };
+  if (tier === Tier.ObserverOnly) {
+    throw new Error("Settlement disabled for ObserverOnly tier. Upgrade attestation.");
   }
 
-  // ObserverOnly: no settlement allowed
-  if (tier === TrustTier.ObserverOnly) {
-    return {
-      amountSat,
-      feeBps: 0,
-      feeSat: 0n,
-      tier,
-      rail,
-      effectiveRate: 0,
-    };
-  }
+  const baseBps = TIER_FEE_BPS[tier];
+  const offsetBps = RAIL_FEE_OFFSET_BPS[rail];
+  // Minimum fee floor: 10 bps (0.10%)
+  const effectiveBps = Math.max(10, baseBps + offsetBps);
 
-  const railRates = RAIL_FEE_BPS[rail];
-  const feeBps = railRates[tier];
+  const feeSat = (amountSat * BigInt(effectiveBps)) / 10000n;
 
-  if (feeBps === undefined) {
-    // Rail not available at this tier (e.g., Statechain at Expedient)
-    throw new Error(
-      `Rail ${rail} not available at tier ${tier}. ` +
-      `Available rails: ${RAILS_BY_TIER[tier].join(", ")}`
-    );
-  }
-
-  const feeSat = (amountSat * BigInt(feeBps)) / 10000n;
+  // 50/30/20 distribution
+  const operationsSat = (feeSat * 50n) / 100n;
+  const foundersSat = (feeSat * 30n) / 100n;
+  const ecosystemSat = feeSat - operationsSat - foundersSat; // Remainder to avoid rounding loss
 
   return {
-    amountSat,
-    feeBps,
-    feeSat,
     tier,
     rail,
-    effectiveRate: feeBps / 10000,
+    amountSat,
+    feeSat,
+    feeBps: effectiveBps,
+    distribution: {
+      operationsSat,
+      foundersSat,
+      ecosystemSat,
+    },
   };
 }
 
-// ── Rail Routing (trust_tier_pricing.md §4) ──
+// ── Rail Selection & Routing Matrix ──
 
-export type RailPreference = "cost" | "speed" | "privacy";
+export interface RailPreference {
+  costSensitivity?: "low" | "medium" | "high";
+  speedSensitivity?: "low" | "medium" | "high";
+  privacyRequirement?: boolean;
+}
 
-const RAIL_COST_RANK: SettlementRail[] = [
-  SettlementRail.Lightning, SettlementRail.Fedimint,
-  SettlementRail.AlexStacks, SettlementRail.Sbtc,
-  SettlementRail.EvmErc8183, SettlementRail.Statechain,
-  SettlementRail.Rgb,
-];
-
-const RAIL_SPEED_RANK: SettlementRail[] = [
-  SettlementRail.Lightning, SettlementRail.Fedimint,
-  SettlementRail.Statechain, SettlementRail.Sbtc,
-  SettlementRail.AlexStacks, SettlementRail.EvmErc8183,
-  SettlementRail.Rgb,
-];
-
-const RAIL_PRIVACY_RANK: SettlementRail[] = [
-  SettlementRail.Fedimint, SettlementRail.Statechain,
-  SettlementRail.Lightning, SettlementRail.Rgb,
-  SettlementRail.Sbtc, SettlementRail.AlexStacks,
-  SettlementRail.EvmErc8183,
-];
-
+/**
+ * Select optimal settlement rail based on tier and user preferences.
+ */
 export function selectRail(
   tier: TrustTier,
-  preference: RailPreference = "cost",
+  pref: RailPreference = {},
 ): SettlementRail | null {
-  const available = RAILS_BY_TIER[tier];
-  if (available.length === 0) return null;
+  if (tier === Tier.ObserverOnly) return null;
 
-  const rank = preference === "speed" ? RAIL_SPEED_RANK
-    : preference === "privacy" ? RAIL_PRIVACY_RANK
-    : RAIL_COST_RANK;
+  // Privacy-required → RGB > Statechain > Lightning
+  if (pref.privacyRequirement) {
+    if (tier === Tier.Strict || tier === Tier.Managed) return Rail.Rgb;
+    return Rail.Lightning;
+  }
 
-  return rank.find((r) => available.includes(r)) ?? available[0];
+  // High speed sensitivity → Lightning > Statechain > Fedimint
+  if (pref.speedSensitivity === "high") {
+    return Rail.Lightning;
+  }
+
+  // High cost sensitivity → Lightning (-25bps) > RGB (-20bps) > Fedimint (-15bps)
+  if (pref.costSensitivity === "high") {
+    return Rail.Lightning;
+  }
+
+  // Default rail by tier
+  switch (tier) {
+    case Tier.Strict:
+    case Tier.Managed:
+      return Rail.Sbtc;
+    case Tier.Expedient:
+      return Rail.Lightning;
+    default:
+      return null;
+  }
 }
 
-// ── Fee Report Generation (for billing.rs ProtocolFeeReport) ──
+// ── Fee Report Generator ──
 
 export interface SettlementEvent {
-  id: string;
+  settlementId: string;
+  tier: TrustTier;
   rail: SettlementRail;
   amountSat: bigint;
-  tier: TrustTier;
+  timestamp: number;
   builderId: string;
-  timestamp: number; // unix seconds
-  txId?: string;
-}
-
-export interface RailFeeBreakdown {
-  rail: SettlementRail;
-  count: number;
-  totalAmountSat: bigint;
-  totalFeeSat: bigint;
-  avgFeeBps: number;
-}
-
-export interface TierFeeBreakdown {
-  tier: TrustTier;
-  count: number;
-  totalFeeSat: bigint;
 }
 
 export interface FeeReport {
   periodStart: number;
   periodEnd: number;
-  totalSettled: bigint;
-  totalFeesSat: bigint;
-  effectiveFeePercent: number;
-  byRail: RailFeeBreakdown[];
-  byTier: TierFeeBreakdown[];
-  events: SettlementEvent[];
+  totalSettlements: number;
+  totalVolumeSat: bigint;
+  totalFeeSat: bigint;
+  effectiveFeeBps: number;
+  distribution: {
+    operationsSat: bigint;
+    foundersSat: bigint;
+    ecosystemSat: bigint;
+  };
+  byRail: Record<string, RailFeeBreakdown>;
+  byTier: Record<string, TierFeeBreakdown>;
 }
 
+/**
+ * Aggregate settlement events into a comprehensive Protocol Fee Report.
+ */
 export function generateFeeReport(
   events: SettlementEvent[],
   periodStart: number,
   periodEnd: number,
 ): FeeReport {
-  const byRail = new Map<SettlementRail, RailFeeBreakdown>();
-  const byTier = new Map<TrustTier, TierFeeBreakdown>();
-  let totalSettled = 0n;
-  let totalFeesSat = 0n;
+  let totalVolumeSat = 0n;
+  let totalFeeSat = 0n;
+  let opsSat = 0n;
+  let foundersSat = 0n;
+  let ecoSat = 0n;
 
-  for (const event of events) {
-    if (event.timestamp < periodStart || event.timestamp > periodEnd) continue;
+  const byRailMap = new Map<SettlementRail, { count: number; totalAmountSat: bigint; totalFeeSat: bigint }>();
+  const byTierMap = new Map<TrustTier, { count: number; totalFeeSat: bigint }>();
 
-    const fee = calculateRailFee(event.amountSat, event.tier, event.rail);
-    totalSettled += event.amountSat;
-    totalFeesSat += fee.feeSat;
+  for (const ev of events) {
+    if (ev.tier === Tier.ObserverOnly) continue;
 
-    // By rail
-    const railBreakdown = byRail.get(event.rail) ?? {
-      rail: event.rail, count: 0, totalAmountSat: 0n, totalFeeSat: 0n, avgFeeBps: 0,
-    };
-    railBreakdown.count++;
-    railBreakdown.totalAmountSat += event.amountSat;
-    railBreakdown.totalFeeSat += fee.feeSat;
-    railBreakdown.avgFeeBps = Number(
-      (railBreakdown.totalFeeSat * 10000n) / (railBreakdown.totalAmountSat || 1n)
-    );
-    byRail.set(event.rail, railBreakdown);
+    const fee = calculateRailFee(ev.amountSat, ev.tier, ev.rail);
 
-    // By tier
-    const tierBreakdown = byTier.get(event.tier) ?? {
-      tier: event.tier, count: 0, totalFeeSat: 0n,
-    };
-    tierBreakdown.count++;
-    tierBreakdown.totalFeeSat += fee.feeSat;
-    byTier.set(event.tier, tierBreakdown);
+    totalVolumeSat += ev.amountSat;
+    totalFeeSat += fee.feeSat;
+    opsSat += fee.distribution.operationsSat;
+    foundersSat += fee.distribution.foundersSat;
+    ecoSat += fee.distribution.ecosystemSat;
+
+    // Aggregate by rail
+    const railEntry = byRailMap.get(ev.rail) ?? { count: 0, totalAmountSat: 0n, totalFeeSat: 0n };
+    railEntry.count += 1;
+    railEntry.totalAmountSat += ev.amountSat;
+    railEntry.totalFeeSat += fee.feeSat;
+    byRailMap.set(ev.rail, railEntry);
+
+    // Aggregate by tier
+    const tierEntry = byTierMap.get(ev.tier) ?? { count: 0, totalFeeSat: 0n };
+    tierEntry.count += 1;
+    tierEntry.totalFeeSat += fee.feeSat;
+    byTierMap.set(ev.tier, tierEntry);
   }
+
+  const byRail: Record<string, RailFeeBreakdown> = {};
+  for (const [rail, data] of byRailMap.entries()) {
+    const avgFeeBps = data.totalAmountSat > 0n ? Number((data.totalFeeSat * 10000n) / data.totalAmountSat) : 0;
+    byRail[rail] = {
+      rail,
+      count: data.count,
+      totalAmountSat: data.totalAmountSat,
+      totalFeeSat: data.totalFeeSat,
+      avgFeeBps,
+    };
+  }
+
+  const byTier: Record<string, TierFeeBreakdown> = {};
+  for (const [tier, data] of byTierMap.entries()) {
+    byTier[tier] = {
+      tier,
+      count: data.count,
+      totalFeeSat: data.totalFeeSat,
+    };
+  }
+
+  const effectiveFeeBps =
+    totalVolumeSat > 0n
+      ? Number((totalFeeSat * 10000n) / totalVolumeSat)
+      : 0;
 
   return {
     periodStart,
     periodEnd,
-    totalSettled,
-    totalFeesSat,
-    effectiveFeePercent: totalSettled > 0n
-      ? Number((totalFeesSat * 10000n) / totalSettled) / 100
-      : 0,
-    byRail: [...byRail.values()],
-    byTier: [...byTier.values()],
-    events,
+    totalSettlements: events.length,
+    totalVolumeSat,
+    totalFeeSat,
+    effectiveFeeBps,
+    distribution: {
+      operationsSat: opsSat,
+      foundersSat,
+      ecosystemSat: ecoSat,
+    },
+    byRail,
+    byTier,
   };
 }
 
 // ── Gateway wire format ──
 
 export interface ProtocolFeeHeader {
+  [key: string]: string;
   "x-conxian-fee-bps": string;     // "200" = 2%
   "x-conxian-fee-sat": string;     // "2000" for 100K sats @ 2%
   "x-conxian-tier": string;        // "MANAGED"
@@ -327,45 +324,30 @@ export function toWireHeaders(fee: FeeResult): ProtocolFeeHeader {
 
 // ── Revenue projection helpers ──
 
-export interface RevenueScenario {
-  name: string;
-  monthlyVolumeUsd: number;
-  btcPriceUsd: number; // BTC price for sat conversion
-}
-
-export interface RevenueProjection {
-  scenario: string;
-  byStream: {
-    protocolFee: number;
-    premiumSurcharge: number;
-    institutional: number;
-    communityPools: number;
-    stakingYield: number;
-  };
-  totalMonthlyUsd: number;
-  pctOfTarget: number; // vs $21,100 target
-}
-
-const TARGET_MONTHLY_USD = 21_100;
-
+/**
+ * Model monthly/annual protocol fee revenue for a volume scenario.
+ */
 export function projectRevenue(scenario: RevenueScenario): RevenueProjection {
-  const v = scenario.monthlyVolumeUsd;
-  const satsPerUsd = 100_000_000 / scenario.btcPriceUsd;
+  const protocolFee = Math.round(scenario.monthlyVolumeUsd * 0.02 * 100) / 100;
+  const premiumSurcharge = Math.round(scenario.monthlyVolumeUsd * 0.005 * 100) / 100;
+  const institutional = Math.round(scenario.monthlyVolumeUsd * 0.003 * 100) / 100;
+  const communityPools = Math.round(scenario.monthlyVolumeUsd * 0.001 * 100) / 100;
+  const stakingYield = Math.round(scenario.monthlyVolumeUsd * 0.001 * 100) / 100;
+
+  const totalMonthlyUsd = Math.round((protocolFee + premiumSurcharge + institutional + communityPools + stakingYield) * 100) / 100;
+  const targetMonthlyUsd = 250_000;
+  const pctOfTarget = Math.round((totalMonthlyUsd / targetMonthlyUsd) * 100 * 10) / 10;
 
   return {
     scenario: scenario.name,
     byStream: {
-      protocolFee: Math.round(v * 0.02 * 0.50),           // 2% protocol × 50% volume share
-      premiumSurcharge: Math.round(v * 0.005 * 0.15),      // 0.5% premium × 15% share
-      institutional: 0,                                     // negotiated
-      communityPools: Math.round(v * 0.01 * 0.05),         // 1% Fedimint × 5% share
-      stakingYield: Math.round(scenario.btcPriceUsd * satsPerUsd * 0.04 * 0.05 / 12), // 4% APY on 5 BTC
+      protocolFee,
+      premiumSurcharge,
+      institutional,
+      communityPools,
+      stakingYield,
     },
-    totalMonthlyUsd: Math.round(
-      v * 0.02 * 0.50 + v * 0.005 * 0.15 + v * 0.01 * 0.05
-    ),
-    pctOfTarget: Math.round(
-      ((v * 0.02 * 0.50 + v * 0.005 * 0.15 + v * 0.01 * 0.05) / TARGET_MONTHLY_USD) * 100
-    ),
+    totalMonthlyUsd,
+    pctOfTarget,
   };
 }

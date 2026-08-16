@@ -1,13 +1,12 @@
 /**
- * Conxian Gateway REST API Client.
+ * Conxian Gateway Client — REST API Client for conxian-gateway.
  *
- * Typed HTTP client for the conxian-gateway REST API (v0.1.5+, axum 0.8).
- * Maps all 50+ gateway endpoints to TypeScript functions.
- *
- * Endpoint reference: conxian-gateway internal/api/src/routes.rs
+ * Exposes 50+ gateway endpoints covering settlement, attestation,
+ * identity, job cards, M2M, ALEX swap, DLC bonds, and governance.
  */
 
 import type {
+  AttestationCertificate,
   AttestationResult,
   BuilderIdentity,
   ChainId,
@@ -17,125 +16,88 @@ import type {
   MrrReport,
   Musig2KeyAggregation,
   ProtocolFeeReport,
-  SettlementIntent,
   SettlementRail,
-  SettlementRequest,
   SettlementResult,
-  TrustTier,
   UsageMetrics,
-  YieldOpportunity,
-} from "./core_types.ts";
-
-// ── Client Config ──
+} from "./core_types";
 
 export interface GatewayConfig {
   baseUrl: string;
-  apiToken: string;
+  apiToken?: string;
   timeoutMs?: number;
 }
 
 export class GatewayClient {
   private readonly baseUrl: string;
-  private readonly authHeader: string;
+  private readonly apiToken?: string;
   private readonly timeoutMs: number;
 
   constructor(config: GatewayConfig) {
-    this.baseUrl = config.baseUrl.replace(/\/$/, "");
-    this.authHeader = `Bearer ${config.apiToken}`;
+    this.baseUrl = config.baseUrl.replace(/\/+$/, "");
+    this.apiToken = config.apiToken;
     this.timeoutMs = config.timeoutMs ?? 10_000;
   }
 
-  // ── HTTP helpers ──
+  // ── Helper ──
 
-  private async get<T>(path: string): Promise<T> {
-    return this.request<T>("GET", path);
-  }
+  private async fetchJson<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(this.apiToken ? { Authorization: `Bearer ${this.apiToken}` } : {}),
+      ...((options.headers as Record<string, string>) ?? {}),
+    };
 
-  private async post<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>("POST", path, body);
-  }
-
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      const res = await fetch(`${this.baseUrl}${path}`, {
-        method,
-        headers: {
-          "Authorization": this.authHeader,
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: body ? JSON.stringify(body) : undefined,
-        signal: controller.signal,
-      });
-
+      const res = await fetch(url, { ...options, headers, signal: controller.signal });
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`Gateway ${method} ${path} → ${res.status}: ${text}`);
+        const text = await res.text();
+        throw new Error(`Gateway HTTP ${res.status}: ${text}`);
       }
-
       return (await res.json()) as T;
     } finally {
       clearTimeout(timer);
     }
   }
 
-  // ── Health & Version ──
+  // ── Attestation & Verification ──
 
-  async health(): Promise<{ status: string; version: string }> {
-    return this.get("/api/v1/health");
-  }
-
-  async version(): Promise<string> {
-    return this.get("/api/v1/version");
-  }
-
-  // ── State & Metrics ──
-
-  async getState(): Promise<Record<string, unknown>> {
-    return this.get("/api/v1/state");
-  }
-
-  async getMetrics(): Promise<Record<string, unknown>> {
-    return this.get("/api/v1/metrics");
-  }
-
-  // ── Attestation (P0-gated via feature flags) ──
-
-  async verifyAttestation(proof: {
+  async verifyAttestation(cert: {
     teeProof?: string;
     zkProof?: string;
     enclaveAttestation?: string;
     lightProof?: string;
   }): Promise<AttestationResult> {
-    return this.post("/api/v1/verify", {
-      tee_proof: proof.teeProof,
-      zk_proof: proof.zkProof,
-      enclave_attestation: proof.enclaveAttestation,
-      light_proof: proof.lightProof,
+    return this.fetchJson<AttestationResult>("/v1/attestation/verify", {
+      method: "POST",
+      body: JSON.stringify(cert),
     });
   }
 
-  // ── Identity ──
-
-  async exchangeIdentity(did: string): Promise<BuilderIdentity> {
-    return this.post("/api/v1/identity/exchange", { did });
+  async verifyCbtcAttestation(proof: Record<string, unknown>): Promise<{ valid: boolean }> {
+    return this.fetchJson<{ valid: boolean }>("/v1/attestation/cbtc", {
+      method: "POST",
+      body: JSON.stringify(proof),
+    });
   }
 
-  async resolveIdentity(did: string): Promise<BuilderIdentity> {
-    return this.post("/api/v1/identity/resolve", { did });
+  // ── Settlement & Job Cards ──
+
+  async settleJobCard(card: JobCard): Promise<SettlementResult> {
+    return this.fetchJson<SettlementResult>("/v1/settlement/job-card", {
+      method: "POST",
+      body: JSON.stringify(card),
+    });
   }
 
-  async resolveMachineIdentity(machineId: string): Promise<{ identity: BuilderIdentity }> {
-    return this.post("/api/v1/identity/resolve/machine", { machine_id: machineId });
-  }
-
-  // ── Settlement ──
-
-  async settleJobCard(card: JobCard, feeHeaders?: Record<string, string>): Promise<SettlementResult> {
-    return this.post("/api/v1/settle", { card, fee_headers: feeHeaders });
+  async settleM2M(settlement: M2MSettlement): Promise<{ txId: string }> {
+    return this.fetchJson<{ txId: string }>("/v1/settlement/m2m", {
+      method: "POST",
+      body: JSON.stringify(settlement),
+    });
   }
 
   async getExternalSettlements(params?: {
@@ -143,51 +105,43 @@ export class GatewayClient {
     from?: number;
     to?: number;
   }): Promise<SettlementResult[]> {
-    const qs = new URLSearchParams();
-    if (params?.rail) qs.set("rail", params.rail);
-    if (params?.from) qs.set("from", String(params.from));
-    if (params?.to) qs.set("to", String(params.to));
-    return this.get(`/api/v1/settlements/external?${qs}`);
+    const q = new URLSearchParams();
+    if (params?.rail) q.set("rail", params.rail);
+    if (params?.from) q.set("from", String(params.from));
+    if (params?.to) q.set("to", String(params.to));
+    const queryStr = q.toString() ? `?${q.toString()}` : "";
+    return this.fetchJson<SettlementResult[]>(`/v1/settlement/history${queryStr}`);
   }
 
-  async toggleBountyPayouts(enabled: boolean): Promise<{ enabled: boolean }> {
-    return this.post("/api/v1/bounties/payouts/toggle", { enabled });
+  // ── ALEX / Stacks ──
+
+  async getAlexQuote(params: { from: string; to: string; amount: string }): Promise<{
+    quoteId: string;
+    expectedOutput: string;
+    minOutput: string;
+    feeSat: bigint;
+  }> {
+    return this.fetchJson("/v1/swap/alex/quote", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
   }
 
-  // ── Chains ──
-
-  async listSupportedChains(): Promise<ChainId[]> {
-    return this.get("/api/v1/chains/list");
+  async prepareAlexSwap(quote: unknown): Promise<Record<string, unknown>> {
+    return this.fetchJson("/v1/swap/alex/prepare", {
+      method: "POST",
+      body: JSON.stringify(quote),
+    });
   }
 
-  async getChainHeight(chain: ChainId): Promise<{ chain: ChainId; height: number }> {
-    return this.get(`/api/v1/chains/${chain}/height`);
+  async executeAlexSwap(prepared: Record<string, unknown>): Promise<{ txId: string }> {
+    return this.fetchJson<{ txId: string }>("/v1/swap/alex/execute", {
+      method: "POST",
+      body: JSON.stringify(prepared),
+    });
   }
 
-  async prepareChainTx(chain: ChainId, tx: Record<string, unknown>): Promise<{ prepared: string }> {
-    return this.post(`/api/v1/chains/${chain}/prepare`, tx);
-  }
-
-  async verifyStateProof(chain: ChainId, proof: Record<string, unknown>): Promise<{ valid: boolean }> {
-    return this.post(`/api/v1/chains/${chain}/verify`, proof);
-  }
-
-  // ── ALEX Swap ──
-
-  async getAlexQuote(params: { from: string; to: string; amount: string }): Promise<{ quote: Record<string, unknown> }> {
-    const qs = new URLSearchParams(params);
-    return this.get(`/api/v1/alex/quote?${qs}`);
-  }
-
-  async prepareAlexSwap(params: Record<string, unknown>): Promise<{ prepared: Record<string, unknown> }> {
-    return this.post("/api/v1/alex/prepare", params);
-  }
-
-  async executeAlexSwap(params: Record<string, unknown>): Promise<{ txId: string }> {
-    return this.post("/api/v1/alex/swap", params);
-  }
-
-  // ── DLC ──
+  // ── DLC Bonds ──
 
   async createDlcBond(params: {
     oracle: string;
@@ -195,82 +149,141 @@ export class GatewayClient {
     amountSat: bigint;
     maturity: number;
   }): Promise<DlcBond> {
-    return this.post("/api/v1/dlc/bond", params);
+    return this.fetchJson<DlcBond>("/v1/dlc/bond", {
+      method: "POST",
+      body: JSON.stringify({ ...params, amountSat: params.amountSat.toString() }),
+    });
   }
 
   // ── MuSig2 ──
 
   async aggregateMusig2Keys(publicKeys: string[]): Promise<Musig2KeyAggregation> {
-    return this.post("/api/v1/musig2/aggregate-keys", { public_keys: publicKeys });
+    return this.fetchJson<Musig2KeyAggregation>("/v1/musig2/aggregate", {
+      method: "POST",
+      body: JSON.stringify({ publicKeys }),
+    });
   }
 
-  // ── M2M Settlement ──
+  // ── Identity & Reputation ──
 
-  async settleM2M(settlement: M2MSettlement): Promise<{ txId: string }> {
-    return this.post("/api/v1/m2m/settle", settlement);
+  async resolveIdentity(did: string): Promise<BuilderIdentity> {
+    return this.fetchJson<BuilderIdentity>(`/v1/identity/${encodeURIComponent(did)}`);
   }
 
-  // ── Bitcoin / Mempool ──
-
-  async getMempoolTelemetry(): Promise<Record<string, unknown>> {
-    return this.get("/api/v1/bitcoin/mempool/telemetry");
+  async exchangeIdentity(did: string): Promise<BuilderIdentity> {
+    return this.fetchJson<BuilderIdentity>("/v1/identity/exchange", {
+      method: "POST",
+      body: JSON.stringify({ did }),
+    });
   }
 
-  async getShadowObservation(): Promise<Record<string, unknown>> {
-    return this.get("/api/v1/bitcoin/core/shadow-observation");
+  async resolveMachineIdentity(machineId: string): Promise<Record<string, unknown>> {
+    return this.fetchJson(`/v1/identity/machine/${encodeURIComponent(machineId)}`);
   }
 
-  // ── ISO 20022 ──
+  // ── Multi-Chain ──
 
-  async generateIsoPayment(params: Record<string, unknown>): Promise<{ payment: string }> {
-    return this.post("/api/v1/iso20022/payment", params);
+  async listSupportedChains(): Promise<ChainId[]> {
+    return this.fetchJson<ChainId[]>("/v1/chains");
   }
 
-  // ── Canton / RWA ──
-
-  async verifyCbtcAttestation(proof: Record<string, unknown>): Promise<{ valid: boolean }> {
-    return this.post("/api/v1/canton/cbtc/verify", proof);
+  async verifyStateProof(chain: ChainId, proof: Record<string, unknown>): Promise<{ valid: boolean }> {
+    return this.fetchJson<{ valid: boolean }>(`/v1/chains/${chain}/verify-proof`, {
+      method: "POST",
+      body: JSON.stringify(proof),
+    });
   }
 
-  async verifyMachineRwaRevenue(machineId: string): Promise<{ revenue: number }> {
-    return this.post("/api/v1/rwa/machine/verify-revenue", { machine_id: machineId });
+  async prepareChainTx(chain: ChainId, tx: Record<string, unknown>): Promise<Record<string, unknown>> {
+    return this.fetchJson(`/v1/chains/${chain}/prepare-tx`, {
+      method: "POST",
+      body: JSON.stringify(tx),
+    });
   }
 
-  // ── CCIP ──
+  // ── CCIP Intent Routing ──
 
-  async routeCcipMessage(message: Record<string, unknown>): Promise<{ routed: boolean }> {
-    return this.post("/api/v1/ccip/route", message);
+  async routeCcipMessage(message: Record<string, unknown>): Promise<{ messageId: string }> {
+    return this.fetchJson<{ messageId: string }>("/v1/intent/ccip/route", {
+      method: "POST",
+      body: JSON.stringify(message),
+    });
   }
 
-  // ── Handoff ──
+  // ── CJCS & Bounties ──
 
-  async getHandoffStatus(): Promise<Record<string, unknown>> {
-    return this.get("/api/v1/handoff/status");
+  async toggleBountyPayouts(enabled: boolean): Promise<{ enabled: boolean }> {
+    return this.fetchJson<{ enabled: boolean }>("/v1/cjcs/bounties/toggle", {
+      method: "POST",
+      body: JSON.stringify({ enabled }),
+    });
   }
 
-  async updateHandoffState(state: Record<string, unknown>): Promise<void> {
-    return this.post("/api/v1/handoff/update", state);
-  }
-
-  // ── Billing (MRR) ──
+  // ── Billing & Fee Submissions ──
 
   async generateMrrReport(usage: UsageMetrics): Promise<MrrReport> {
-    return this.post("/api/v1/erp/sync", usage);
+    return this.fetchJson<MrrReport>("/v1/billing/mrr", {
+      method: "POST",
+      body: JSON.stringify(usage),
+    });
   }
 
-  // ── Protocol Fee Report ──
-
-  async submitFeeReport(report: ProtocolFeeReport): Promise<{ accepted: boolean }> {
-    return this.post("/api/v1/settle", { fee_report: report });
+  async submitFeeReport(report: ProtocolFeeReport): Promise<{ received: boolean }> {
+    return this.fetchJson<{ received: boolean }>("/v1/billing/fee-report", {
+      method: "POST",
+      body: JSON.stringify(report),
+    });
   }
 
-  // ── Admin ──
+  // ── Governance, Releases & Handoff ──
 
-  async requestReleaseApproval(version: string, notes: string): Promise<{ approved: boolean }> {
-    return this.post("/admin/v1/releases/request-approval", { version, notes });
+  async requestReleaseApproval(version: string, notes: string): Promise<{ requestId: string }> {
+    return this.fetchJson<{ requestId: string }>("/v1/release/approval", {
+      method: "POST",
+      body: JSON.stringify({ version, notes }),
+    });
   }
 
-  async submitGovernanceDecision(decision: Record<string, unknown>): Promise<void> {
-    return this.post("/admin/v1/governance/decision", decision);
+  async submitGovernanceDecision(decision: Record<string, unknown>): Promise<{ decisionId: string }> {
+    return this.fetchJson<{ decisionId: string }>("/v1/governance/decision", {
+      method: "POST",
+      body: JSON.stringify(decision),
+    });
+  }
+
+  async getHandoffStatus(): Promise<Record<string, unknown>> {
+    return this.fetchJson("/v1/handoff/status");
+  }
+
+  async updateHandoffState(state: Record<string, unknown>): Promise<{ updated: boolean }> {
+    return this.fetchJson<{ updated: boolean }>("/v1/handoff/state", {
+      method: "PUT",
+      body: JSON.stringify(state),
+    });
+  }
+
+  // ── ISO 20022 & RWA ──
+
+  async generateIsoPayment(params: Record<string, unknown>): Promise<{ xml: string }> {
+    return this.fetchJson<{ xml: string }>("/v1/iso20022/payment", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  async verifyMachineRwaRevenue(machineId: string): Promise<{ revenueSat: bigint; verified: boolean }> {
+    return this.fetchJson<{ revenueSat: bigint; verified: boolean }>(
+      `/v1/rwa/machine/${encodeURIComponent(machineId)}/revenue`,
+    );
+  }
+
+  // ── System Health & Metrics ──
+
+  async getState(): Promise<Record<string, unknown>> {
+    return this.fetchJson("/v1/system/state");
+  }
+
+  async getMetrics(): Promise<Record<string, unknown>> {
+    return this.fetchJson("/v1/system/metrics");
   }
 }

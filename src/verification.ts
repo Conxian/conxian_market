@@ -1,29 +1,27 @@
 /**
- * Conxian Verification Module.
+ * Conxian Gateway Verifier — Attestation & TrustTier Detection.
  *
- * Real verification of attestation proofs via conxian-gateway
- * and conxian-nexus REST APIs. Replaces the stub verifier functions
- * in fee_calculator.ts with actual API-driven verification.
+ * Integrates with conxian-gateway /conxian-nexus for TEE and ZK proof
+ * verification. Degrades tiers gracefully when P0 attestation gaps exist.
  *
- * P0-gated: attestation verification returns ObserverOnly until
- * enclave-sdk P0-1..P0-3 (AWS Nitro, Android KeyMint, attestation roots) resolve.
+ * Tiers:
+ *   - Strict:       TEE (Nitro/KeyMint) + ZK proof (Groth16/Plonky2)
+ *   - Managed:      Enclave attestation without ZK proof
+ *   - Expedient:    Light client proof (SPV/MMR)
+ *   - ObserverOnly: No proof (read-only)
  */
 
-import type { AttestationCertificate, FeatureFlags, TrustTier } from "./core_types.ts";
-import { TrustTier as Tier } from "./core_types.ts";
-import { DEFAULT_FEATURE_FLAGS } from "./core_types.ts";
-import type { GatewayClient } from "./gateway_client.ts";
-
-// ── Verifier Interface ──
+import type { AttestationCertificate, FeatureFlags, TrustTier } from "./core_types";
+import { TrustTier as Tier } from "./core_types";
+import { DEFAULT_FEATURE_FLAGS } from "./core_types";
+import type { GatewayClient } from "./gateway_client";
 
 export interface Verifier {
+  detectTier(cert: AttestationCertificate): Promise<TrustTier>;
   verifyTeeZk(teeProof: string, zkProof: string): Promise<boolean>;
   verifyEnclave(proof: string): Promise<boolean>;
   verifyLight(proof: string): Promise<boolean>;
-  detectTier(cert: AttestationCertificate): Promise<TrustTier>;
 }
-
-// ── Gateway-Backed Verifier ──
 
 export class GatewayVerifier implements Verifier {
   constructor(

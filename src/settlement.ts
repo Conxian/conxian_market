@@ -22,11 +22,11 @@ import type {
   TrustTier,
   VtxoTransfer,
   YieldOpportunity,
-} from "./core_types.ts";
-import { SettlementRail as Rail, TrustTier as Tier } from "./core_types.ts";
-import { DEFAULT_FEATURE_FLAGS } from "./core_types.ts";
-import type { GatewayClient } from "./gateway_client.ts";
-import type { Verifier } from "./verification.ts";
+} from "./core_types";
+import { SettlementRail as Rail, TrustTier as Tier } from "./core_types";
+import { DEFAULT_FEATURE_FLAGS } from "./core_types";
+import type { GatewayClient } from "./gateway_client";
+import type { Verifier } from "./verification";
 
 // ── Settlement Orchestrator ──
 
