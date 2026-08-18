@@ -2,8 +2,8 @@
  * @conxian/market-sdk — Conxian Market SDK
  *
  * Full integration bridge: fee calculator, gateway client,
- * verification, settlement orchestration, and SDK capability
- * wiring for all 27 enclave-sdk + lib-conxian-core modules.
+ * verification, settlement orchestration, autonomous SLA bounty engine,
+ * and SDK capability wiring for all 27 enclave-sdk + lib-conxian-core modules.
  *
  * Quick start:
  * ```typescript
@@ -30,6 +30,9 @@
  *   tier,
  *   builderId: "did:conxian:builder-001",
  * });
+ *
+ * // Evaluate SLA & generate gap cards
+ * const slaResult = sdk.evaluateSla(jobCard, new Date().toISOString());
  * ```
  */
 
@@ -44,53 +47,23 @@ export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./
 export { SettlementOrchestrator, RAIL_CAPABILITIES } from "./settlement";
 export type { RailCapability } from "./settlement";
 
+export { SlaEngine, DEFAULT_SLA_RULESET, URGENCY_PRICING_TABLE } from "./sla_engine";
+export type {
+  GapCard,
+  SlaEvaluationResult,
+  BuilderReputationRecord,
+  UrgencyTier,
+  SlaRule,
+  SlaRuleId,
+  SlaAction,
+  SlaCondition,
+} from "./sla_engine";
+
 export {
   detectTrustTier,
   calculateRailFee,
   selectRail,
-  generateFeeReport,
   projectRevenue,
-  toWireHeaders,
-  TrustTier,
-  SettlementRail,
-} from "./fee_calculator";
-export type {
-  AttestationHeaders,
-  FeeResult,
-  FeeReport,
-  RailPreference,
-  SettlementEvent,
 } from "./fee_calculator";
 
-export {
-  TrustTier as TrustTierEnum,
-  DEFAULT_FEATURE_FLAGS,
-  ChainId,
-  JobCardStatus,
-  DlcBondStatus,
-} from "./core_types";
-export type {
-  FeatureFlags,
-  AttestationCertificate,
-  AttestationResult,
-  ProtocolFeeRecord,
-  ProtocolFeeReport,
-  RailFeeBreakdown,
-  TierFeeBreakdown,
-  SettlementRequest,
-  SettlementResult,
-  JobCard,
-  SlaTemplate,
-  DlcBond,
-  Musig2KeyAggregation,
-  VtxoTransfer,
-  M2MSettlement,
-  BuilderIdentity,
-  SettlementIntent,
-  AgentCreditScore,
-  YieldOpportunity,
-  UsageMetrics,
-  MrrReport,
-  RevenueScenario,
-  RevenueProjection,
-} from "./core_types";
+export * from "./core_types";
