@@ -1,28 +1,21 @@
 /**
- * @conxian/market-sdk — Conxian Market SDK
+ * Conxian Market SDK — Main Export.
  *
- * Full integration bridge: fee calculator, gateway client,
- * verification, settlement orchestration, autonomous SLA bounty engine,
- * and SDK capability wiring for all 27 enclave-sdk + lib-conxian-core modules.
+ * Value & Orchestration Layer for the Conxian Marketplace.
  *
- * Quick start:
+ * Usage:
  * ```typescript
  * import { ConxianMarketSDK } from "@conxian/market-sdk";
  *
  * const sdk = await ConxianMarketSDK.connect({
- *   baseUrl: "https://gateway.conxian.io",
- *   apiToken: process.env.CONXIAN_API_TOKEN!,
+ *   baseUrl: "https://gateway.conxian.dev",
+ *   apiToken: "api-key",
  * });
  *
- * // Detect trust tier
- * const tier = await sdk.detectTrustTier({
- *   "x-conxian-light-proof": "...",
- * });
+ * // Detect tier from request headers
+ * const tier = await sdk.detectTrustTier(req.headers);
  *
- * // Calculate fee
- * const fee = sdk.calculateFee(100_000n, tier, "LIGHTNING");
- *
- * // Execute settlement
+ * // Execute multi-rail settlement
  * const result = await sdk.executeSettlement({
  *   id: "settle-001",
  *   amountSat: 100_000n,
@@ -33,6 +26,9 @@
  *
  * // Evaluate SLA & generate gap cards
  * const slaResult = sdk.evaluateSla(jobCard, new Date().toISOString());
+ *
+ * // Generate Telemetry & Treasury Health Snapshot
+ * const health = sdk.getHealthSnapshot({ sbtc, fedimints, babylon, treasury });
  * ```
  */
 
@@ -48,16 +44,22 @@ export { SettlementOrchestrator, RAIL_CAPABILITIES } from "./settlement";
 export type { RailCapability } from "./settlement";
 
 export { SlaEngine, DEFAULT_SLA_RULESET, URGENCY_PRICING_TABLE } from "./sla_engine";
+
+export { MonitoringWatcher, DEFAULT_TARGET_ALLOCATION } from "./monitoring_watcher";
 export type {
-  GapCard,
-  SlaEvaluationResult,
-  BuilderReputationRecord,
-  UrgencyTier,
-  SlaRule,
-  SlaRuleId,
-  SlaAction,
-  SlaCondition,
-} from "./sla_engine";
+  HealthStatus,
+  SbtcHealthInput,
+  SbtcHealthResult,
+  FedimintMintInput,
+  FedimintHealthResult,
+  BabylonStakingInput,
+  BabylonHealthResult,
+  AssetAllocation,
+  TargetAllocationPct,
+  TreasuryRunwayInput,
+  TreasuryRunwayResult,
+  UnifiedHealthSnapshot,
+} from "./monitoring_watcher";
 
 export {
   detectTrustTier,
@@ -65,5 +67,12 @@ export {
   selectRail,
   projectRevenue,
 } from "./fee_calculator";
-
-export * from "./core_types";
+export { TrustTier, SettlementRail, ChainId } from "./core_types";
+export type {
+  JobCard,
+  ProtocolFeeRecord,
+  ProtocolFeeReport,
+  SettlementRequest,
+  SettlementResult,
+  FeatureFlags,
+} from "./core_types";

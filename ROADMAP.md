@@ -35,6 +35,8 @@ We operate as a **Data-First** organization. We do not waste resources building 
 
 **Goal:** Activate value capture through external rail integration and build trust infrastructure.
 
+- [x] **SLA Bounty & Gap Card Engine (Session 49):** Autonomous SLA watcher and CJCS gap card generator per `sla_bounty_system.md` (`sla_engine.ts`).
+- [ ] **Telemetry & Treasury Health Watcher (Session 50):** Autonomous health monitoring for sBTC peg, Fedimint mints, Babylon staking, and treasury runway per `monitoring.md` (`monitoring_watcher.ts`).
 - [ ] **External Settlement Integration (CON-1427 REDIRECT):** Implement functional adapters for established DeFi protocols (ALEX, Uniswap) to replace no-op internal fee placeholders.
 - [ ] **Build the Escrow Layer (ERC-8183):** Functional programmable settlement to ensure builders (internal/external) are paid using external liquidity.
 - [ ] **Unit of Account Standardization:** Standardize on external stablecoins (USDC, USDT, sBTC) for the AI Office rather than building a proprietary stablecoin (CON-1425 PIVOT).
@@ -47,47 +49,14 @@ We operate as a **Data-First** organization. We do not waste resources building 
 - [ ] **Founder Vesting Setup:** 4-year cliff schedule
 - [ ] **Treasury Reporting:** Monthly transparency dashboard
 
+---
+
 ## 🤖 Phase 2: The "AI Office" & Federated Integration (Months 3-4)
 
-**Goal:** Launch the Sovereign OS (DD) as the interface for coordinating specialized federated agents.
+**Goal:** Launch high-utility industrial AI agents ("Productive AI") using edge compute and BYOK keys.
 
-- [ ] **Deploy the 'Thin Orchestrator':** Refactor the Hub to coordinate MCP handoffs between external AI providers (Bittensor, Fetch.ai, etc.) without bearing inference costs.
-- [ ] **npm SDK Release (CON-1440):** Publish the canonical `@conxian/sdk` to npm with production-ready interfaces for hardware-backed signing and MCP discovery.
-- [ ] **Standardize 'Operating Lane' Specification:** Declarative YAML rules that agents must ingest to operate under business constraints.
-- [ ] **Launch Reputation Registry:** Implement on-chain tracking of agent performance and reliability to guide user discovery.
-
-### Revenue Milestones
-
-| Metric | Target | Target Date |
-|:-------|:------:|:-----------:|
-| **Daily Volume** | $33K+ | Month 6 |
-| **Active Builders** | 50+ | Month 4 |
-| **Monthly Revenue** | $20K | Month 6 |
-| **Treasury Runway** | 12+ months | Month 3 |
-
-## 🏭 Phase 3: Industrial Scaling & Client Optionality (Months 5+)
-
-**Goal:** Capture high-MRR industrial revenue areas and enable sovereign on-prem deployment.
-
-- [ ] **Sovereign On-Prem Bundle:** Package the Hub, Gateway, and Nexus as a dockerized "Sovereign Server" for behind-firewall enterprise deployment.
-- [ ] **Reduce Wallet to Reference App (CON-1135):** Constrain the Conxius Wallet to a minimal reference client to prove the SDK/security model across any external rail.
-- [ ] **Supply Chain Swarm Adapters:** Implement Nexus adapters for logistics protocols (Fedimint, Citrea).
-- [ ] **Developer Sandbox (CON-1437):** Frictionless onboarding (TTFV < 15 mins) for builders to publish to the Marketplace.
+- [ ] **Edge Inference & BYOK Enforcement:** Ensure AI Office agents run inference locally or via user-provided API keys.
+- [ ] **Industrial/Enterprise Agent Suite:** Deploy financial, logistics, and legal compliance workflows.
+- [ ] **Federated Agent Network (MCP Integration):** Enable cross-agent handoffs using Model Context Protocol.
 
 ---
-## 🛑 The "Discard" Mandate
-
-- **Discard** any proprietary DeFi development (conxian/conxian). We orchestrate, we don't recreate.
-- **Stop** building broad architectural concepts. Every new line of code must contribute to **Functional Depth** in orchestration and settlement.
-- **Don't Build Agents:** Stop building proprietary agents that compete with the open market. Focus on **Orchestration** and **Marketplace Infrastructure**.
-
----
-
-## 📊 Treasury Health Indicators
-
-| Indicator | Healthy | Warning | Critical |
-|:----------|:-------:|:-------:|:--------:|
-| **Runway** | 12+ months | 6 months | 3 months |
-| **Daily Volume** | $33K+ | $15K | $5K |
-| **Monthly Revenue** | $20K+ | $10K | $3K |
-| **Stablecoin %** | 40%+ | 25% | 15% |

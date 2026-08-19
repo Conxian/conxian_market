@@ -1,8 +1,8 @@
 /**
  * Conxian Market SDK Bridge — Comprehensive Capability Wiring.
  *
- * This module provides a single entry point that wires all 27 SDK
- * capabilities (11 core + 16 enclave-sdk) into the market layer.
+ * This module provides a single entry point that wires all 28 SDK
+ * capabilities (11 core + 16 enclave-sdk + 1 monitoring-watcher) into the market layer.
  *
  * Architecture:
  *   Market SDK Bridge
@@ -11,15 +11,8 @@
  *   ├── GatewayVerifier     → attestation verification via gateway + nexus
  *   ├── FeeCalculator       → tier detection, fee computation, revenue projection
  *   ├── SlaEngine           → autonomous SLA enforcement & CJCS gap card generation
+ *   ├── MonitoringWatcher   → telemetry, peg status, Fedimint, Babylon & treasury health
  *   └── FeatureFlags        → P0-gated capability degradation
- *
- * SDK capabilities wired (Session 48):
- *   Core (11): control_model, cjcs, verifier, stacks, rgb, babylon,
- *              fedimint, enclave, deployment, lightning, bitcoin
- *   Enclave (16): statechain, frost, dlc, ark, swap_router,
- *                 settlement_service, stablecoin_orchestrator, solver,
- *                 economy, job_card, identity, zkml, opportunity,
- *                 credit, intent, sidl
  */
 
 import type {
@@ -59,16 +52,25 @@ import { SettlementOrchestrator } from "./settlement";
 import { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification";
 import { SlaEngine } from "./sla_engine";
 import type { GapCard, SlaEvaluationResult, BuilderReputationRecord } from "./sla_engine";
+import {
+  MonitoringWatcher,
+  type BabylonStakingInput,
+  type FedimintMintInput,
+  type SbtcHealthInput,
+  type TreasuryRunwayInput,
+  type UnifiedHealthSnapshot,
+} from "./monitoring_watcher";
 
 export interface CapabilitySummary {
   coreCapabilities: number; // 11
   enclaveCapabilities: number; // 16
-  totalCapabilities: number; // 27
+  totalCapabilities: number; // 28
   activeRails: SettlementRail[];
   activeTiers: TrustTier[];
   p0GapsDetected: string[];
   coreModules: Record<string, boolean>;
   enclaveModules: Record<string, boolean>;
+  monitoringWatcherEnabled: boolean;
 }
 
 export class ConxianMarketSDK {
@@ -76,6 +78,7 @@ export class ConxianMarketSDK {
   readonly verifier: GatewayVerifier;
   readonly settlement: SettlementOrchestrator;
   readonly slaEngine: SlaEngine;
+  readonly monitoringWatcher: MonitoringWatcher;
   readonly flags: FeatureFlags;
 
   private constructor(
@@ -87,6 +90,7 @@ export class ConxianMarketSDK {
     this.verifier = new GatewayVerifier(this.gateway, flags);
     this.settlement = new SettlementOrchestrator(this.gateway, this.verifier, flags);
     this.slaEngine = new SlaEngine();
+    this.monitoringWatcher = new MonitoringWatcher();
   }
 
   /** Connect to gateway and instantiate full Market SDK Bridge */
@@ -164,7 +168,18 @@ export class ConxianMarketSDK {
     return SlaEngine.updateBuilderReputation(current, event);
   }
 
-  // ── Capability Summary (All 27 Modules Wired) ──
+  // ── Capability 7: Telemetry & Treasury Health Watcher ──
+
+  getHealthSnapshot(params: {
+    sbtc: SbtcHealthInput;
+    fedimints: FedimintMintInput[];
+    babylon: BabylonStakingInput;
+    treasury: TreasuryRunwayInput;
+  }): UnifiedHealthSnapshot {
+    return this.monitoringWatcher.createSnapshot(params);
+  }
+
+  // ── Capability Summary (All Modules Wired) ──
 
   getCapabilitySummary(): CapabilitySummary {
     const p0Gaps: string[] = [];
@@ -175,7 +190,7 @@ export class ConxianMarketSDK {
     return {
       coreCapabilities: 11,
       enclaveCapabilities: 16,
-      totalCapabilities: 27,
+      totalCapabilities: 28,
       activeRails: this.settlement.availableRails(Tier.Strict),
       activeTiers: this.flags.attestationAvailable
         ? [Tier.ObserverOnly, Tier.Expedient, Tier.Managed, Tier.Strict]
@@ -212,6 +227,7 @@ export class ConxianMarketSDK {
         intent: true,
         sidl: true,
       },
+      monitoringWatcherEnabled: true,
     };
   }
 
@@ -228,3 +244,18 @@ export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./
 export { SettlementOrchestrator } from "./settlement";
 export { SlaEngine, DEFAULT_SLA_RULESET, URGENCY_PRICING_TABLE } from "./sla_engine";
 export type { GapCard, SlaEvaluationResult, BuilderReputationRecord, UrgencyTier, SlaRule } from "./sla_engine";
+export { MonitoringWatcher, DEFAULT_TARGET_ALLOCATION } from "./monitoring_watcher";
+export type {
+  HealthStatus,
+  SbtcHealthInput,
+  SbtcHealthResult,
+  FedimintMintInput,
+  FedimintHealthResult,
+  BabylonStakingInput,
+  BabylonHealthResult,
+  AssetAllocation,
+  TargetAllocationPct,
+  TreasuryRunwayInput,
+  TreasuryRunwayResult,
+  UnifiedHealthSnapshot,
+} from "./monitoring_watcher";
