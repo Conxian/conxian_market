@@ -1,72 +1,15 @@
-# Conxian Marketplace (conxian_market)
+# Conxian Market SDK (`@conxian/market-sdk`)
 
-## Repository scope and boundaries
+> **The Value, Settlement & SLA Enforcement Layer of the Conxian Ecosystem**
+> **Version:** 0.2.0 | **Status:** Active Production Core | **Capabilities:** 31 Integrated Modules
 
-This repository is the Conxian Marketplace and orchestration layer for the broader Conxian ecosystem. It is not the standalone public SDK, npm package root, or a generic client library for external consumption.
+---
 
-The market layer coordinates discovery, settlement, escrow, and treasury logic across the ecosystem and integrates with adjacent Conxian repos such as:
-- Conxian/Conxian — protocol/core contracts and on-chain governance
-- lib-conxian-core — shared protocol primitives and chain adapters
-- conxian-gateway — settlement rail and compliance middleware
-- conxian-nexus — verification, proof, and state synchronization
-- conxius-platform — CI/CD and control-plane orchestration
-- conxian-business — governance and operating model work
+## 🏛 Ecosystem Role & Boundary Alignment
 
-This repo is the value-layer coordination mechanism for the marketplace, not the canonical SDK distribution point or the entire Conxian stack.
+The `conxian_market` repository (`@conxian/market-sdk`) serves as the **orchestration, settlement, fee routing, SLA enforcement, and telemetry layer** for the Conxian ecosystem.
 
-### Chain-native boundary and anti-competition rule
-
-The marketplace must remain an orchestration and value-capture layer. It must not become a consumer-facing custody, wallet, data, or full DeFi platform that competes with the users and infrastructure owners it serves.
-
-The repo should only take on chain-native enforcement when it is the minimal, required settlement boundary for a chosen rail. In practice, this means:
-- universal chain support is an abstraction layer for routing, verification, and compatibility
-- consumer-owned custody, execution, and data remain outside this repo
-- any chain-native contract work is limited to the minimum required to enforce settlement truth on a specific rail
-- Stacks or any other chain is integrated only when it serves the market’s settlement and verification flow, not when it would expand into a competing ecosystem product
-
-## Dependency and integration coverage
-
-The marketplace repo is intentionally designed to consume the Conxian org stack at the correct abstraction layer:
-
-| Dependency | Status in this repo | Evidence | Notes |
-|:-----------|:-------------------|:---------|:------|
-| **Conxian/Conxian** | Indirect / protocol boundary | Shared ecosystem architecture and fee/governance docs | This repo does not own the protocol core itself; it coordinates settlement and marketplace logic around it. |
-| **lib-conxian-core** | **Directly used** | Shared trust-tier, chain, rail, and settlement type definitions in [src/core_types.ts](src/core_types.ts) | This is the main primitive dependency used by fee, settlement, and verification logic. |
-| **conxian-gateway** | **Directly used** | Gateway REST client and settlement execution pipeline in [src/gateway_client.ts](src/gateway_client.ts) and [src/settlement.ts](src/settlement.ts) | This is the primary live integration point for settlement and routing. |
-| **conxian-nexus** | **Partial integration** | Verification and trust-tier logic in [src/verification.ts](src/verification.ts) and bridge references in [src/sdk_bridge.ts](src/sdk_bridge.ts) | The repo depends on nexus concepts and proof semantics, but the actual implementation remains gateway-oriented and feature-gated by upstream maturity. |
-| **conxius-platform** | Indirect / orchestration boundary | CI/CD and control-plane references in the org docs and roadmap | This repo does not own platform infrastructure; it consumes platform-grade operations and release scaffolding as an adjacent layer. |
-| **conxian-business** | Governance / policy boundary | BOS and governance references in [docs/AGENTS.md](docs/AGENTS.md) and [docs/research/conxian_business_logic_analysis.md](docs/research/conxian_business_logic_analysis.md) | Business doctrine informs the repo, but this repo does not directly import business workflow modules. |
-
-### Current assessment
-
-This repo is already aligned to the org role it should play:
-- It uses the shared core primitives and the gateway settlement layer aggressively.
-- It partially consumes the trust/proof model represented by nexus.
-- It does not absorb the business or platform repos as direct runtime dependencies; those are separate governance and platform layers.
-- Remaining gaps are primarily upstream/infrastructure maturity issues, not missing imports inside this repo.
-
-### Org dependency gaps to track
-
-| Area | Current state | Dependency owner | Repo-level implication |
-|:-----|:--------------|:----------------|:----------------------|
-| **Core primitives** | Strong direct usage | lib-conxian-core | Market logic depends on shared trust tiers, rail definitions, and chain metadata. |
-| **Settlement rails** | Strong direct usage | conxian-gateway | Market flow is intentionally built around gateway APIs and settlement routing. |
-| **Proof verification** | Partial integration | conxian-nexus | The repo expects nexus-backed proof semantics, but actual runtime checks remain gateway-driven and feature-gated. |
-| **TEE attestation** | Upstream blocker | conxius-enclave-sdk | Strict trust tiers remain gated by unresolved P0 attestation issues. |
-| **CI/CD enforcement** | Upstream blocker | conxius-platform | Release quality gates and repo automation should come from platform-level enforcement. |
-| **Business rules / BOS** | Governance boundary | conxian-business | Business rationale is consumed conceptually, not as a runtime code dependency in this repo. |
-
-### Recommended next org actions
-
-1. Keep this repo focused on marketplace orchestration, fee routing, escrow logic, and settlement integration.
-2. Treat gateway and core as the active runtime dependencies this repo must keep aligned with.
-3. Treat nexus as the trust/proof enhancement layer to deepen integration when upstream verification services mature.
-4. Keep business and platform concerns in their own repos unless a direct runtime dependency is explicitly required.
-5. Track the remaining strict-tier blockers as upstream work, not as a reason to broaden this repo beyond its market role.
-
-## ⚡ The Production Settlement Core of the Conxian Ecosystem
-
-The Conxian Marketplace is the **primary value capture mechanism** for the entire Conxian ecosystem. It provides discovery, deployment, settlement, and escrow for autonomous AI labor.
+Rather than building proprietary smart contracts or AI agents, Conxian operates as a **Market-Agnostic, Zero-Custody Value Router** that orchestrates and monetizes industrial agent labor through programmable escrow (ERC-8183 / CJCS Job Cards), multi-rail Bitcoin/Stacks settlement, TrustTier verification, autonomous SLA enforcement, telemetry monitoring, and BYO DeFi protocol routing.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -75,79 +18,103 @@ The Conxian Marketplace is the **primary value capture mechanism** for the entir
 │                                                                          │
 │   All other Conxian repos are INFRASTRUCTURE that ENABLES the market.   │
 │                                                                          │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                    │
-│   │  Discovery  │  │  Settlement │  │   Escrow    │                    │
-│   │  (Agents)   │  │  (2% Fee)   │  │  (ERC-8183) │                    │
-│   └─────────────┘  └─────────────┘  └─────────────┘                    │
+│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐   │
+│   │  Discovery  │  │  Settlement │  │   Escrow    │  │  Zero-Custody│   │
+│   │  (Agents)   │  │ (2% Fee)    │  │ (ERC-8183)  │  │ BYO DeFi Router│   │
+│   └─────────────┘  └─────────────┘  └─────────────┘  └──────────────┘   │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 🏛 The Ethos: Sovereign, Productive, Federated
+---
 
-- **DeFi-Agnostic Orchestration:** We do not build proprietary DeFi protocols. We build the **Orchestration Layer** that allows AI labor to utilize *any* external financial primitive (EVM, Bitcoin L2s, etc.) as a settlement utility.
-- **Sovereign AI (BYOK) Mandate:** All agents must support Bring-Your-Own-Keys (BYOK). Intelligence is decoupled from cloud monopolies, ensuring users control their data, keys, and inference costs.
-- **Productive AI (Real Economy):** We prioritize "Productive" modules (logistics, finance, industrial management) that solve real-world efficiency gaps over consumer chatbots.
-- **Deployment Optionality:** To fulfill the "Sovereign" promise, Conxian supports multiple deployment lanes: Cloud-Orchestrated, Edge-Local (mobile/hardware), and **On-Prem Sovereign (behind-firewall)**.
-- **Multi-Dimensional Scaling:** Our infrastructure remains a "Thin Platform." We capture value through settlement fees while pushing compute costs to the edge.
+## 🔗 Dependency and Integration Coverage
 
-### 🛠 Core Architecture
+The Marketplace SDK is intentionally designed to consume the Conxian org stack at the correct abstraction layer:
 
-1. **The Hub (Thin Orchestrator):** Lightweight coordination of agent handoffs using the **Model Context Protocol (MCP)**.
-2. **The Escrow Layer (ERC-8183):** Programmable settlement that secures builder royalties and user funds using external liquidity rails.
-3. **The Builder Network:** A decentralized "App Store" where specialized agentic logic is published and monetized.
-4. **The Treasury Layer:** 2% protocol fee with 50/30/20 allocation for sustainable operations.
+| Dependency | Status in this Repo | Evidence / Module | Notes |
+|:-----------|:-------------------|:------------------|:------|
+| **Conxian/Conxian** | **Deprecated / Archived Reference** | [src/market_agnostic_router.ts](src/market_agnostic_router.ts) | Custom smart contract development is frozen to eliminate maintenance debt and audit overhead in favor of external BYO DeFi adapters. |
+| **lib-conxian-core** | **Directly Used** | [src/core_types.ts](src/core_types.ts) | Shared trust-tier, chain, rail, and settlement type definitions. |
+| **conxian-gateway** | **Directly Used** | [src/gateway_client.ts](src/gateway_client.ts) & [src/settlement.ts](src/settlement.ts) | Primary live integration point for REST endpoints and settlement execution. |
+| **conxian-nexus** | **Partial Integration** | [src/verification.ts](src/verification.ts) | Verification and trust-tier attestation semantics. |
+| **conxius-enclave-sdk** | **Security Dependency** | [src/verification.ts](src/verification.ts) & [src/bos_yield_splitter.ts](src/bos_yield_splitter.ts) | Enclave attestation (Nitro/KeyMint) and BYOK key handling. |
+| **conxius-platform** | **Control Plane** | Org docs & roadmap | CI/CD automation and release rulesets. |
+| **conxian-business** | **Governance Boundary** | [src/bos_yield_splitter.ts](src/bos_yield_splitter.ts) | Commercial packaging doctrine (80/10/10 split, fee decay, founder vesting). |
 
-### 🔗 Ecosystem Integration
+---
 
-| Component | Role | Status |
-|:----------|:-----|:-------|
-| **conxian-nexus** | Trust verification, ZK proofs | ✅ v0.4.19 |
-| **conxian-gateway** | Settlement rails, industrial ingress | ✅ v0.1.4 |
-| **conxius-enclave-sdk** | Hardware security, BYOK | ✅ v2.0.12 |
-| **lib-conxian-core** | 30+ chain adapters | ✅ v0.2.12 |
-| **Conxian/Conxian** | Smart contracts, fee collection | ✅ Mainnet |
+## 🛠 Integrated SDK Modules (31 Capabilities)
 
-### 📊 Economic Model
+The `@conxian/market-sdk` package exposes 31 integrated capabilities via `ConxianMarketSDK`:
 
+1. **Control Model (`verification.ts`)**: TrustTier detection & P0 gap degradation.
+2. **CJCS Escrow (`gateway_client.ts`)**: Programmable Job Card settlement & escrow.
+3. **Attestation Verifier (`verification.ts`)**: TEE (Nitro/KeyMint) & ZK proof validation via Nexus/Gateway.
+4. **Fee Calculator & Revenue Model (`fee_calculator.ts`)**: Tier-based pricing, discounts & revenue projections.
+5. **Settlement Orchestration (`settlement.ts`)**: Multi-rail settlement execution across 8+ rails.
+6. **Autonomous SLA Engine (`sla_engine.ts`)**: Automated job card evaluation, delay penalties, gap cards & builder reputation.
+7. **Telemetry & Treasury Watcher (`monitoring_watcher.ts`)**: sBTC peg health, Fedimint mints, Babylon staking & 12-month runway calculator.
+8. **TrustTier Middleware (`trust_tier_middleware.ts`)**: 4-stage pricing pipeline, SLA template resolution & wire headers.
+9. **BOS Yield Splitter (`bos_yield_splitter.ts`)**: 80/10/10 yield split, fee decay timeline, founder vesting & Thin Orchestrator BYOK guard.
+10. **Market-Agnostic Router (`market_agnostic_router.ts`)**: Zero-custody validation, BYO DeFi protocol adapter resolution, M2M MCP routing & deprecation advisory.
+
+---
+
+## 📊 Economic & Governance Framework
+
+- **Yield Matrix (80/10/10)**: 80% Builder, 10% Platform Treasury, 10% Ecosystem Stakeholders.
+- **Protocol Fee Structure**: 2.0% launch rate (50% Operations, 30% Founder Vesting, 20% Ecosystem Growth).
+- **Fee Decay Timeline**: 2.0% (0–12m), 1.5% (12–36m), 1.0% (36m+).
+- **Zero-Custody Mandate**: Conxian never touches or custodies client funds or private data.
+- **Thin Orchestrator & BYOK**: Centralized heavy AI inference is prohibited; compute runs at the edge or via user-provided keys.
+
+---
+
+## ⚡ Quick Start
+
+```typescript
+import { ConxianMarketSDK, SettlementRail, TrustTier } from "@conxian/market-sdk";
+
+// Initialize SDK
+const sdk = await ConxianMarketSDK.connect({
+  baseUrl: "https://gateway.conxian.io",
+});
+
+// Run 4-stage TrustTier Pricing & Routing Pipeline
+const pipelineResult = sdk.runTrustTierPipeline({
+  headers: { "x-conxian-light-proof": "spv_proof" },
+  amountSat: 100_000n,
+});
+
+console.log(`Effective Tier: ${pipelineResult.effectiveTier}`);
+console.log(`Protocol Fee: ${pipelineResult.fee.feeSat} sats (${pipelineResult.fee.feeBps} bps)`);
+
+// Validate Zero-Custody Compliance
+const custody = sdk.validateZeroCustody({
+  id: "settle-001",
+  sourceWalletAddress: "0xalice...",
+  destinationWalletAddress: "0xbob...",
+  amountSat: 100_000n,
+  rail: SettlementRail.EvmErc8183,
+  isClientKeyIsolated: true,
+  storesClientDataOnHub: false,
+});
+
+console.log(`Zero Custody Compliant: ${custody.isZeroCustodyCompliant}`);
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     PROTOCOL FEE: 2%                                    │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  USER PAYMENT → ERC-8183 ESCROW → SETTLEMENT                    │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                              │                                           │
-│                              ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                    100% RELEASED TO BUILDER                       │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                              │                                           │
-│                              ▼                                           │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                     PROTOCOL FEE: 2%                            │    │
-│  │                                                                  │    │
-│  │  50% → Operations (CI/CD, SDKs, Nexus, Audits)                   │    │
-│  │  30% → Founders (4-year vesting)                                │    │
-│  │  20% → Ecosystem (Grants, Liquidity, Bounties)                  │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
-```
 
-### 🚀 Roadmap: From Stubs to Economic Vitality
+---
 
-Our current focus is **Hardening the Orchestration Core**:
-- **Rail Integration:** Connecting the Marketplace to external DeFi protocols (ALEX, Uniswap) for functional settlement.
-- **Federated Standard:** Mandating the **MCP-only** handoff model for all third-party AI providers.
-- **Security Hardening:** Transitioning from Admin-Key control to DAO-governed Access Control (CON-1438).
+## 📚 Documentation & Research Index
 
-### 📚 Research Documents
-
-- [FUNDING_AND_ECONOMICS.md](docs/research/FUNDING_AND_ECONOMICS.md) - Complete funding model
-- [FULL_SYSTEM_ARCHITECTURE.md](docs/research/FULL_SYSTEM_ARCHITECTURE.md) - Ecosystem integration
-- [MARKET_UNIFIED_POSITIONING.md](docs/research/MARKET_UNIFIED_POSITIONING.md) - Unified enhancement blueprint
+- [docs/knowledge_base/operating_manual.md](docs/knowledge_base/operating_manual.md) - Operating manual & BOS doctrine
+- [docs/knowledge_base/trust_tier_pricing.md](docs/knowledge_base/trust_tier_pricing.md) - TrustTier pricing & routing pipeline
+- [docs/knowledge_base/sla_bounty_system.md](docs/knowledge_base/sla_bounty_system.md) - SLA engine & gap card spec
+- [docs/knowledge_base/monitoring.md](docs/knowledge_base/monitoring.md) - Telemetry & treasury watcher spec
+- [docs/GOVERNANCE.md](docs/GOVERNANCE.md) - Governance standards & zero-custody mandate
+- [ROADMAP.md](ROADMAP.md) - Multi-session roadmap & execution tracking
+- [docs/IMPLEMENTATION_TRACKER.md](docs/IMPLEMENTATION_TRACKER.md) - Live implementation tracker
 
 ---
 *Intelligence is a Utility. Sovereignty is a Right.*
