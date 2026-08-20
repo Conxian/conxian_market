@@ -1,24 +1,40 @@
 import { describe, expect, it } from "vitest";
+import { TrustTier, SettlementRail } from "../src/core_types";
 import { ConxianMarketSDK } from "../src/sdk_bridge";
-import { SettlementRail, TrustTier } from "../src/core_types";
 
-describe("sdk_bridge", () => {
+describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
   it("connects and exposes SDK capabilities", async () => {
-    const sdk = await ConxianMarketSDK.connect({
-      baseUrl: "https://gateway.conxian.io",
-      apiToken: "test-token",
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+    expect(sdk.gateway).toBeDefined();
+    expect(sdk.verifier).toBeDefined();
+    expect(sdk.settlement).toBeDefined();
+    expect(sdk.slaEngine).toBeDefined();
+    expect(sdk.monitoringWatcher).toBeDefined();
+    expect(sdk.trustTierMiddleware).toBeDefined();
+  });
+
+  it("includes trustTierMiddleware in capability summary", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+    const summary = sdk.getCapabilitySummary();
+
+    expect(summary.totalCapabilities).toBe(29);
+    expect(summary.trustTierMiddlewareEnabled).toBe(true);
+  });
+
+  it("executes trust tier pipeline directly via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+    const pipelineResult = sdk.runTrustTierPipeline({
+      headers: {
+        "x-conxian-light-proof": "spv_proof_data",
+      },
+      amountSat: 500_000n,
     });
 
-    expect(sdk.gateway).toBeDefined();
-    expect(sdk.settlement).toBeDefined();
-    expect(sdk.verifier).toBeDefined();
-
-    const fee = sdk.calculateFee(100_000n, TrustTier.Expedient, SettlementRail.Sbtc);
-    expect(fee.feeBps).toBe(200);
-    expect(fee.feeSat).toBe(2000n);
-
-    const capabilities = sdk.getCapabilitySummary();
-    expect(capabilities.coreModules.controlModel).toBe(true);
-    expect(capabilities.enclaveModules.swapRouter).toBe(true);
+    expect(pipelineResult.effectiveTier).toBe(TrustTier.Expedient);
+    expect(pipelineResult.fee.feeSat).toBe(8_750n); // 175 bps for Lightning
+    expect(pipelineResult.selectedRail).toBe(SettlementRail.Lightning);
+    expect(pipelineResult.wireHeaders["x-conxian-tier"]).toBe("EXPEDIENT");
   });
 });

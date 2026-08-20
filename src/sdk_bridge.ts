@@ -1,18 +1,19 @@
 /**
  * Conxian Market SDK Bridge — Comprehensive Capability Wiring.
  *
- * This module provides a single entry point that wires all 28 SDK
- * capabilities (11 core + 16 enclave-sdk + 1 monitoring-watcher) into the market layer.
+ * This module provides a single entry point that wires all 29 SDK
+ * capabilities (11 core + 16 enclave-sdk + 1 monitoring-watcher + 1 trust-tier-middleware) into the market layer.
  *
  * Architecture:
  *   Market SDK Bridge
- *   ├── GatewayClient      → conxian-gateway REST API (50+ endpoints)
- *   ├── SettlementOrch      → multi-rail settlement execution
- *   ├── GatewayVerifier     → attestation verification via gateway + nexus
- *   ├── FeeCalculator       → tier detection, fee computation, revenue projection
- *   ├── SlaEngine           → autonomous SLA enforcement & CJCS gap card generation
- *   ├── MonitoringWatcher   → telemetry, peg status, Fedimint, Babylon & treasury health
- *   └── FeatureFlags        → P0-gated capability degradation
+ *   ├── GatewayClient          → conxian-gateway REST API (50+ endpoints)
+ *   ├── SettlementOrch          → multi-rail settlement execution
+ *   ├── GatewayVerifier         → attestation verification via gateway + nexus
+ *   ├── FeeCalculator           → tier detection, fee computation, revenue projection
+ *   ├── SlaEngine               → autonomous SLA enforcement & CJCS gap card generation
+ *   ├── MonitoringWatcher       → telemetry, peg status, Fedimint, Babylon & treasury health
+ *   ├── TrustTierMiddleware     → 4-stage pricing & rail routing pipeline
+ *   └── FeatureFlags            → P0-gated capability degradation
  */
 
 import type {
@@ -60,17 +61,23 @@ import {
   type TreasuryRunwayInput,
   type UnifiedHealthSnapshot,
 } from "./monitoring_watcher";
+import {
+  TrustTierMiddleware,
+  type TrustTierPipelineRequest,
+  type TrustTierPipelineResult,
+} from "./trust_tier_middleware";
 
 export interface CapabilitySummary {
   coreCapabilities: number; // 11
   enclaveCapabilities: number; // 16
-  totalCapabilities: number; // 28
+  totalCapabilities: number; // 29
   activeRails: SettlementRail[];
   activeTiers: TrustTier[];
   p0GapsDetected: string[];
   coreModules: Record<string, boolean>;
   enclaveModules: Record<string, boolean>;
   monitoringWatcherEnabled: boolean;
+  trustTierMiddlewareEnabled: boolean;
 }
 
 export class ConxianMarketSDK {
@@ -79,6 +86,7 @@ export class ConxianMarketSDK {
   readonly settlement: SettlementOrchestrator;
   readonly slaEngine: SlaEngine;
   readonly monitoringWatcher: MonitoringWatcher;
+  readonly trustTierMiddleware: TrustTierMiddleware;
   readonly flags: FeatureFlags;
 
   private constructor(
@@ -91,6 +99,7 @@ export class ConxianMarketSDK {
     this.settlement = new SettlementOrchestrator(this.gateway, this.verifier, flags);
     this.slaEngine = new SlaEngine();
     this.monitoringWatcher = new MonitoringWatcher();
+    this.trustTierMiddleware = new TrustTierMiddleware(flags);
   }
 
   /** Connect to gateway and instantiate full Market SDK Bridge */
@@ -179,6 +188,12 @@ export class ConxianMarketSDK {
     return this.monitoringWatcher.createSnapshot(params);
   }
 
+  // ── Capability 8: TrustTier Pricing & Routing Middleware Pipeline ──
+
+  runTrustTierPipeline(request: TrustTierPipelineRequest): TrustTierPipelineResult {
+    return this.trustTierMiddleware.executePipeline(request);
+  }
+
   // ── Capability Summary (All Modules Wired) ──
 
   getCapabilitySummary(): CapabilitySummary {
@@ -190,7 +205,7 @@ export class ConxianMarketSDK {
     return {
       coreCapabilities: 11,
       enclaveCapabilities: 16,
-      totalCapabilities: 28,
+      totalCapabilities: 29,
       activeRails: this.settlement.availableRails(Tier.Strict),
       activeTiers: this.flags.attestationAvailable
         ? [Tier.ObserverOnly, Tier.Expedient, Tier.Managed, Tier.Strict]
@@ -228,6 +243,7 @@ export class ConxianMarketSDK {
         sidl: true,
       },
       monitoringWatcherEnabled: true,
+      trustTierMiddlewareEnabled: true,
     };
   }
 
@@ -259,3 +275,11 @@ export type {
   TreasuryRunwayResult,
   UnifiedHealthSnapshot,
 } from "./monitoring_watcher";
+export { TrustTierMiddleware, SLA_TEMPLATES, RAIL_ROUTING_MATRIX } from "./trust_tier_middleware";
+export type {
+  TrustTierHeaders,
+  TrustTierPipelineRequest,
+  TrustTierPipelineResult,
+  SlaTemplate,
+  PipelineWireHeaders,
+} from "./trust_tier_middleware";
