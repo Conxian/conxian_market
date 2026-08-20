@@ -46,18 +46,18 @@ Agents should be packaged in three tiers:
 - **Performance Cap:** 50% base, 50% DAO-voted bonus
 - **Emergency Limit:** Maximum 6-month compensation in escrow
 
-## 4. Settlement Rail Integration
-*Source: ALEX Launch Strategy*
+## 4. Settlement Rail Integration (BYO DeFi & Non-Custodial Doctrine)
+*Source: ALEX Launch Strategy & Session 53 Architecture Expansion*
 
-### A. Primary Rails (ALEX/Bitcoin)
-- **sBTC/USDC Pools:** Trustless Bitcoin settlement for AI labor
-- **ALEX Launchpad:** APower-based allocation mechanism
-- **Cross-Chain:** Fedimint, Citrea adapters
+### A. Non-Custodial & Market-Agnostic Routing
+- **Zero Custody:** Conxian never holds, touches, or custodies client funds or private data.
+- **BYO DeFi Adapters:** Clients select external audited protocols (ALEX sBTC/USDC pools, Uniswap v4 ERC-8183 escrow, Fedimint e-cash mints, Lightning routing nodes).
+- **Deprecation Advisory:** Proprietary smart contract development (`Conxian/Conxian`) is deprecated and recommended for archival to avoid contract maintenance debt and audit overhead.
 
-### B. Secondary Rails (EVM)
-- **ERC-8183 Escrow:** Programmable settlement standard
-- **Uniswap Integration:** EVM liquidity pools
-- **USDC/USDT:** Stable settlement currencies
+### B. Primary Rails (ALEX/Bitcoin & EVM)
+- **sBTC/USDC Pools:** Trustless Bitcoin settlement for AI labor via ALEX.
+- **ERC-8183 Escrow:** Programmable settlement standard for EVM chains.
+- **Federated Mints & Lightning:** Instant M2M e-cash micro-payments.
 
 ## 5. Sovereign OS (DD) Implementation Patterns
 *Source: Daemon-Dynamics Analysis*
@@ -85,5 +85,5 @@ Agents should be packaged in three tiers:
 ## 7. Maintenance & Updates
 - **Data-First:** Always audit repository state against the "Data-Driven Insights" report before major releases.
 - **Stub Policy:** Zero tolerance for non-functional placeholders in the "Settlement" or "Security" layers.
-- **Treasury Reviews:** Quarterly treasury health assessments
-- **Fee Audits:** Annual protocol fee structure review via DAO governance
+- **Treasury Reviews:** Quarterly treasury health assessments.
+- **Fee Audits:** Annual protocol fee structure review via DAO governance.

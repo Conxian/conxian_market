@@ -1,8 +1,8 @@
 /**
  * Conxian Market SDK Bridge — Comprehensive Capability Wiring.
  *
- * This module provides a single entry point that wires all 30 SDK
- * capabilities (11 core + 16 enclave-sdk + 1 monitoring-watcher + 1 trust-tier-middleware + 1 bos-yield-splitter) into the market layer.
+ * This module provides a single entry point that wires all 31 SDK
+ * capabilities (11 core + 16 enclave-sdk + 1 monitoring-watcher + 1 trust-tier-middleware + 1 bos-yield-splitter + 1 market-agnostic-router) into the market layer.
  *
  * Architecture:
  *   Market SDK Bridge
@@ -14,6 +14,7 @@
  *   ├── MonitoringWatcher       → telemetry, peg status, Fedimint, Babylon & treasury health
  *   ├── TrustTierMiddleware     → 4-stage pricing & rail routing pipeline
  *   ├── BosYieldSplitter        → 80/10/10 yield split, fee decay, founder vesting & thin orchestrator guard
+ *   ├── MarketAgnosticRouter    → zero-custody validation, BYO DeFi protocol routing & M2M MCP handoffs
  *   └── FeatureFlags            → P0-gated capability degradation
  */
 
@@ -76,11 +77,19 @@ import {
   type ProtocolFeeDistribution,
   type YieldSplit,
 } from "./bos_yield_splitter";
+import {
+  MarketAgnosticRouter,
+  type DefiProtocolAdapter,
+  type DeprecationAdvisory,
+  type M2mRouteResult,
+  type NonCustodialSettlementRequest,
+  type ZeroCustodyValidationResult,
+} from "./market_agnostic_router";
 
 export interface CapabilitySummary {
   coreCapabilities: number; // 11
   enclaveCapabilities: number; // 16
-  totalCapabilities: number; // 30
+  totalCapabilities: number; // 31
   activeRails: SettlementRail[];
   activeTiers: TrustTier[];
   p0GapsDetected: string[];
@@ -89,6 +98,7 @@ export interface CapabilitySummary {
   monitoringWatcherEnabled: boolean;
   trustTierMiddlewareEnabled: boolean;
   bosYieldSplitterEnabled: boolean;
+  marketAgnosticRouterEnabled: boolean;
 }
 
 export class ConxianMarketSDK {
@@ -99,6 +109,7 @@ export class ConxianMarketSDK {
   readonly monitoringWatcher: MonitoringWatcher;
   readonly trustTierMiddleware: TrustTierMiddleware;
   readonly bosYieldSplitter: typeof BosYieldSplitter;
+  readonly marketAgnosticRouter: typeof MarketAgnosticRouter;
   readonly flags: FeatureFlags;
 
   private constructor(
@@ -113,6 +124,7 @@ export class ConxianMarketSDK {
     this.monitoringWatcher = new MonitoringWatcher();
     this.trustTierMiddleware = new TrustTierMiddleware(flags);
     this.bosYieldSplitter = BosYieldSplitter;
+    this.marketAgnosticRouter = MarketAgnosticRouter;
   }
 
   /** Connect to gateway and instantiate full Market SDK Bridge */
@@ -225,6 +237,36 @@ export class ConxianMarketSDK {
     return BosYieldSplitter.verifyInferencePolicy(input);
   }
 
+  // ── Capability 10: Market-Agnostic Non-Custodial Router & BYO DeFi ──
+
+  validateZeroCustody(request: NonCustodialSettlementRequest): ZeroCustodyValidationResult {
+    return MarketAgnosticRouter.validateZeroCustody(request);
+  }
+
+  resolveDefiAdapter(rail: SettlementRail, preferredProtocol?: string): DefiProtocolAdapter {
+    return MarketAgnosticRouter.resolveDefiAdapter(rail, preferredProtocol);
+  }
+
+  routeM2mSettlement(
+    fromAgentDid: string,
+    toAgentDid: string,
+    amountSat: bigint,
+    rail: SettlementRail,
+    preferredProtocol?: string
+  ): M2mRouteResult {
+    return MarketAgnosticRouter.routeM2mSettlement(
+      fromAgentDid,
+      toAgentDid,
+      amountSat,
+      rail,
+      preferredProtocol
+    );
+  }
+
+  getDeprecationAdvisory(): DeprecationAdvisory {
+    return MarketAgnosticRouter.getDeprecationAdvisory();
+  }
+
   // ── Capability Summary (All Modules Wired) ──
 
   getCapabilitySummary(): CapabilitySummary {
@@ -236,7 +278,7 @@ export class ConxianMarketSDK {
     return {
       coreCapabilities: 11,
       enclaveCapabilities: 16,
-      totalCapabilities: 30,
+      totalCapabilities: 31,
       activeRails: this.settlement.availableRails(Tier.Strict),
       activeTiers: this.flags.attestationAvailable
         ? [Tier.ObserverOnly, Tier.Expedient, Tier.Managed, Tier.Strict]
@@ -276,6 +318,7 @@ export class ConxianMarketSDK {
       monitoringWatcherEnabled: true,
       trustTierMiddlewareEnabled: true,
       bosYieldSplitterEnabled: true,
+      marketAgnosticRouterEnabled: true,
     };
   }
 
@@ -325,3 +368,11 @@ export type {
   InferencePolicyInput,
   InferencePolicyResult,
 } from "./bos_yield_splitter";
+export { MarketAgnosticRouter } from "./market_agnostic_router";
+export type {
+  NonCustodialSettlementRequest,
+  ZeroCustodyValidationResult,
+  DefiProtocolAdapter,
+  M2mRouteResult,
+  DeprecationAdvisory,
+} from "./market_agnostic_router";

@@ -54,6 +54,15 @@ export type {
   InferencePolicyResult,
 } from "./bos_yield_splitter";
 
+export { MarketAgnosticRouter } from "./market_agnostic_router";
+export type {
+  NonCustodialSettlementRequest,
+  ZeroCustodyValidationResult,
+  DefiProtocolAdapter,
+  M2mRouteResult,
+  DeprecationAdvisory,
+} from "./market_agnostic_router";
+
 export {
   detectTrustTier,
   calculateRailFee,

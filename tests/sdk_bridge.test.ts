@@ -14,15 +14,17 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     expect(sdk.monitoringWatcher).toBeDefined();
     expect(sdk.trustTierMiddleware).toBeDefined();
     expect(sdk.bosYieldSplitter).toBeDefined();
+    expect(sdk.marketAgnosticRouter).toBeDefined();
   });
 
-  it("includes trustTierMiddleware and bosYieldSplitter in capability summary", async () => {
+  it("includes all modules in capability summary", async () => {
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(30);
+    expect(summary.totalCapabilities).toBe(31);
     expect(summary.trustTierMiddlewareEnabled).toBe(true);
     expect(summary.bosYieldSplitterEnabled).toBe(true);
+    expect(summary.marketAgnosticRouterEnabled).toBe(true);
   });
 
   it("executes trust tier pipeline directly via SDK bridge", async () => {
@@ -56,5 +58,39 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
       usesEnclaveSdk: false,
     });
     expect(policy.compliant).toBe(true);
+  });
+});
+
+describe("ConxianMarketSDK Bridge - Market-Agnostic Router Integration", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("includes marketAgnosticRouter in capability summary", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+    const summary = sdk.getCapabilitySummary();
+
+    expect(summary.totalCapabilities).toBe(31);
+    expect(summary.marketAgnosticRouterEnabled).toBe(true);
+  });
+
+  it("exposes zero-custody validation, BYO DeFi adapter resolution, and deprecation advisory directly", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const validation = sdk.validateZeroCustody({
+      id: "settle-100",
+      sourceWalletAddress: "0xalice",
+      destinationWalletAddress: "0xbob",
+      amountSat: 50_000n,
+      rail: SettlementRail.EvmErc8183,
+      isClientKeyIsolated: true,
+      storesClientDataOnHub: false,
+    });
+    expect(validation.isZeroCustodyCompliant).toBe(true);
+
+    const adapter = sdk.resolveDefiAdapter(SettlementRail.Sbtc);
+    expect(adapter.protocolName).toContain("ALEX");
+
+    const advisory = sdk.getDeprecationAdvisory();
+    expect(advisory.targetRepo).toBe("Conxian/Conxian");
+    expect(advisory.status).toBe("DEPRECATED_RECOMMENDED_ARCHIVE");
   });
 });
