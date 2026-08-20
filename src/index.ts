@@ -1,35 +1,7 @@
 /**
- * Conxian Market SDK — Main Export.
+ * Conxian Market SDK Main Index.
  *
- * Value & Orchestration Layer for the Conxian Marketplace.
- *
- * Usage:
- * ```typescript
- * import { ConxianMarketSDK } from "@conxian/market-sdk";
- *
- * const sdk = await ConxianMarketSDK.connect({
- *   baseUrl: "https://gateway.conxian.dev",
- *   apiToken: "api-key",
- * });
- *
- * // Detect tier from request headers
- * const tier = await sdk.detectTrustTier(req.headers);
- *
- * // Execute multi-rail settlement
- * const result = await sdk.executeSettlement({
- *   id: "settle-001",
- *   amountSat: 100_000n,
- *   rail: "LIGHTNING",
- *   tier,
- *   builderId: "did:conxian:builder-001",
- * });
- *
- * // Evaluate SLA & generate gap cards
- * const slaResult = sdk.evaluateSla(jobCard, new Date().toISOString());
- *
- * // Generate Telemetry & Treasury Health Snapshot
- * const health = sdk.getHealthSnapshot({ sbtc, fedimints, babylon, treasury });
- * ```
+ * Export all modules, interfaces, and types for market SDK consumers.
  */
 
 export { ConxianMarketSDK } from "./sdk_bridge";
@@ -44,6 +16,7 @@ export { SettlementOrchestrator, RAIL_CAPABILITIES } from "./settlement";
 export type { RailCapability } from "./settlement";
 
 export { SlaEngine, DEFAULT_SLA_RULESET, URGENCY_PRICING_TABLE } from "./sla_engine";
+export type { GapCard, SlaEvaluationResult, BuilderReputationRecord, UrgencyTier, SlaRule } from "./sla_engine";
 
 export { MonitoringWatcher, DEFAULT_TARGET_ALLOCATION } from "./monitoring_watcher";
 export type {
@@ -60,6 +33,35 @@ export type {
   TreasuryRunwayResult,
   UnifiedHealthSnapshot,
 } from "./monitoring_watcher";
+
+export { TrustTierMiddleware, SLA_TEMPLATES, RAIL_ROUTING_MATRIX } from "./trust_tier_middleware";
+export type {
+  TrustTierHeaders,
+  TrustTierPipelineRequest,
+  TrustTierPipelineResult,
+  SlaTemplate,
+  PipelineWireHeaders,
+} from "./trust_tier_middleware";
+
+export { BosYieldSplitter, FEE_DECAY_TIMELINE } from "./bos_yield_splitter";
+export type {
+  YieldSplit,
+  FeeDecayTier,
+  ProtocolFeeDistribution,
+  FounderVestingInput,
+  FounderVestingResult,
+  InferencePolicyInput,
+  InferencePolicyResult,
+} from "./bos_yield_splitter";
+
+export { MarketAgnosticRouter } from "./market_agnostic_router";
+export type {
+  NonCustodialSettlementRequest,
+  ZeroCustodyValidationResult,
+  DefiProtocolAdapter,
+  M2mRouteResult,
+  DeprecationAdvisory,
+} from "./market_agnostic_router";
 
 export {
   detectTrustTier,
