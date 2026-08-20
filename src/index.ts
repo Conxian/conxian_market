@@ -43,6 +43,17 @@ export type {
   PipelineWireHeaders,
 } from "./trust_tier_middleware";
 
+export { BosYieldSplitter, FEE_DECAY_TIMELINE } from "./bos_yield_splitter";
+export type {
+  YieldSplit,
+  FeeDecayTier,
+  ProtocolFeeDistribution,
+  FounderVestingInput,
+  FounderVestingResult,
+  InferencePolicyInput,
+  InferencePolicyResult,
+} from "./bos_yield_splitter";
+
 export {
   detectTrustTier,
   calculateRailFee,

@@ -1,8 +1,8 @@
 /**
  * Conxian Market SDK Bridge — Comprehensive Capability Wiring.
  *
- * This module provides a single entry point that wires all 29 SDK
- * capabilities (11 core + 16 enclave-sdk + 1 monitoring-watcher + 1 trust-tier-middleware) into the market layer.
+ * This module provides a single entry point that wires all 30 SDK
+ * capabilities (11 core + 16 enclave-sdk + 1 monitoring-watcher + 1 trust-tier-middleware + 1 bos-yield-splitter) into the market layer.
  *
  * Architecture:
  *   Market SDK Bridge
@@ -13,6 +13,7 @@
  *   ├── SlaEngine               → autonomous SLA enforcement & CJCS gap card generation
  *   ├── MonitoringWatcher       → telemetry, peg status, Fedimint, Babylon & treasury health
  *   ├── TrustTierMiddleware     → 4-stage pricing & rail routing pipeline
+ *   ├── BosYieldSplitter        → 80/10/10 yield split, fee decay, founder vesting & thin orchestrator guard
  *   └── FeatureFlags            → P0-gated capability degradation
  */
 
@@ -66,11 +67,20 @@ import {
   type TrustTierPipelineRequest,
   type TrustTierPipelineResult,
 } from "./trust_tier_middleware";
+import {
+  BosYieldSplitter,
+  type FounderVestingInput,
+  type FounderVestingResult,
+  type InferencePolicyInput,
+  type InferencePolicyResult,
+  type ProtocolFeeDistribution,
+  type YieldSplit,
+} from "./bos_yield_splitter";
 
 export interface CapabilitySummary {
   coreCapabilities: number; // 11
   enclaveCapabilities: number; // 16
-  totalCapabilities: number; // 29
+  totalCapabilities: number; // 30
   activeRails: SettlementRail[];
   activeTiers: TrustTier[];
   p0GapsDetected: string[];
@@ -78,6 +88,7 @@ export interface CapabilitySummary {
   enclaveModules: Record<string, boolean>;
   monitoringWatcherEnabled: boolean;
   trustTierMiddlewareEnabled: boolean;
+  bosYieldSplitterEnabled: boolean;
 }
 
 export class ConxianMarketSDK {
@@ -87,6 +98,7 @@ export class ConxianMarketSDK {
   readonly slaEngine: SlaEngine;
   readonly monitoringWatcher: MonitoringWatcher;
   readonly trustTierMiddleware: TrustTierMiddleware;
+  readonly bosYieldSplitter: typeof BosYieldSplitter;
   readonly flags: FeatureFlags;
 
   private constructor(
@@ -100,6 +112,7 @@ export class ConxianMarketSDK {
     this.slaEngine = new SlaEngine();
     this.monitoringWatcher = new MonitoringWatcher();
     this.trustTierMiddleware = new TrustTierMiddleware(flags);
+    this.bosYieldSplitter = BosYieldSplitter;
   }
 
   /** Connect to gateway and instantiate full Market SDK Bridge */
@@ -194,6 +207,24 @@ export class ConxianMarketSDK {
     return this.trustTierMiddleware.executePipeline(request);
   }
 
+  // ── Capability 9: BOS Commercial Yield Matrix & Thin Orchestrator Guard ──
+
+  calculateYieldSplit(grossAmountSat: bigint): YieldSplit {
+    return BosYieldSplitter.calculateYieldSplit(grossAmountSat);
+  }
+
+  distributeProtocolFee(grossAmountSat: bigint, monthsElapsed: number): ProtocolFeeDistribution {
+    return BosYieldSplitter.distributeProtocolFee(grossAmountSat, monthsElapsed);
+  }
+
+  evaluateFounderVesting(input: FounderVestingInput): FounderVestingResult {
+    return BosYieldSplitter.evaluateFounderVesting(input);
+  }
+
+  verifyInferencePolicy(input: InferencePolicyInput): InferencePolicyResult {
+    return BosYieldSplitter.verifyInferencePolicy(input);
+  }
+
   // ── Capability Summary (All Modules Wired) ──
 
   getCapabilitySummary(): CapabilitySummary {
@@ -205,7 +236,7 @@ export class ConxianMarketSDK {
     return {
       coreCapabilities: 11,
       enclaveCapabilities: 16,
-      totalCapabilities: 29,
+      totalCapabilities: 30,
       activeRails: this.settlement.availableRails(Tier.Strict),
       activeTiers: this.flags.attestationAvailable
         ? [Tier.ObserverOnly, Tier.Expedient, Tier.Managed, Tier.Strict]
@@ -244,6 +275,7 @@ export class ConxianMarketSDK {
       },
       monitoringWatcherEnabled: true,
       trustTierMiddlewareEnabled: true,
+      bosYieldSplitterEnabled: true,
     };
   }
 
@@ -283,3 +315,13 @@ export type {
   SlaTemplate,
   PipelineWireHeaders,
 } from "./trust_tier_middleware";
+export { BosYieldSplitter, FEE_DECAY_TIMELINE } from "./bos_yield_splitter";
+export type {
+  YieldSplit,
+  FeeDecayTier,
+  ProtocolFeeDistribution,
+  FounderVestingInput,
+  FounderVestingResult,
+  InferencePolicyInput,
+  InferencePolicyResult,
+} from "./bos_yield_splitter";

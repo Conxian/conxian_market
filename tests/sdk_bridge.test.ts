@@ -13,14 +13,16 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     expect(sdk.slaEngine).toBeDefined();
     expect(sdk.monitoringWatcher).toBeDefined();
     expect(sdk.trustTierMiddleware).toBeDefined();
+    expect(sdk.bosYieldSplitter).toBeDefined();
   });
 
-  it("includes trustTierMiddleware in capability summary", async () => {
+  it("includes trustTierMiddleware and bosYieldSplitter in capability summary", async () => {
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(29);
+    expect(summary.totalCapabilities).toBe(30);
     expect(summary.trustTierMiddlewareEnabled).toBe(true);
+    expect(summary.bosYieldSplitterEnabled).toBe(true);
   });
 
   it("executes trust tier pipeline directly via SDK bridge", async () => {
@@ -36,5 +38,23 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     expect(pipelineResult.fee.feeSat).toBe(8_750n); // 175 bps for Lightning
     expect(pipelineResult.selectedRail).toBe(SettlementRail.Lightning);
     expect(pipelineResult.wireHeaders["x-conxian-tier"]).toBe("EXPEDIENT");
+  });
+
+  it("exposes BOS yield splitting, fee decay, vesting, and inference verification directly", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const split = sdk.calculateYieldSplit(100_000n);
+    expect(split.builderSat).toBe(80_000n);
+
+    const feeDist = sdk.distributeProtocolFee(1_000_000n, 18); // 18m = Growth Phase (150 bps)
+    expect(feeDist.feeSat).toBe(15_000n);
+
+    const policy = sdk.verifyInferencePolicy({
+      isCentralizedInference: false,
+      handlesPrivateKeys: false,
+      usesMcpHandoff: true,
+      usesEnclaveSdk: false,
+    });
+    expect(policy.compliant).toBe(true);
   });
 });

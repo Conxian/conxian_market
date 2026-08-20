@@ -1,13 +1,13 @@
 # Conxian Ecosystem & Market SDK Roadmap
 
-> **Current Session:** Session 51
+> **Current Session:** Session 52
 > **Strategic Directive:** Hardening the Core (Functional Settlement, Fee Collection, SLA Enforcement & Telemetry Health)
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
 
 ---
 
 ## 🎯 Executive Vision
-The Conxian Market SDK serves as the value, settlement, and SLA enforcement layer for the Conxian Ecosystem. Rather than building proprietary AI agents, Conxian orchestrates and monetizes industrial, high-utility agent labor through programmable escrow (ERC-8183 / CJCS Job Cards), multi-rail Bitcoin/Stacks settlement, TrustTier verification, autonomous SLA enforcement, and telemetry monitoring.
+The Conxian Market SDK serves as the value, settlement, and SLA enforcement layer for the Conxian Ecosystem. Rather than building proprietary AI agents, Conxian orchestrates and monetizes industrial, high-utility agent labor through programmable escrow (ERC-8183 / CJCS Job Cards), multi-rail Bitcoin/Stacks settlement, TrustTier verification, autonomous SLA enforcement, telemetry monitoring, and commercial yield splits.
 
 ---
 
@@ -31,17 +31,23 @@ The Conxian Market SDK serves as the value, settlement, and SLA enforcement laye
 - [x] Implemented `MonitoringWatcher` in `src/monitoring_watcher.ts` covering sBTC peg status, Fedimint mint health, Babylon staking concentration, and 12-month treasury runway calculations.
 - [x] Wired `MonitoringWatcher` into `ConxianMarketSDK` bridge and main exports.
 
-### Session 51 — TrustTier Pricing & Routing Middleware Pipeline (CURRENT)
+### Session 51 — TrustTier Pricing & Routing Middleware Pipeline
 - [x] Synthesize ecosystem audit across all repos, databases, Render web services, open PRs, and active issues (#488, #527, #530, #532, #1082, #242).
 - [x] Research expansion and gap analysis (`SESSION_51_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
 - [x] Candidate Scoring: TrustTier Pricing & Routing Middleware scored #3 (90/100).
-- [x] Implemented `TrustTierMiddleware` in `src/trust_tier_middleware.ts` per `trust_tier_pricing.md`:
-  1. Tier Detection with feature-flag aware P0 gap degradation.
-  2. Tier-based fee calculator with 80/10/10 yield split distribution.
-  3. SLA Template resolution (Strict, Managed, Expedient, ObserverOnly).
-  4. Multi-rail routing matrix and HTTP wire header generator (`x-conxian-tier`, `x-conxian-rail`, `x-conxian-fee-bps`, `x-conxian-fee-sat`, `x-conxian-sla-tier`, `x-conxian-p0-degraded`).
-- [x] Wired `TrustTierMiddleware` into `ConxianMarketSDK` bridge and exported in `src/index.ts`.
-- [x] Added unit tests (`tests/trust_tier_middleware.test.ts`), verifying 54 total passing tests across 7 test suites with 100% type safety (`npm run typecheck`).
+- [x] Implemented `TrustTierMiddleware` in `src/trust_tier_middleware.ts` per `trust_tier_pricing.md`.
+
+### Session 52 — BOS Yield Splitter & Thin Orchestrator Guard (CURRENT)
+- [x] Synthesize ecosystem audit across all repos, recent commits, databases, Render web services, open PRs, and active issues (#488, #527, #530, #532, #1082, #242).
+- [x] Research expansion and gap analysis (`SESSION_52_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: BOS Yield Splitter & Thin Orchestrator Guard scored #4 (87/100).
+- [x] Implemented `BosYieldSplitter` in `src/bos_yield_splitter.ts` per `operating_manual.md`:
+  1. 80/10/10 Yield Matrix Splitter (80% Builder, 10% Platform Treasury, 10% Ecosystem Stakeholders).
+  2. Protocol Fee Decay Calculator (2.0% Launch, 1.5% Growth, 1.0% Mature) with 50/30/20 distribution.
+  3. Founder Compensation & Vesting Rules Evaluator (4-year vesting, 50/50 base/bonus cap, 6-month emergency limit).
+  4. Sovereign OS Thin Orchestrator & BYOK Security Guard (enforcing decentralized edge compute and enclave key security).
+- [x] Wired `BosYieldSplitter` into `ConxianMarketSDK` bridge and exported in `src/index.ts`.
+- [x] Added unit tests (`tests/bos_yield_splitter.test.ts`), verifying 60 total passing tests across 8 test suites with 100% type safety (`npm run typecheck`).
 
 ---
 
