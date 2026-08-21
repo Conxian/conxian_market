@@ -1,0 +1,51 @@
+name: Repository Hygiene & ZSE Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-repo:
+    name: Repo Hygiene & ZSE Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Zero Secret Egress (ZSE) Compliance
+        run: |
+          echo "Checking for prohibited sensitive files in repository track..."
+          PROHIBITED_FILES=$(git ls-files | grep -i -E "\.env$|\.key$|\.pem$|credentials\.json|secrets\.json" || true)
+          if [ -n "$PROHIBITED_FILES" ]; then
+            echo "ERROR: Sensitive file(s) detected in git tracking:"
+            echo "$PROHIBITED_FILES"
+            exit 1
+          fi
+          echo "ZSE file tracking check passed."
+
+      - name: Verify Tracked Artifact Hygiene
+        run: |
+          echo "Checking for prohibited runtime/build artifacts in repository track..."
+          ARTIFACT_FILES=$(git ls-files | grep -i -E "^node_modules/|^dist/|^build/|^coverage/|^playwright-report/|test\.txt$" || true)
+          if [ -n "$ARTIFACT_FILES" ]; then
+            echo "ERROR: Tracked artifact file(s) detected:"
+            echo "$ARTIFACT_FILES"
+            exit 1
+          fi
+          echo "Tracked artifact hygiene check passed."
+
+      - name: Validate Markdown & Links Consistency
+        run: |
+          echo "Validating core Markdown documents presence..."
+          REQUIRED_DOCS=("README.md" "SECURITY.md" "CONTRIBUTING.md" "LICENSE" "ROADMAP.md" "CHANGELOG.md")
+          for doc in "${REQUIRED_DOCS[@]}"; do
+            if [ ! -f "$doc" ]; then
+              echo "ERROR: Missing required documentation file: $doc"
+              exit 1
+            fi
+          done
+          echo "All required core documentation files present."

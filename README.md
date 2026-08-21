@@ -79,6 +79,15 @@ Our current focus is **Hardening the Orchestration Core**:
 - **Federated Standard:** Mandating the **MCP-only** handoff model for all third-party AI providers.
 - **Security Hardening:** Transitioning from Admin-Key control to DAO-governed Access Control (CON-1438).
 
+
+### 🛡 Repository Quality, CI/CD & Governance
+
+This repository enforces strict operational hygiene, security compliance, and versioning discipline:
+- **Zero Secret Egress (ZSE):** Automated CI workflows (`.github/workflows/ci.yml` and `.circleci/config.yml`) verify that no sensitive credentials or runtime artifacts are tracked in Git.
+- **Release Discipline:** Version releases follow [Semantic Versioning](https://semver.org/) and are tracked in [CHANGELOG.md](CHANGELOG.md) per [Keep a Changelog](https://keepachangelog.com/) guidelines.
+- **Local Sandbox Setup:** Copy [.env.example](.env.example) to `.env` for local developer configuration.
+- **Contribution Guidelines:** Review [CONTRIBUTING.md](CONTRIBUTING.md) for pull request workflows, branch policies, and pre-commit checks.
+
 ### 📚 Research Documents
 
 - [FUNDING_AND_ECONOMICS.md](docs/research/FUNDING_AND_ECONOMICS.md) - Complete funding model
