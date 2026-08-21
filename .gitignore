@@ -3,9 +3,11 @@ node_modules/
 jspm_packages/
 web_modules/
 
-# Next.js build output
+# Next.js & Web build output
 .next/
 out/
+.vercel/
+.turbo/
 
 # Build and production outputs
 build/
@@ -14,6 +16,7 @@ target/
 bin/
 obj/
 out-tsc/
+*.tsbuildinfo
 
 # Log files and databases
 *.log
@@ -22,12 +25,10 @@ out-tsc/
 *.db
 *.db-journal
 
-# Environment variables & secrets
+# Environment variables & secrets (ZSE Compliance)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 *.pem
 *.key
 *.pfx
@@ -60,14 +61,16 @@ Desktop.ini
 *.swp
 *.swo
 
-# Runtime and lockfiles generated during development (if any)
+# Runtime and lockfiles generated during development
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Temporal files
+# Temporal & artifact files
 *.patch
 *.diff
+*.tmp
+*.bak
 test.txt
