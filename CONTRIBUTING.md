@@ -26,22 +26,25 @@ The market layer depends on adjacent Conxian repos including lib-conxian-core, c
 ## Dependency and Integration Ownership
 
 This repo should only consume Conxian dependencies at the appropriate layer. In practice, the market layer depends most directly on:
+
 - lib-conxian-core for protocol primitives and shared types
 - conxian-gateway for settlement and API orchestration
 - conxian-nexus for verification and proof semantics
 - archived protocol reference material only from Conxian/Conxian; not an active contract, governance, or DeFi workstream for this repo
 
 Platform and business concerns are adjacent layers owned elsewhere. If a change is actually a platform CI issue, a business governance issue, or a protocol-core issue, it should be proposed in the corresponding repo rather than folded into this marketplace repository.
+
 ### Org Handoff Rules
 
 When a proposal is not clearly market-layer work, use this decision rule:
+
 - If the work is about shared protocol types, chain adapters, or settlement primitives → route to lib-conxian-core or the protocol repo.
 - If the work is about rail execution, API orchestration, or settlement ingress/egress → route to conxian-gateway.
 - If the work is about proof verification, attestation trust, or MMR-based assurance → route to conxian-nexus or the enclave SDK depending on the layer.
 - If the work is about CI/CD, operational enforcement, or release policy → route to conxius-platform.
 - If the work is about business rules, governance approvals, or BOS logic → route to conxian-business.
 
-This repo should remain focused on value capture, settlement orchestration, fee logic, and marketplace composition while upstream repos mature.
+This repo should remain focused on value capture, settlement orchestration, fee logic, and marketplace composition while upstream repos mature
 ---
 
 ## Branching & Workflow Policy
@@ -57,6 +60,11 @@ This repo should remain focused on value capture, settlement orchestration, fee 
 ## Security & Verification Checks
 
 Before submitting your Pull Request, ensure that:
+
 1. No sensitive operational data, credentials, or `.env` files are tracked in git.
 2. All modified files follow proper styling, formatting, and formatting rules.
 3. If database schema migrations or query tuning are included, verify them in isolated temporary branches before requesting target branch inclusion.
+
+The documentation CI also rejects tracked environment files, credentials, private keys,
+build output, dependency folders, coverage, and test-report directories. Keep those
+paths local and rely on the repository's ignore rules rather than force-adding them.
