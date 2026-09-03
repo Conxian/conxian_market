@@ -21,7 +21,7 @@ describe("settlement", () => {
 
       expect(orchestrator.isRailAvailable(TrustTier.ObserverOnly, SettlementRail.Sbtc)).toBe(false);
       expect(orchestrator.isRailAvailable(TrustTier.Expedient, SettlementRail.Lightning)).toBe(true);
-      expect(orchestrator.isRailAvailable(TrustTier.Managed, SettlementRail.Statechain)).toBe(true);
+      expect(orchestrator.isRailAvailable(TrustTier.Managed, SettlementRail.Statechain)).toBe(false);
     });
 
     it("execute handles rail unavailable error", async () => {
@@ -61,7 +61,9 @@ describe("settlement", () => {
         }),
       } as unknown as GatewayClient;
 
-      const mockVerifier = {} as GatewayVerifier;
+      const mockVerifier = {
+        detectTier: vi.fn().mockResolvedValue(TrustTier.Expedient),
+      } as unknown as GatewayVerifier;
 
       const orchestrator = new SettlementOrchestrator(mockGateway, mockVerifier);
 
@@ -71,10 +73,49 @@ describe("settlement", () => {
         rail: SettlementRail.Lightning,
         tier: TrustTier.Expedient,
         builderId: "builder-1",
+        attestation: { light_proof: "light-proof" },
       });
 
       expect(res.success).toBe(true);
       expect(mockGateway.settleJobCard).toHaveBeenCalled();
+    });
+
+    it("does not trust a requested tier without verified attestation", async () => {
+      const mockGateway = {
+        settleJobCard: vi.fn(),
+      } as unknown as GatewayClient;
+      const orchestrator = new SettlementOrchestrator(mockGateway, {} as GatewayVerifier);
+
+      const res = await orchestrator.execute({
+        id: "forged-tier",
+        amountSat: 10_000n,
+        rail: SettlementRail.Lightning,
+        tier: TrustTier.Expedient,
+        builderId: "builder-1",
+      });
+
+      expect(res.success).toBe(false);
+      expect(mockGateway.settleJobCard).not.toHaveBeenCalled();
+    });
+
+    it("does not execute a feature-gated rail", async () => {
+      const mockGateway = { settleJobCard: vi.fn() } as unknown as GatewayClient;
+      const mockVerifier = {
+        detectTier: vi.fn().mockResolvedValue(TrustTier.Managed),
+      } as unknown as GatewayVerifier;
+      const orchestrator = new SettlementOrchestrator(mockGateway, mockVerifier);
+
+      const res = await orchestrator.execute({
+        id: "gated-rail",
+        amountSat: 10_000n,
+        rail: SettlementRail.Statechain,
+        tier: TrustTier.Managed,
+        builderId: "builder-1",
+        attestation: { enclave_attestation: "enclave-proof" },
+      });
+
+      expect(res.success).toBe(false);
+      expect(mockGateway.settleJobCard).not.toHaveBeenCalled();
     });
   });
 });

@@ -39,14 +39,13 @@ export class SettlementOrchestrator {
 
   /** Execute a full settlement: attest → fee → route → settle */
   async execute(request: SettlementRequest): Promise<SettlementResult> {
-    // 1. Verify attestation (or degrade tier for P0 gaps)
-    let tier = request.tier;
-    if (request.attestation) {
-      tier = await this.verifier.detectTier(request.attestation);
-    }
+    // The requested tier is advisory; only verified proof may authorize settlement.
+    const tier = request.attestation
+      ? await this.verifier.detectTier(request.attestation)
+      : Tier.ObserverOnly;
 
     // 2. Validate rail availability at tier
-    if (!this.isRailAvailable(tier, request.rail)) {
+    if (!this.availableRails(tier).includes(request.rail)) {
       return {
         success: false,
         settlementId: request.id,
@@ -128,7 +127,7 @@ export class SettlementOrchestrator {
   };
 
   isRailAvailable(tier: TrustTier, rail: SettlementRail): boolean {
-    return this.RAILS_BY_TIER[tier].includes(rail);
+    return this.availableRails(tier).includes(rail);
   }
 
   availableRails(tier: TrustTier): SettlementRail[] {
