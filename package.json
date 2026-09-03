@@ -7,23 +7,38 @@
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "files": ["src/"],
+  "files": [
+    "src/"
+  ],
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "build": "tsc"
   },
   "dependencies": {
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.1",
+    "@capacitor/haptics": "8.0.2",
+    "@capacitor/keyboard": "8.0.5",
+    "@capacitor/status-bar": "8.0.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.1",
+    "@types/node": "^22.0.0",
     "typescript": "^5.6.0",
-    "vitest": "^2.1.0",
-    "@types/node": "^22.0.0"
+    "vitest": "^2.1.0"
   },
   "keywords": [
-    "conxian", "protocol-fee", "settlement", "trust-tier", "bitcoin",
-    "gateway", "sdk-bridge", "verification", "enclave"
+    "conxian",
+    "protocol-fee",
+    "settlement",
+    "trust-tier",
+    "bitcoin",
+    "gateway",
+    "sdk-bridge",
+    "verification",
+    "enclave"
   ],
   "engines": {
     "node": ">=18"

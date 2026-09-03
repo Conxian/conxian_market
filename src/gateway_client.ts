@@ -38,6 +38,12 @@ export class GatewayClient {
     this.timeoutMs = config.timeoutMs ?? 10_000;
   }
 
+  private serializeBody(value: unknown): string {
+    return JSON.stringify(value, (_key, nestedValue) =>
+      typeof nestedValue === "bigint" ? nestedValue.toString() : nestedValue,
+    );
+  }
+
   // ── Helper ──
 
   private async fetchJson<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -89,14 +95,14 @@ export class GatewayClient {
   async settleJobCard(card: JobCard): Promise<SettlementResult> {
     return this.fetchJson<SettlementResult>("/v1/settlement/job-card", {
       method: "POST",
-      body: JSON.stringify(card),
+      body: this.serializeBody(card),
     });
   }
 
   async settleM2M(settlement: M2MSettlement): Promise<{ txId: string }> {
     return this.fetchJson<{ txId: string }>("/v1/settlement/m2m", {
       method: "POST",
-      body: JSON.stringify(settlement),
+      body: this.serializeBody(settlement),
     });
   }
 
