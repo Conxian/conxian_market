@@ -63,6 +63,15 @@ export type {
   DeprecationAdvisory,
 } from "./market_agnostic_router";
 
+export { JobCardEscrowEngine, EscrowState } from "./job_card_escrow";
+export type {
+  EscrowCreationParams,
+  JobOutputSubmission,
+  EscrowReleaseResult,
+  EscrowRefundResult,
+  EscrowRecord,
+} from "./job_card_escrow";
+
 export {
   detectTrustTier,
   calculateRailFee,

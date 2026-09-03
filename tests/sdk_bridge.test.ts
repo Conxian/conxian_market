@@ -15,16 +15,19 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     expect(sdk.trustTierMiddleware).toBeDefined();
     expect(sdk.bosYieldSplitter).toBeDefined();
     expect(sdk.marketAgnosticRouter).toBeDefined();
+    expect(sdk.jobCardEscrowEngine).toBeDefined();
   });
 
   it("includes all modules in capability summary", async () => {
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(31);
+    expect(summary.totalCapabilities).toBe(32);
+    expect(summary.coreCapabilities).toBe(12);
     expect(summary.trustTierMiddlewareEnabled).toBe(true);
     expect(summary.bosYieldSplitterEnabled).toBe(true);
     expect(summary.marketAgnosticRouterEnabled).toBe(true);
+    expect(summary.jobCardEscrowEngineEnabled).toBe(true);
   });
 
   it("executes trust tier pipeline directly via SDK bridge", async () => {
@@ -61,15 +64,16 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
   });
 });
 
-describe("ConxianMarketSDK Bridge - Market-Agnostic Router Integration", () => {
+describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Integration", () => {
   const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
 
-  it("includes marketAgnosticRouter in capability summary", async () => {
+  it("includes marketAgnosticRouter and jobCardEscrowEngine in capability summary", async () => {
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(31);
+    expect(summary.totalCapabilities).toBe(32);
     expect(summary.marketAgnosticRouterEnabled).toBe(true);
+    expect(summary.jobCardEscrowEngineEnabled).toBe(true);
   });
 
   it("exposes zero-custody validation, BYO DeFi adapter resolution, and deprecation advisory directly", async () => {
@@ -92,5 +96,30 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router Integration", () => {
     const advisory = sdk.getDeprecationAdvisory();
     expect(advisory.targetRepo).toBe("Conxian/Conxian");
     expect(advisory.status).toBe("DEPRECATED_RECOMMENDED_ARCHIVE");
+  });
+
+  it("exposes Job Card Escrow lifecycle methods via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const created = sdk.createJobCardEscrow({
+      jobId: "bridge-job-1",
+      clientDid: "did:client:bridge",
+      agentProviderDid: "did:agent:bridge",
+      budgetSat: 2_000_000n,
+      deadlineTimestamp: Date.now() + 86400000,
+      tier: TrustTier.Managed,
+      rail: SettlementRail.EvmErc8183,
+    });
+    expect(created.jobId).toBe("bridge-job-1");
+
+    sdk.submitJobCardOutput({
+      jobId: "bridge-job-1",
+      outputHash: "0xbridgeoutputhash",
+      completedAtTimestamp: Date.now(),
+    });
+
+    const release = sdk.evaluateAndReleaseJobCardEscrow("bridge-job-1", new Date().toISOString());
+    expect(release.grossBudgetSat).toBe(2_000_000n);
+    expect(release.yieldSplit.builderSat).toBe(1_574_400n); // 80% of net payout (1,968,000 Sat)
   });
 });
