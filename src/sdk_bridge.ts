@@ -1,60 +1,46 @@
 /**
- * Conxian Market SDK Bridge — Comprehensive Capability Wiring.
+ * Conxian Market SDK Bridge — Unified Client Interface for Marketplace Services.
  *
- * This module provides a single entry point that wires all 31 SDK
- * capabilities (11 core + 16 enclave-sdk + 1 monitoring-watcher + 1 trust-tier-middleware + 1 bos-yield-splitter + 1 market-agnostic-router) into the market layer.
- *
- * Architecture:
- *   Market SDK Bridge
- *   ├── GatewayClient          → conxian-gateway REST API (50+ endpoints)
- *   ├── SettlementOrch          → multi-rail settlement execution
- *   ├── GatewayVerifier         → attestation verification via gateway + nexus
- *   ├── FeeCalculator           → tier detection, fee computation, revenue projection
- *   ├── SlaEngine               → autonomous SLA enforcement & CJCS gap card generation
- *   ├── MonitoringWatcher       → telemetry, peg status, Fedimint, Babylon & treasury health
- *   ├── TrustTierMiddleware     → 4-stage pricing & rail routing pipeline
- *   ├── BosYieldSplitter        → 80/10/10 yield split, fee decay, founder vesting & thin orchestrator guard
- *   ├── MarketAgnosticRouter    → zero-custody validation, BYO DeFi protocol routing & M2M MCP handoffs
- *   └── FeatureFlags            → P0-gated capability degradation
+ * Integrates:
+ *   - Gateway Client (relay, RWA verification, blocks, NTT)
+ *   - Gateway Verifier (attestation cert verification, trust tier detection)
+ *   - Settlement Orchestrator (cross-chain settlement routing across 8 rails)
+ *   - SLA Engine (autonomous SLA evaluation & gap card bounties)
+ *   - Monitoring Watcher (sBTC, Fedimint, Babylon, and Treasury health monitoring)
+ *   - TrustTier Middleware (HTTP/MCP request verification & routing pipeline)
+ *   - BOS Yield Splitter (80/10/10 yield matrix, fee decay, founder vesting, inference policy)
+ *   - Market-Agnostic Router (Zero-custody validation, BYO DeFi protocol adapter resolution, M2M route execution, Conxian/Conxian deprecation advisory)
+ *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission, SLA-integrated release, dispute/refund handling)
+ *   - Fee Calculator (2% protocol fee with tier/rail breakdown)
  */
 
-import type {
-  AgentCreditScore,
-  AttestationCertificate,
-  BuilderIdentity,
-  ChainId,
-  DlcBond,
-  FeatureFlags,
-  JobCard,
-  M2MSettlement,
-  MrrReport,
-  Musig2KeyAggregation,
-  ProtocolFeeRecord,
-  ProtocolFeeReport,
-  RevenueProjection,
-  RevenueScenario,
-  SettlementIntent,
-  SettlementRail,
-  SettlementRequest,
-  SettlementResult,
-  TrustTier,
-  UsageMetrics,
-  YieldOpportunity,
-} from "./core_types";
-import { DEFAULT_FEATURE_FLAGS, TrustTier as Tier } from "./core_types";
+import { GatewayClient, type GatewayConfig } from "./gateway_client";
+import { GatewayVerifier, degradeTierForP0Gaps } from "./verification";
+import { SettlementOrchestrator } from "./settlement";
+import {
+  SlaEngine,
+  type BuilderReputationRecord,
+  type SlaEvaluationResult,
+} from "./sla_engine";
 import {
   detectTrustTier as detectTier,
   calculateRailFee,
-  selectRail,
   projectRevenue,
-  FeeResult,
 } from "./fee_calculator";
-import { GatewayClient } from "./gateway_client";
-import type { GatewayConfig } from "./gateway_client";
-import { SettlementOrchestrator } from "./settlement";
-import { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification";
-import { SlaEngine } from "./sla_engine";
-import type { GapCard, SlaEvaluationResult, BuilderReputationRecord } from "./sla_engine";
+import {
+  TrustTier,
+  SettlementRail,
+  TrustTier as Tier,
+  DEFAULT_FEATURE_FLAGS,
+  type AttestationCertificate,
+  type FeatureFlags,
+  type JobCard,
+  type ProtocolFeeRecord as FeeResult,
+  type RevenueProjection,
+  type RevenueScenario,
+  type SettlementRequest,
+  type SettlementResult,
+} from "./core_types";
 import {
   MonitoringWatcher,
   type BabylonStakingInput,
@@ -85,11 +71,19 @@ import {
   type NonCustodialSettlementRequest,
   type ZeroCustodyValidationResult,
 } from "./market_agnostic_router";
+import {
+  JobCardEscrowEngine,
+  type EscrowCreationParams,
+  type EscrowRecord,
+  type EscrowRefundResult,
+  type EscrowReleaseResult,
+  type JobOutputSubmission,
+} from "./job_card_escrow";
 
 export interface CapabilitySummary {
-  coreCapabilities: number; // 11
+  coreCapabilities: number; // 12
   enclaveCapabilities: number; // 16
-  totalCapabilities: number; // 31
+  totalCapabilities: number; // 32
   activeRails: SettlementRail[];
   activeTiers: TrustTier[];
   p0GapsDetected: string[];
@@ -99,6 +93,7 @@ export interface CapabilitySummary {
   trustTierMiddlewareEnabled: boolean;
   bosYieldSplitterEnabled: boolean;
   marketAgnosticRouterEnabled: boolean;
+  jobCardEscrowEngineEnabled: boolean;
 }
 
 export class ConxianMarketSDK {
@@ -110,6 +105,7 @@ export class ConxianMarketSDK {
   readonly trustTierMiddleware: TrustTierMiddleware;
   readonly bosYieldSplitter: typeof BosYieldSplitter;
   readonly marketAgnosticRouter: typeof MarketAgnosticRouter;
+  readonly jobCardEscrowEngine: JobCardEscrowEngine;
   readonly flags: FeatureFlags;
 
   private constructor(
@@ -125,6 +121,7 @@ export class ConxianMarketSDK {
     this.trustTierMiddleware = new TrustTierMiddleware(flags);
     this.bosYieldSplitter = BosYieldSplitter;
     this.marketAgnosticRouter = MarketAgnosticRouter;
+    this.jobCardEscrowEngine = new JobCardEscrowEngine(this.slaEngine);
   }
 
   /** Connect to gateway and instantiate full Market SDK Bridge */
@@ -167,7 +164,17 @@ export class ConxianMarketSDK {
     tier: TrustTier,
     rail: SettlementRail
   ): FeeResult {
-    return calculateRailFee(amountSat, tier, rail);
+    const feeInfo = calculateRailFee(amountSat, tier, rail);
+    return {
+      settlementId: `fee-${Date.now()}`,
+      rail,
+      tier,
+      amountSat,
+      feeSat: feeInfo.feeSat,
+      feeBps: feeInfo.feeBps,
+      timestamp: Date.now(),
+      builderId: "system",
+    };
   }
 
   projectRevenue(scenario: RevenueScenario): RevenueProjection {
@@ -267,6 +274,32 @@ export class ConxianMarketSDK {
     return MarketAgnosticRouter.getDeprecationAdvisory();
   }
 
+  // ── Capability 11: ERC-8183 Job Card Escrow Engine ──
+
+  createJobCardEscrow(params: EscrowCreationParams): EscrowRecord {
+    return this.jobCardEscrowEngine.createEscrow(params);
+  }
+
+  submitJobCardOutput(submission: JobOutputSubmission): EscrowRecord {
+    return this.jobCardEscrowEngine.submitJobOutput(submission);
+  }
+
+  evaluateAndReleaseJobCardEscrow(
+    jobId: string,
+    currentTimeIso: string,
+    options?: { actualTrustTier?: TrustTier }
+  ): EscrowReleaseResult {
+    return this.jobCardEscrowEngine.evaluateAndRelease(jobId, currentTimeIso, options);
+  }
+
+  disputeAndRefundJobCardEscrow(
+    jobId: string,
+    reason: string,
+    currentTimeIso: string
+  ): EscrowRefundResult {
+    return this.jobCardEscrowEngine.disputeAndRefund(jobId, reason, currentTimeIso);
+  }
+
   // ── Capability Summary (All Modules Wired) ──
 
   getCapabilitySummary(): CapabilitySummary {
@@ -276,9 +309,9 @@ export class ConxianMarketSDK {
     }
 
     return {
-      coreCapabilities: 11,
+      coreCapabilities: 12,
       enclaveCapabilities: 16,
-      totalCapabilities: 31,
+      totalCapabilities: 32,
       activeRails: this.settlement.availableRails(Tier.Strict),
       activeTiers: this.flags.attestationAvailable
         ? [Tier.ObserverOnly, Tier.Expedient, Tier.Managed, Tier.Strict]
@@ -319,6 +352,7 @@ export class ConxianMarketSDK {
       trustTierMiddlewareEnabled: true,
       bosYieldSplitterEnabled: true,
       marketAgnosticRouterEnabled: true,
+      jobCardEscrowEngineEnabled: true,
     };
   }
 
@@ -376,3 +410,11 @@ export type {
   M2mRouteResult,
   DeprecationAdvisory,
 } from "./market_agnostic_router";
+export { JobCardEscrowEngine, EscrowState } from "./job_card_escrow";
+export type {
+  EscrowCreationParams,
+  JobOutputSubmission,
+  EscrowReleaseResult,
+  EscrowRefundResult,
+  EscrowRecord,
+} from "./job_card_escrow";
