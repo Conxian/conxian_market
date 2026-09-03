@@ -73,6 +73,15 @@ export type {
 } from "./job_card_escrow";
 
 export {
+  X402_SCHEME,
+  X402_CURRENCY,
+  jobCardToDemand,
+  verifyPaymentReceipt,
+  toEscrowParams,
+} from "./x402_facade";
+export type { X402PaymentDemand, X402PaymentReceipt } from "./x402_facade";
+
+export {
   detectTrustTier,
   calculateRailFee,
   selectRail,
