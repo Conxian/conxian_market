@@ -81,3 +81,37 @@ describe("verification", () => {
     });
   });
 });
+
+  describe("GatewayVerifier Capabilities", () => {
+    it("reports P0 gaps when attestation is disabled", () => {
+      const mockGateway = {} as GatewayClient;
+      const verifier = new GatewayVerifier(mockGateway, {
+        ...DEFAULT_FEATURE_FLAGS,
+        attestationAvailable: false,
+      });
+
+      const caps = verifier.getCapabilities();
+      expect(caps.attestationAvailable).toBe(false);
+      expect(caps.supportedTiers).toEqual([TrustTier.ObserverOnly, TrustTier.Expedient]);
+      expect(caps.p0Gaps.length).toBeGreaterThan(0);
+      expect(caps.p0Gaps[0]).toContain("enclave-sdk#242");
+    });
+
+    it("reports full tier support when attestation is enabled", () => {
+      const mockGateway = {} as GatewayClient;
+      const verifier = new GatewayVerifier(mockGateway, {
+        ...DEFAULT_FEATURE_FLAGS,
+        attestationAvailable: true,
+      });
+
+      const caps = verifier.getCapabilities();
+      expect(caps.attestationAvailable).toBe(true);
+      expect(caps.supportedTiers).toEqual([
+        TrustTier.ObserverOnly,
+        TrustTier.Expedient,
+        TrustTier.Managed,
+        TrustTier.Strict,
+      ]);
+      expect(caps.p0Gaps.length).toBe(0);
+    });
+  });

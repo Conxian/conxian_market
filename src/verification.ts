@@ -1,7 +1,7 @@
 /**
  * Conxian Gateway Verifier — Attestation & TrustTier Detection.
  *
- * Integrates with conxian-gateway /conxian-nexus for TEE and ZK proof
+ * Integrates with conxian-gateway / conxian-nexus for TEE and ZK proof
  * verification. Degrades tiers gracefully when P0 attestation gaps exist.
  *
  * Tiers:
@@ -16,11 +16,18 @@ import { TrustTier as Tier } from "./core_types";
 import { DEFAULT_FEATURE_FLAGS } from "./core_types";
 import type { GatewayClient } from "./gateway_client";
 
+export interface AttestationCapabilities {
+  attestationAvailable: boolean;
+  supportedTiers: TrustTier[];
+  p0Gaps: string[];
+}
+
 export interface Verifier {
   detectTier(cert: AttestationCertificate): Promise<TrustTier>;
   verifyTeeZk(teeProof: string, zkProof: string): Promise<boolean>;
   verifyEnclave(proof: string): Promise<boolean>;
   verifyLight(proof: string): Promise<boolean>;
+  getCapabilities(): AttestationCapabilities;
 }
 
 export class GatewayVerifier implements Verifier {
@@ -28,6 +35,24 @@ export class GatewayVerifier implements Verifier {
     private readonly gateway: GatewayClient,
     private readonly flags: FeatureFlags = DEFAULT_FEATURE_FLAGS,
   ) {}
+
+  getCapabilities(): AttestationCapabilities {
+    const p0Gaps: string[] = [];
+    if (!this.flags.attestationAvailable) {
+      p0Gaps.push(
+        "enclave-sdk#242 (AWS Nitro TEE)",
+        "enclave-sdk#241 (Android KeyMint TEE)",
+        "enclave-sdk#240 (Attestation Roots)"
+      );
+    }
+    return {
+      attestationAvailable: this.flags.attestationAvailable,
+      supportedTiers: this.flags.attestationAvailable
+        ? [Tier.ObserverOnly, Tier.Expedient, Tier.Managed, Tier.Strict]
+        : [Tier.ObserverOnly, Tier.Expedient],
+      p0Gaps,
+    };
+  }
 
   async verifyTeeZk(teeProof: string, zkProof: string): Promise<boolean> {
     if (!this.flags.attestationAvailable) return false; // P0-1..P0-3 gate
