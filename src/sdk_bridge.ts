@@ -12,6 +12,7 @@
  *   - Market-Agnostic Router (Zero-custody validation, BYO DeFi protocol adapter resolution, M2M route execution, Conxian/Conxian deprecation advisory)
  *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission, SLA-integrated release, dispute/refund handling)
  *   - Fee Calculator (2% protocol fee with tier/rail breakdown)
+ *   - x402 Escrow Gateway (Multi-rail HTTP 402 payment demands & ERC-8183 budget locking)
  */
 
 import { GatewayClient, type GatewayConfig } from "./gateway_client";
@@ -40,14 +41,14 @@ import {
   type RevenueScenario,
   type SettlementRequest,
   type SettlementResult,
+  type CapabilitySummary,
 } from "./core_types";
-import {
-  MonitoringWatcher,
-  type BabylonStakingInput,
-  type FedimintMintInput,
-  type SbtcHealthInput,
-  type TreasuryRunwayInput,
-  type UnifiedHealthSnapshot,
+import { MonitoringWatcher, type UnifiedHealthSnapshot } from "./monitoring_watcher";
+import type {
+  BabylonStakingInput,
+  FedimintMintInput,
+  SbtcHealthInput,
+  TreasuryRunwayInput,
 } from "./monitoring_watcher";
 import {
   TrustTierMiddleware,
@@ -65,8 +66,8 @@ import {
 } from "./bos_yield_splitter";
 import {
   MarketAgnosticRouter,
-  type DefiProtocolAdapter,
   type DeprecationAdvisory,
+  type DefiProtocolAdapter,
   type M2mRouteResult,
   type NonCustodialSettlementRequest,
   type ZeroCustodyValidationResult,
@@ -79,22 +80,13 @@ import {
   type EscrowReleaseResult,
   type JobOutputSubmission,
 } from "./job_card_escrow";
-
-export interface CapabilitySummary {
-  coreCapabilities: number; // 12
-  enclaveCapabilities: number; // 16
-  totalCapabilities: number; // 32
-  activeRails: SettlementRail[];
-  activeTiers: TrustTier[];
-  p0GapsDetected: string[];
-  coreModules: Record<string, boolean>;
-  enclaveModules: Record<string, boolean>;
-  monitoringWatcherEnabled: boolean;
-  trustTierMiddlewareEnabled: boolean;
-  bosYieldSplitterEnabled: boolean;
-  marketAgnosticRouterEnabled: boolean;
-  jobCardEscrowEngineEnabled: boolean;
-}
+import {
+  jobCardToDemand,
+  jobCardToMultiRailDemands,
+  X402EscrowGateway,
+  type X402PaymentDemand,
+  type X402PaymentReceipt,
+} from "./x402_facade";
 
 export class ConxianMarketSDK {
   readonly gateway: GatewayClient;
@@ -106,6 +98,7 @@ export class ConxianMarketSDK {
   readonly bosYieldSplitter: typeof BosYieldSplitter;
   readonly marketAgnosticRouter: typeof MarketAgnosticRouter;
   readonly jobCardEscrowEngine: JobCardEscrowEngine;
+  readonly x402EscrowGateway: X402EscrowGateway;
   readonly flags: FeatureFlags;
 
   private constructor(
@@ -115,13 +108,18 @@ export class ConxianMarketSDK {
     this.flags = flags;
     this.gateway = new GatewayClient(config);
     this.verifier = new GatewayVerifier(this.gateway, flags);
-    this.settlement = new SettlementOrchestrator(this.gateway, this.verifier, flags);
+    this.settlement = new SettlementOrchestrator(
+      this.gateway,
+      this.verifier,
+      flags
+    );
     this.slaEngine = new SlaEngine();
     this.monitoringWatcher = new MonitoringWatcher();
     this.trustTierMiddleware = new TrustTierMiddleware(flags);
     this.bosYieldSplitter = BosYieldSplitter;
     this.marketAgnosticRouter = MarketAgnosticRouter;
     this.jobCardEscrowEngine = new JobCardEscrowEngine(this.slaEngine);
+    this.x402EscrowGateway = new X402EscrowGateway(this.jobCardEscrowEngine);
   }
 
   /** Connect to gateway and instantiate full Market SDK Bridge */
@@ -183,7 +181,9 @@ export class ConxianMarketSDK {
 
   // ── Capability 5: Settlement Orchestration ──
 
-  async executeSettlement(request: SettlementRequest): Promise<SettlementResult> {
+  async executeSettlement(
+    request: SettlementRequest
+  ): Promise<SettlementResult> {
     return this.settlement.execute(request);
   }
 
@@ -204,7 +204,12 @@ export class ConxianMarketSDK {
 
   updateBuilderReputation(
     current: BuilderReputationRecord,
-    event: "sla_breach" | "abandonment" | "gap_resolved" | "quality_dispute" | "job_completed"
+    event:
+      | "sla_breach"
+      | "abandonment"
+      | "gap_resolved"
+      | "quality_dispute"
+      | "job_completed"
   ): BuilderReputationRecord {
     return SlaEngine.updateBuilderReputation(current, event);
   }
@@ -222,7 +227,9 @@ export class ConxianMarketSDK {
 
   // ── Capability 8: TrustTier Pricing & Routing Middleware Pipeline ──
 
-  runTrustTierPipeline(request: TrustTierPipelineRequest): TrustTierPipelineResult {
+  runTrustTierPipeline(
+    request: TrustTierPipelineRequest
+  ): TrustTierPipelineResult {
     return this.trustTierMiddleware.executePipeline(request);
   }
 
@@ -232,7 +239,10 @@ export class ConxianMarketSDK {
     return BosYieldSplitter.calculateYieldSplit(grossAmountSat);
   }
 
-  distributeProtocolFee(grossAmountSat: bigint, monthsElapsed: number): ProtocolFeeDistribution {
+  distributeProtocolFee(
+    grossAmountSat: bigint,
+    monthsElapsed: number
+  ): ProtocolFeeDistribution {
     return BosYieldSplitter.distributeProtocolFee(grossAmountSat, monthsElapsed);
   }
 
@@ -246,11 +256,16 @@ export class ConxianMarketSDK {
 
   // ── Capability 10: Market-Agnostic Non-Custodial Router & BYO DeFi ──
 
-  validateZeroCustody(request: NonCustodialSettlementRequest): ZeroCustodyValidationResult {
+  validateZeroCustody(
+    request: NonCustodialSettlementRequest
+  ): ZeroCustodyValidationResult {
     return MarketAgnosticRouter.validateZeroCustody(request);
   }
 
-  resolveDefiAdapter(rail: SettlementRail, preferredProtocol?: string): DefiProtocolAdapter {
+  resolveDefiAdapter(
+    rail: SettlementRail,
+    preferredProtocol?: string
+  ): DefiProtocolAdapter {
     return MarketAgnosticRouter.resolveDefiAdapter(rail, preferredProtocol);
   }
 
@@ -289,7 +304,11 @@ export class ConxianMarketSDK {
     currentTimeIso: string,
     options?: { actualTrustTier?: TrustTier }
   ): EscrowReleaseResult {
-    return this.jobCardEscrowEngine.evaluateAndRelease(jobId, currentTimeIso, options);
+    return this.jobCardEscrowEngine.evaluateAndRelease(
+      jobId,
+      currentTimeIso,
+      options
+    );
   }
 
   disputeAndRefundJobCardEscrow(
@@ -297,7 +316,43 @@ export class ConxianMarketSDK {
     reason: string,
     currentTimeIso: string
   ): EscrowRefundResult {
-    return this.jobCardEscrowEngine.disputeAndRefund(jobId, reason, currentTimeIso);
+    return this.jobCardEscrowEngine.disputeAndRefund(
+      jobId,
+      reason,
+      currentTimeIso
+    );
+  }
+
+  // ── Capability 12: x402 Escrow Gateway ──
+
+  createX402Demand(
+    job: Pick<JobCard, "id" | "title" | "description" | "bountySat" | "deadline">,
+    rail?: SettlementRail
+  ): X402PaymentDemand {
+    return jobCardToDemand(job, rail);
+  }
+
+  createX402MultiRailDemands(
+    job: Pick<JobCard, "id" | "title" | "description" | "bountySat" | "deadline">,
+    rails: SettlementRail[]
+  ): X402PaymentDemand[] {
+    return jobCardToMultiRailDemands(job, rails);
+  }
+
+  processX402PaymentAndLockEscrow(
+    demand: X402PaymentDemand,
+    receipt: X402PaymentReceipt,
+    agentProviderDid: string,
+    rail: SettlementRail,
+    tier: TrustTier
+  ): EscrowRecord {
+    return this.x402EscrowGateway.processPaymentAndLockEscrow(
+      demand,
+      receipt,
+      agentProviderDid,
+      rail,
+      tier
+    );
   }
 
   // ── Capability Summary (All Modules Wired) ──
@@ -305,7 +360,11 @@ export class ConxianMarketSDK {
   getCapabilitySummary(): CapabilitySummary {
     const p0Gaps: string[] = [];
     if (!this.flags.attestationAvailable) {
-      p0Gaps.push("enclave-sdk#242 (AWS Nitro)", "enclave-sdk#241 (Android KeyMint)", "enclave-sdk#240 (Attestation Roots)");
+      p0Gaps.push(
+        "enclave-sdk#242 (AWS Nitro)",
+        "enclave-sdk#241 (Android KeyMint)",
+        "enclave-sdk#240 (Attestation Roots)"
+      );
     }
 
     return {
@@ -353,6 +412,7 @@ export class ConxianMarketSDK {
       bosYieldSplitterEnabled: true,
       marketAgnosticRouterEnabled: true,
       jobCardEscrowEngineEnabled: true,
+      x402EscrowGatewayEnabled: true,
     };
   }
 
@@ -361,60 +421,3 @@ export class ConxianMarketSDK {
     return this.settlement.availableRails(tier);
   }
 }
-
-// Re-export core types and sub-modules for consumers
-export * from "./core_types";
-export { GatewayClient } from "./gateway_client";
-export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification";
-export { SettlementOrchestrator } from "./settlement";
-export { SlaEngine, DEFAULT_SLA_RULESET, URGENCY_PRICING_TABLE } from "./sla_engine";
-export type { GapCard, SlaEvaluationResult, BuilderReputationRecord, UrgencyTier, SlaRule } from "./sla_engine";
-export { MonitoringWatcher, DEFAULT_TARGET_ALLOCATION } from "./monitoring_watcher";
-export type {
-  HealthStatus,
-  SbtcHealthInput,
-  SbtcHealthResult,
-  FedimintMintInput,
-  FedimintHealthResult,
-  BabylonStakingInput,
-  BabylonHealthResult,
-  AssetAllocation,
-  TargetAllocationPct,
-  TreasuryRunwayInput,
-  TreasuryRunwayResult,
-  UnifiedHealthSnapshot,
-} from "./monitoring_watcher";
-export { TrustTierMiddleware, SLA_TEMPLATES, RAIL_ROUTING_MATRIX } from "./trust_tier_middleware";
-export type {
-  TrustTierHeaders,
-  TrustTierPipelineRequest,
-  TrustTierPipelineResult,
-  SlaTemplate,
-  PipelineWireHeaders,
-} from "./trust_tier_middleware";
-export { BosYieldSplitter, FEE_DECAY_TIMELINE } from "./bos_yield_splitter";
-export type {
-  YieldSplit,
-  FeeDecayTier,
-  ProtocolFeeDistribution,
-  FounderVestingInput,
-  FounderVestingResult,
-  InferencePolicyInput,
-  InferencePolicyResult,
-} from "./bos_yield_splitter";
-export { MarketAgnosticRouter } from "./market_agnostic_router";
-export type {
-  NonCustodialSettlementRequest,
-  ZeroCustodyValidationResult,
-  DefiProtocolAdapter,
-  M2mRouteResult,
-  DeprecationAdvisory,
-} from "./market_agnostic_router";
-export { JobCardEscrowEngine, EscrowState } from "./job_card_escrow";
-export type {
-  EscrowCreationParams,
-  JobOutputSubmission,
-  EscrowReleaseResult,
-  EscrowRefundResult,
-  EscrowRecord,
-} from "./job_card_escrow";
