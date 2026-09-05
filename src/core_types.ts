@@ -343,3 +343,20 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
   arkAvailable: false,           // ProtocolUnsupported gate
   dlcCetAvailable: false,        // CET stub
 };
+
+export interface CapabilitySummary {
+  coreCapabilities: number;
+  enclaveCapabilities: number;
+  totalCapabilities: number;
+  activeRails: SettlementRail[];
+  activeTiers: TrustTier[];
+  p0GapsDetected: string[];
+  coreModules: Record<string, boolean>;
+  enclaveModules: Record<string, boolean>;
+  monitoringWatcherEnabled: boolean;
+  trustTierMiddlewareEnabled: boolean;
+  bosYieldSplitterEnabled: boolean;
+  marketAgnosticRouterEnabled: boolean;
+  jobCardEscrowEngineEnabled: boolean;
+  x402EscrowGatewayEnabled?: boolean;
+}
