@@ -1,6 +1,6 @@
 # Conxian Ecosystem & Market SDK Roadmap
 
-> **Current Session:** Session 54
+> **Current Session:** Session 55
 > **Strategic Directive:** Hardening the Core (Functional Settlement, Non-Custodial Value Routing & M2M Economy Orchestration)
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
 
@@ -43,17 +43,19 @@ The Conxian Market SDK serves as the value, settlement, and SLA enforcement laye
 - [x] Formulate formal architectural advisory to **Deprecate & Archive `Conxian/Conxian`** in favor of external BYO DeFi adapters and `@conxian/market-sdk` orchestration.
 - [x] Implemented `MarketAgnosticRouter` in `src/market_agnostic_router.ts`.
 
-### Session 54 — ERC-8183 Job Card Escrow & Programmable Settlement Engine (CURRENT)
+### Session 54 — ERC-8183 Job Card Escrow & Programmable Settlement Engine
 - [x] Synthesize ecosystem audit across all repos, databases, Render web services, open PRs, and active issues.
 - [x] Research expansion and gap analysis (`SESSION_54_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
 - [x] Candidate Scoring: ERC-8183 Job Card Escrow Engine scored #1 (98/100).
-- [x] Implemented `JobCardEscrowEngine` in `src/job_card_escrow.ts`:
-  1. Non-custodial escrow creation with zero-custody validation.
-  2. Output submission with payload hash and attestation proof verification.
-  3. SLA-integrated release with protocol fee calculation (`FeeCalculator`), 80/10/10 yield distribution (`BosYieldSplitter`), and M2M rail payment routing (`MarketAgnosticRouter`).
-  4. Dispute resolution, gap card auto-bounty generation (`SlaEngine`), and non-custodial client refund distribution.
-- [x] Wired `JobCardEscrowEngine` into `ConxianMarketSDK` bridge and exported in `src/index.ts`.
-- [x] Added comprehensive unit tests (`tests/job_card_escrow.test.ts`), verifying 77 total passing tests across 11 test suites with 100% type safety (`npm run typecheck`).
+- [x] Implemented `JobCardEscrowEngine` in `src/job_card_escrow.ts`.
+
+### Session 55 — Attestation-Aware TrustTier Verification & Proof Gateway Bridge (CURRENT)
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_55_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Attestation-Aware Proof Verification & Fallback scored #1 (99/100).
+- [x] Implemented `AttestationCapabilities` and `getCapabilities()` in `src/verification.ts`.
+- [x] Wired capabilities into `ConxianMarketSDK` bridge and exported in `src/index.ts`.
+- [x] Added unit tests (`tests/verification.test.ts`), verifying 84 total passing tests across 12 test suites with 100% type safety (`npm run typecheck`).
 
 ---
 
