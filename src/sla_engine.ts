@@ -12,7 +12,7 @@
  *   - Autonomous SLA Gap Card Auto-Resolution & Reputation Recovery
  */
 
-import type { JobCard, TrustTier } from "./core_types";
+import type { JobCard, TrustTier, SLAPenaltySettlementRequest, SLAPenaltySettlementResult, SLAPenaltyClawbackRecord } from "./core_types";
 import { TrustTier as Tier } from "./core_types";
 
 // ── Types ──
@@ -408,6 +408,102 @@ export class SlaEngine {
     return updated;
   }
 
+  /**
+   * Settle SLA breach fee penalty and process automated non-custodial clawback.
+   * Specification: docs/knowledge_base/sla_bounty_system.md Section 4
+   */
+  settleSLAPenalty(
+    request: SLAPenaltySettlementRequest,
+    currentReputation?: BuilderReputationRecord,
+    timestampIso?: string
+  ): SLAPenaltySettlementResult {
+    const settledAtIso = timestampIso ?? new Date().toISOString();
+
+    let penaltyBps = 1500; // default 15% for standard breach
+    let repEvent: "sla_breach" | "abandonment" = "sla_breach";
+
+    switch (request.breachSeverity) {
+      case "warn":
+        penaltyBps = 500; // 5%
+        repEvent = "sla_breach";
+        break;
+      case "standard":
+        penaltyBps = 1500; // 15%
+        repEvent = "sla_breach";
+        break;
+      case "critical":
+        penaltyBps = 3000; // 30%
+        repEvent = "sla_breach";
+        break;
+      case "abandonment":
+        penaltyBps = 5000; // 50%
+        repEvent = "abandonment";
+        break;
+    }
+
+    const totalPenaltySats = (request.contractBountySats * BigInt(penaltyBps)) / 10000n;
+    const remainingEscrowBalanceSats =
+      request.escrowBalanceSats > totalPenaltySats
+        ? request.escrowBalanceSats - totalPenaltySats
+        : 0n;
+
+    const clawback = this.processSLAPenaltyClawback(
+      request.jobId,
+      totalPenaltySats,
+      settledAtIso
+    );
+
+    const initialRep = currentReputation ?? {
+      builderId: request.builderId,
+      score: 80,
+      slaBreachCount: 0,
+      abandonmentCount: 0,
+      gapCardsResolved: 0,
+      qualityDisputeCount: 0,
+      consecutiveCompletions: 0,
+      eligibleTier: Tier.Managed,
+      status: "active",
+    };
+
+    const updatedRep = SlaEngine.updateBuilderReputation(initialRep, repEvent);
+    const reputationDelta = updatedRep.score - initialRep.score;
+    const gapCardIssued = request.breachSeverity === "critical" || request.breachSeverity === "abandonment";
+
+    return {
+      jobId: request.jobId,
+      builderId: request.builderId,
+      clientId: request.clientId,
+      breachSeverity: request.breachSeverity,
+      penaltyBps,
+      totalPenaltySats,
+      remainingEscrowBalanceSats,
+      clawback,
+      updatedReputationScore: updatedRep.score,
+      reputationDelta,
+      gapCardIssued,
+      settledAtIso,
+    };
+  }
+
+  /**
+   * Internal clawback router deducting penalty satoshis to remediation pool and treasury fee.
+   */
+  processSLAPenaltyClawback(
+    jobId: string,
+    totalPenaltySats: bigint,
+    timestampIso: string
+  ): SLAPenaltyClawbackRecord {
+    const clientRemediationBountySats = totalPenaltySats / 2n;
+    const treasuryFeeSats = totalPenaltySats - clientRemediationBountySats;
+
+    return {
+      jobId,
+      penaltySats: totalPenaltySats,
+      clientRemediationBountySats,
+      treasuryFeeSats,
+      clawbackTimestampIso: timestampIso,
+    };
+  }
   /**
    * Calculate updated builder reputation score and eligible TrustTier.
    */

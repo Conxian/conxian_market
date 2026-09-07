@@ -360,4 +360,40 @@ export interface CapabilitySummary {
   jobCardEscrowEngineEnabled: boolean;
   x402EscrowGatewayEnabled?: boolean;
   trustTierLifecycleEnabled?: boolean;
+  slaPenaltyEngineEnabled?: boolean;
+}
+
+// ── SLA Penalty & Escrow Clawback Types (Session 59) ──
+
+export interface SLAPenaltySettlementRequest {
+  jobId: string;
+  builderId: string;
+  clientId: string;
+  breachSeverity: "warn" | "standard" | "critical" | "abandonment";
+  escrowBalanceSats: bigint;
+  contractBountySats: bigint;
+  reason: string;
+}
+
+export interface SLAPenaltyClawbackRecord {
+  jobId: string;
+  penaltySats: bigint;
+  clientRemediationBountySats: bigint;
+  treasuryFeeSats: bigint;
+  clawbackTimestampIso: string;
+}
+
+export interface SLAPenaltySettlementResult {
+  jobId: string;
+  builderId: string;
+  clientId: string;
+  breachSeverity: "warn" | "standard" | "critical" | "abandonment";
+  penaltyBps: number;
+  totalPenaltySats: bigint;
+  remainingEscrowBalanceSats: bigint;
+  clawback: SLAPenaltyClawbackRecord;
+  updatedReputationScore: number;
+  reputationDelta: number;
+  gapCardIssued: boolean;
+  settledAtIso: string;
 }

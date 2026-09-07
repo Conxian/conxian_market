@@ -45,6 +45,9 @@ import {
   type SettlementRequest,
   type SettlementResult,
   type CapabilitySummary,
+  type SLAPenaltySettlementRequest,
+  type SLAPenaltySettlementResult,
+  type SLAPenaltyClawbackRecord,
 } from "./core_types";
 import { MonitoringWatcher, type UnifiedHealthSnapshot } from "./monitoring_watcher";
 import type {
@@ -212,6 +215,22 @@ export class ConxianMarketSDK {
 
   autoResolveGapCard(input: GapCardAutoResolutionInput): GapCardAutoResolutionResult {
     return this.slaEngine.autoResolveGapCard(input);
+  }
+
+  settleSLAPenalty(
+    request: SLAPenaltySettlementRequest,
+    currentReputation?: BuilderReputationRecord,
+    timestampIso?: string
+  ): SLAPenaltySettlementResult {
+    return this.slaEngine.settleSLAPenalty(request, currentReputation, timestampIso);
+  }
+
+  processSLAPenaltyClawback(
+    jobId: string,
+    totalPenaltySats: bigint,
+    timestampIso: string
+  ): SLAPenaltyClawbackRecord {
+    return this.slaEngine.processSLAPenaltyClawback(jobId, totalPenaltySats, timestampIso);
   }
 
   evaluateReputationRecovery(
@@ -441,6 +460,7 @@ export class ConxianMarketSDK {
       jobCardEscrowEngineEnabled: true,
       x402EscrowGatewayEnabled: true,
       trustTierLifecycleEnabled: true,
+      slaPenaltyEngineEnabled: true,
     };
   }
 
