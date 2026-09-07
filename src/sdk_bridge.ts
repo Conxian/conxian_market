@@ -55,8 +55,13 @@ import type {
 } from "./monitoring_watcher";
 import {
   TrustTierMiddleware,
+  TrustTierLifecycleEngine,
   type TrustTierPipelineRequest,
   type TrustTierPipelineResult,
+  type TierUpgradeRequest,
+  type TierUpgradeResult,
+  type TierDowngradeRequest,
+  type TierDowngradeResult,
 } from "./trust_tier_middleware";
 import {
   BosYieldSplitter,
@@ -247,6 +252,14 @@ export class ConxianMarketSDK {
     return this.trustTierMiddleware.executePipeline(request);
   }
 
+  evaluateTierUpgrade(req: TierUpgradeRequest): TierUpgradeResult {
+    return this.trustTierMiddleware.evaluateTierUpgrade(req);
+  }
+
+  evaluateTierDowngrade(req: TierDowngradeRequest): TierDowngradeResult {
+    return this.trustTierMiddleware.evaluateTierDowngrade(req);
+  }
+
   // ── Capability 9: BOS Commercial Yield Matrix & Thin Orchestrator Guard ──
 
   calculateYieldSplit(grossAmountSat: bigint): YieldSplit {
@@ -427,6 +440,7 @@ export class ConxianMarketSDK {
       marketAgnosticRouterEnabled: true,
       jobCardEscrowEngineEnabled: true,
       x402EscrowGatewayEnabled: true,
+      trustTierLifecycleEnabled: true,
     };
   }
 

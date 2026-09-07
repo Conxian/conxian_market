@@ -1,11 +1,12 @@
 /**
- * Conxian Market: TrustTier Pricing & Routing Middleware Pipeline.
+ * Conxian Market: TrustTier Pricing, Routing & Lifecycle Middleware.
  *
  * Implements the 4-stage pipeline specified in docs/knowledge_base/trust_tier_pricing.md:
  * 1. Tier Detector: Evaluates attestation/proof headers and degrades tier for P0 gaps.
  * 2. Fee Calculator: Calculates tier-based fee schedule and 80/10/10 yield split.
  * 3. SLA Enforcer: Selects SLA template guarantees and penalties for the detected tier.
  * 4. Rail Router: Selects optimal settlement rail and formats wire headers.
+ * 5. Lifecycle Engine: Evaluates tier upgrade thresholds (Reputation >= 40, 70, 90) and downgrade triggers.
  */
 
 import type { FeatureFlags, SettlementRail, TrustTier } from "./core_types";
@@ -68,6 +69,48 @@ export interface TrustTierPipelineResult {
   selectedRail: SettlementRail | null;
   availableRails: SettlementRail[];
   wireHeaders: PipelineWireHeaders;
+}
+
+// ── Tier Lifecycle & Upgrade/Downgrade Interfaces (KB Section 6) ──
+
+export interface TierUpgradeRequest {
+  currentTier: TrustTier;
+  targetTier: TrustTier;
+  reputationScore: number;
+  headers?: TrustTierHeaders;
+  auditPassed?: boolean;
+}
+
+export type TierTransitionStatus =
+  | "APPROVED"
+  | "REJECTED"
+  | "INSUFFICIENT_REPUTATION"
+  | "MISSING_ATTESTATION"
+  | "NO_CHANGE";
+
+export interface TierUpgradeResult {
+  status: TierTransitionStatus;
+  previousTier: TrustTier;
+  newTier: TrustTier;
+  reputationScore: number;
+  requiredReputation: number;
+  reason: string;
+  requiredActions: string[];
+}
+
+export interface TierDowngradeRequest {
+  currentTier: TrustTier;
+  consecutiveBreaches: number;
+  hasActiveP0Gap?: boolean;
+  manualTrigger?: boolean;
+}
+
+export interface TierDowngradeResult {
+  previousTier: TrustTier;
+  newTier: TrustTier;
+  downgraded: boolean;
+  reason: string;
+  recoveryRequirements: string[];
 }
 
 // ── SLA Template Definitions per KB Specs ──
@@ -187,10 +230,212 @@ export const RAIL_ROUTING_MATRIX: Record<TrustTier, SettlementRail[]> = {
   [Tier.ObserverOnly]: [],
 };
 
+// ── TrustTier Lifecycle Engine Implementation (KB Section 6) ──
+
+export class TrustTierLifecycleEngine {
+  constructor(private readonly flags: FeatureFlags = DEFAULT_FEATURE_FLAGS) {}
+
+  /**
+   * Return upgrade threshold rules for target tier per KB Section 6.1.
+   */
+  static getUpgradeRequirements(targetTier: TrustTier): {
+    minReputation: number;
+    requiredProofType: string;
+    costDescription: string;
+  } {
+    switch (targetTier) {
+      case Tier.Strict:
+        return {
+          minReputation: 90,
+          requiredProofType: "TEE + ZK Attestation + Audit",
+          costDescription: "Variable Audit Fee",
+        };
+      case Tier.Managed:
+        return {
+          minReputation: 70,
+          requiredProofType: "Enclave Attestation",
+          costDescription: "Enclave Provisioning",
+        };
+      case Tier.Expedient:
+        return {
+          minReputation: 40,
+          requiredProofType: "Basic API Key / Light Proof",
+          costDescription: "Free",
+        };
+      case Tier.ObserverOnly:
+      default:
+        return {
+          minReputation: 0,
+          requiredProofType: "None",
+          costDescription: "Free",
+        };
+    }
+  }
+
+  /**
+   * Evaluate whether a builder/client can upgrade to a target tier.
+   */
+  evaluateTierUpgrade(req: TierUpgradeRequest): TierUpgradeResult {
+    const tierRank: Record<TrustTier, number> = {
+      [Tier.ObserverOnly]: 0,
+      [Tier.Expedient]: 1,
+      [Tier.Managed]: 2,
+      [Tier.Strict]: 3,
+    };
+
+    if (tierRank[req.currentTier] >= tierRank[req.targetTier]) {
+      return {
+        status: "NO_CHANGE",
+        previousTier: req.currentTier,
+        newTier: req.currentTier,
+        reputationScore: req.reputationScore,
+        requiredReputation: TrustTierLifecycleEngine.getUpgradeRequirements(req.targetTier).minReputation,
+        reason: `Current tier (${req.currentTier}) is already equal to or higher than target tier (${req.targetTier}).`,
+        requiredActions: [],
+      };
+    }
+
+    const reqs = TrustTierLifecycleEngine.getUpgradeRequirements(req.targetTier);
+
+    // 1. Reputation Check
+    if (req.reputationScore < reqs.minReputation) {
+      return {
+        status: "INSUFFICIENT_REPUTATION",
+        previousTier: req.currentTier,
+        newTier: req.currentTier,
+        reputationScore: req.reputationScore,
+        requiredReputation: reqs.minReputation,
+        reason: `Reputation score (${req.reputationScore}) is below required threshold (${reqs.minReputation}) for target tier ${req.targetTier}.`,
+        requiredActions: [
+          `Increase reputation score to at least ${reqs.minReputation} via successful job completions and SLA gap resolutions.`,
+        ],
+      };
+    }
+
+    // 2. Attestation Proof Check
+    const headers = req.headers ?? {};
+    if (req.targetTier === Tier.Strict) {
+      const hasTee = Boolean(headers["x-conxian-tee-proof"]);
+      const hasZk = Boolean(headers["x-conxian-zk-proof"]);
+      const auditOk = req.auditPassed ?? true;
+
+      if (!hasTee || !hasZk || !auditOk) {
+        const missing: string[] = [];
+        if (!hasTee) missing.push("x-conxian-tee-proof header");
+        if (!hasZk) missing.push("x-conxian-zk-proof header");
+        if (!auditOk) missing.push("Third-party TEE + ZK audit");
+
+        return {
+          status: "MISSING_ATTESTATION",
+          previousTier: req.currentTier,
+          newTier: req.currentTier,
+          reputationScore: req.reputationScore,
+          requiredReputation: reqs.minReputation,
+          reason: `Missing required attestation proofs for Strict tier: ${missing.join(", ")}.`,
+          requiredActions: missing.map((m) => `Provide ${m}`),
+        };
+      }
+    } else if (req.targetTier === Tier.Managed) {
+      const hasEnclave = Boolean(headers["x-conxian-enclave-attestation"]);
+      if (!hasEnclave) {
+        return {
+          status: "MISSING_ATTESTATION",
+          previousTier: req.currentTier,
+          newTier: req.currentTier,
+          reputationScore: req.reputationScore,
+          requiredReputation: reqs.minReputation,
+          reason: `Missing required x-conxian-enclave-attestation header for Managed tier.`,
+          requiredActions: ["Deploy enclave SDK and provide x-conxian-enclave-attestation header."],
+        };
+      }
+    }
+
+    // 3. P0 Enclave Gap Degradation Circuit Breaker
+    if (req.targetTier === Tier.Strict || req.targetTier === Tier.Managed) {
+      if (!this.flags.attestationAvailable) {
+        const degradedTier = degradeTierForP0Gaps(req.targetTier, this.flags);
+        return {
+          status: "APPROVED",
+          previousTier: req.currentTier,
+          newTier: degradedTier,
+          reputationScore: req.reputationScore,
+          requiredReputation: reqs.minReputation,
+          reason: `Upgrade approved but degraded to ${degradedTier} due to active enclave P0 attestation gaps.`,
+          requiredActions: ["Resolve upstream enclave SDK P0 attestation issues (#242, #241, #240)."],
+        };
+      }
+    }
+
+    return {
+      status: "APPROVED",
+      previousTier: req.currentTier,
+      newTier: req.targetTier,
+      reputationScore: req.reputationScore,
+      requiredReputation: reqs.minReputation,
+      reason: `Successfully upgraded to ${req.targetTier}.`,
+      requiredActions: [],
+    };
+  }
+
+  /**
+   * Evaluate whether a builder/client should be downgraded based on SLA breaches or P0 gaps.
+   */
+  evaluateTierDowngrade(req: TierDowngradeRequest): TierDowngradeResult {
+    let newTier = req.currentTier;
+    let downgraded = false;
+    const reasons: string[] = [];
+    const recoveryRequirements: string[] = [];
+
+    if (req.consecutiveBreaches >= 3) {
+      newTier = Tier.ObserverOnly;
+      downgraded = true;
+      reasons.push(`${req.consecutiveBreaches} consecutive SLA breaches triggered downgrade to ObserverOnly.`);
+      recoveryRequirements.push("Resolve open gap cards and restore reputation score above 40.");
+    } else if (req.consecutiveBreaches >= 2) {
+      if (req.currentTier === Tier.Strict) {
+        newTier = Tier.Managed;
+        downgraded = true;
+        reasons.push(`${req.consecutiveBreaches} consecutive SLA breaches triggered downgrade from Strict to Managed.`);
+      } else if (req.currentTier === Tier.Managed) {
+        newTier = Tier.Expedient;
+        downgraded = true;
+        reasons.push(`${req.consecutiveBreaches} consecutive SLA breaches triggered downgrade from Managed to Expedient.`);
+      } else if (req.currentTier === Tier.Expedient) {
+        newTier = Tier.ObserverOnly;
+        downgraded = true;
+        reasons.push(`${req.consecutiveBreaches} consecutive SLA breaches triggered downgrade from Expedient to ObserverOnly.`);
+      }
+      recoveryRequirements.push("Maintain 0 SLA breaches for at least 5 consecutive job executions.");
+    }
+
+    if (req.hasActiveP0Gap && (newTier === Tier.Strict || newTier === Tier.Managed)) {
+      const beforeP0 = newTier;
+      newTier = degradeTierForP0Gaps(newTier, this.flags);
+      if (newTier !== beforeP0) {
+        downgraded = true;
+        reasons.push(`Active P0 enclave attestation gap degraded tier from ${beforeP0} to ${newTier}.`);
+        recoveryRequirements.push("Resolve upstream enclave SDK attestation gaps.");
+      }
+    }
+
+    return {
+      previousTier: req.currentTier,
+      newTier,
+      downgraded,
+      reason: reasons.length > 0 ? reasons.join(" ") : "No downgrade required.",
+      recoveryRequirements,
+    };
+  }
+}
+
 // ── Middleware Class Implementation ──
 
 export class TrustTierMiddleware {
-  constructor(private readonly flags: FeatureFlags = DEFAULT_FEATURE_FLAGS) {}
+  readonly lifecycleEngine: TrustTierLifecycleEngine;
+
+  constructor(private readonly flags: FeatureFlags = DEFAULT_FEATURE_FLAGS) {
+    this.lifecycleEngine = new TrustTierLifecycleEngine(flags);
+  }
 
   /**
    * Run the full 4-stage pricing and routing pipeline.
@@ -257,6 +502,20 @@ export class TrustTierMiddleware {
       availableRails,
       wireHeaders,
     };
+  }
+
+  /**
+   * Evaluate tier upgrade request.
+   */
+  evaluateTierUpgrade(req: TierUpgradeRequest): TierUpgradeResult {
+    return this.lifecycleEngine.evaluateTierUpgrade(req);
+  }
+
+  /**
+   * Evaluate tier downgrade request.
+   */
+  evaluateTierDowngrade(req: TierDowngradeRequest): TierDowngradeResult {
+    return this.lifecycleEngine.evaluateTierDowngrade(req);
   }
 
   /**
