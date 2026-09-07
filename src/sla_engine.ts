@@ -9,6 +9,7 @@
  *   - CJCS Gap Card Generation with Urgency-based Pricing & Floors
  *   - TrustTier Gating & Auto-Execution Matrix
  *   - Builder Reputation Tracking & TrustTier Mapping
+ *   - Autonomous SLA Gap Card Auto-Resolution & Reputation Recovery
  */
 
 import type { JobCard, TrustTier } from "./core_types";
@@ -86,8 +87,10 @@ export interface GapCard {
   urgency: UrgencyTier;
   labels: string[];
   trustTier: TrustTier;
-  state: "auto_published" | "pending_approval";
+  state: "auto_published" | "pending_approval" | "resolved";
   createdAtIso: string;
+  resolvedAtIso?: string;
+  resolvingBuilderId?: string;
 }
 
 export interface SlaEvaluationResult {
@@ -112,6 +115,24 @@ export interface BuilderReputationRecord {
   consecutiveCompletions: number;
   eligibleTier: TrustTier;
   status: "active" | "suspended";
+}
+
+export interface GapCardAutoResolutionInput {
+  gapCard: GapCard;
+  resolvingBuilderId: string;
+  proofHash: string;
+  currentReputation?: BuilderReputationRecord;
+  currentTimeIso?: string;
+}
+
+export interface GapCardAutoResolutionResult {
+  gapCardId: string;
+  status: "resolved";
+  resolvedAtIso: string;
+  resolvingBuilderId: string;
+  payoutSats: bigint;
+  updatedReputation?: BuilderReputationRecord;
+  reputationDelta: number;
 }
 
 // ── Default Ruleset ──
@@ -333,6 +354,58 @@ export class SlaEngine {
       state: isAutoPublished ? "auto_published" : "pending_approval",
       createdAtIso: currentTimeIso,
     };
+  }
+
+  /**
+   * Auto-resolves a gap card upon verified completion, updating state, payout, and builder reputation.
+   */
+  autoResolveGapCard(input: GapCardAutoResolutionInput): GapCardAutoResolutionResult {
+    if (!input.proofHash || input.proofHash.trim() === "") {
+      throw new Error("Cannot auto-resolve gap card without a valid proofHash");
+    }
+
+    const resolvedAtIso = input.currentTimeIso ?? new Date().toISOString();
+
+    let updatedReputation: BuilderReputationRecord | undefined;
+    let reputationDelta = 0;
+
+    if (input.currentReputation) {
+      const initialScore = input.currentReputation.score;
+      updatedReputation = SlaEngine.updateBuilderReputation(
+        input.currentReputation,
+        "gap_resolved"
+      );
+      reputationDelta = updatedReputation.score - initialScore;
+    }
+
+    // Mutate gapCard state
+    input.gapCard.state = "resolved";
+    input.gapCard.resolvedAtIso = resolvedAtIso;
+    input.gapCard.resolvingBuilderId = input.resolvingBuilderId;
+
+    return {
+      gapCardId: input.gapCard.id,
+      status: "resolved",
+      resolvedAtIso,
+      resolvingBuilderId: input.resolvingBuilderId,
+      payoutSats: input.gapCard.budgetSats,
+      updatedReputation,
+      reputationDelta,
+    };
+  }
+
+  /**
+   * Evaluates builder reputation recovery trajectory after resolving gap cards or consecutive jobs.
+   */
+  evaluateReputationRecovery(
+    builder: BuilderReputationRecord,
+    consecutiveCompletionsToAdd = 1
+  ): BuilderReputationRecord {
+    let updated = { ...builder };
+    for (let i = 0; i < consecutiveCompletionsToAdd; i++) {
+      updated = SlaEngine.updateBuilderReputation(updated, "job_completed");
+    }
+    return updated;
   }
 
   /**

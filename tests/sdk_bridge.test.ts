@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TrustTier, SettlementRail } from "../src/core_types";
 import { ConxianMarketSDK } from "../src/sdk_bridge";
+import type { GapCard, BuilderReputationRecord } from "../src/sla_engine";
 
 describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", () => {
   const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
@@ -121,5 +122,51 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Int
     const release = sdk.evaluateAndReleaseJobCardEscrow("bridge-job-1", new Date().toISOString());
     expect(release.grossBudgetSat).toBe(2_000_000n);
     expect(release.yieldSplit.builderSat).toBe(1_574_400n); // 80% of net payout (1,968,000 Sat)
+  });
+
+  it("exposes gap card auto-resolution and reputation recovery via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const gapCard: GapCard = {
+      id: "GC-BRIDGE-101",
+      context: "sla_remediation",
+      type: "gap_card",
+      parentJobId: "JC-BRIDGE-101",
+      description: "Fix SLA breach",
+      deadlineIso: "2026-08-05T12:00:00Z",
+      budgetSats: 100_000n,
+      urgency: "critical",
+      labels: ["gap"],
+      trustTier: TrustTier.Managed,
+      state: "auto_published",
+      createdAtIso: "2026-08-05T10:00:00Z",
+    };
+
+    const initialReputation: BuilderReputationRecord = {
+      builderId: "did:conxian:agent-hero",
+      score: 75,
+      slaBreachCount: 1,
+      abandonmentCount: 0,
+      gapCardsResolved: 0,
+      qualityDisputeCount: 0,
+      consecutiveCompletions: 2,
+      eligibleTier: TrustTier.Managed,
+      status: "active",
+    };
+
+    const resolution = sdk.autoResolveGapCard({
+      gapCard,
+      resolvingBuilderId: "did:conxian:agent-hero",
+      proofHash: "0xproof123",
+      currentReputation: initialReputation,
+      currentTimeIso: "2026-08-05T11:00:00Z",
+    });
+
+    expect(resolution.status).toBe("resolved");
+    expect(resolution.payoutSats).toBe(100_000n);
+    expect(resolution.updatedReputation?.score).toBe(80);
+
+    const recovered = sdk.evaluateReputationRecovery(initialReputation, 5);
+    expect(recovered.consecutiveCompletions).toBe(7);
   });
 });

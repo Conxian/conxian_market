@@ -5,7 +5,7 @@
  *   - Gateway Client (relay, RWA verification, blocks, NTT)
  *   - Gateway Verifier (attestation cert verification, trust tier detection)
  *   - Settlement Orchestrator (cross-chain settlement routing across 8 rails)
- *   - SLA Engine (autonomous SLA evaluation & gap card bounties)
+ *   - SLA Engine (autonomous SLA evaluation, gap card bounties & auto-resolution)
  *   - Monitoring Watcher (sBTC, Fedimint, Babylon, and Treasury health monitoring)
  *   - TrustTier Middleware (HTTP/MCP request verification & routing pipeline)
  *   - BOS Yield Splitter (80/10/10 yield matrix, fee decay, founder vesting, inference policy)
@@ -22,6 +22,9 @@ import {
   SlaEngine,
   type BuilderReputationRecord,
   type SlaEvaluationResult,
+  type GapCard,
+  type GapCardAutoResolutionInput,
+  type GapCardAutoResolutionResult,
 } from "./sla_engine";
 import {
   detectTrustTier as detectTier,
@@ -187,7 +190,7 @@ export class ConxianMarketSDK {
     return this.settlement.execute(request);
   }
 
-  // ── Capability 6: Autonomous SLA Enforcement & CJCS Gap Cards ──
+  // ── Capability 6: Autonomous SLA Enforcement, CJCS Gap Cards & Auto-Resolution ──
 
   evaluateSla(
     jobCard: JobCard,
@@ -200,6 +203,17 @@ export class ConxianMarketSDK {
     }
   ): SlaEvaluationResult {
     return this.slaEngine.evaluateJobCard(jobCard, currentTimeIso, options);
+  }
+
+  autoResolveGapCard(input: GapCardAutoResolutionInput): GapCardAutoResolutionResult {
+    return this.slaEngine.autoResolveGapCard(input);
+  }
+
+  evaluateReputationRecovery(
+    builder: BuilderReputationRecord,
+    consecutiveCompletionsToAdd = 1
+  ): BuilderReputationRecord {
+    return this.slaEngine.evaluateReputationRecovery(builder, consecutiveCompletionsToAdd);
   }
 
   updateBuilderReputation(

@@ -3,7 +3,7 @@
  *
  * Core exports for non-custodial value routing, SLA enforcement, TrustTier pricing,
  * telemetry monitoring, BOS yield splitting, ERC-8183 escrow management, attestation proof verification,
- * and x402 gateway integration.
+ * x402 gateway integration, and autonomous SLA gap card auto-resolution.
  */
 
 export * from "./core_types";
@@ -12,7 +12,15 @@ export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./
 export type { AttestationCapabilities } from "./verification";
 export { SettlementOrchestrator } from "./settlement";
 export { SlaEngine, DEFAULT_SLA_RULESET, URGENCY_PRICING_TABLE } from "./sla_engine";
-export type { GapCard, SlaEvaluationResult, BuilderReputationRecord, UrgencyTier, SlaRule } from "./sla_engine";
+export type {
+  GapCard,
+  SlaEvaluationResult,
+  BuilderReputationRecord,
+  UrgencyTier,
+  SlaRule,
+  GapCardAutoResolutionInput,
+  GapCardAutoResolutionResult,
+} from "./sla_engine";
 export { MonitoringWatcher, DEFAULT_TARGET_ALLOCATION } from "./monitoring_watcher";
 export type {
   HealthStatus,
