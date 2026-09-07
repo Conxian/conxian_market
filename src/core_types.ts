@@ -359,4 +359,5 @@ export interface CapabilitySummary {
   marketAgnosticRouterEnabled: boolean;
   jobCardEscrowEngineEnabled: boolean;
   x402EscrowGatewayEnabled?: boolean;
+  trustTierLifecycleEnabled?: boolean;
 }

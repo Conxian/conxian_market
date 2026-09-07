@@ -121,3 +121,110 @@ describe("TrustTierMiddleware", () => {
     expect(wire["x-conxian-p0-degraded"]).toBe("false");
   });
 });
+
+describe("TrustTierLifecycleEngine", () => {
+  const middleware = new TrustTierMiddleware(DEFAULT_FEATURE_FLAGS);
+  const fullMiddleware = new TrustTierMiddleware({
+    ...DEFAULT_FEATURE_FLAGS,
+    attestationAvailable: true,
+  });
+
+  it("evaluates tier upgrade request requirements per KB Section 6", () => {
+    // 1. Rejection due to insufficient reputation
+    const lowRepResult = middleware.evaluateTierUpgrade({
+      currentTier: TrustTier.ObserverOnly,
+      targetTier: TrustTier.Expedient,
+      reputationScore: 30, // threshold is 40
+    });
+    expect(lowRepResult.status).toBe("INSUFFICIENT_REPUTATION");
+    expect(lowRepResult.requiredReputation).toBe(40);
+    expect(lowRepResult.newTier).toBe(TrustTier.ObserverOnly);
+
+    // 2. Upgrade approval to Expedient with rep = 45
+    const expResult = middleware.evaluateTierUpgrade({
+      currentTier: TrustTier.ObserverOnly,
+      targetTier: TrustTier.Expedient,
+      reputationScore: 45,
+    });
+    expect(expResult.status).toBe("APPROVED");
+    expect(expResult.newTier).toBe(TrustTier.Expedient);
+
+    // 3. Rejection due to missing enclave attestation for Managed
+    const missingEnclaveResult = middleware.evaluateTierUpgrade({
+      currentTier: TrustTier.Expedient,
+      targetTier: TrustTier.Managed,
+      reputationScore: 75, // threshold is 70
+      headers: {},
+    });
+    expect(missingEnclaveResult.status).toBe("MISSING_ATTESTATION");
+    expect(missingEnclaveResult.newTier).toBe(TrustTier.Expedient);
+
+    // 4. Upgrade approval to Managed with rep = 75 and enclave header (when attestationAvailable is true)
+    const managedResult = fullMiddleware.evaluateTierUpgrade({
+      currentTier: TrustTier.Expedient,
+      targetTier: TrustTier.Managed,
+      reputationScore: 75,
+      headers: {
+        "x-conxian-enclave-attestation": "valid_jwt_attestation",
+      },
+    });
+    expect(managedResult.status).toBe("APPROVED");
+    expect(managedResult.newTier).toBe(TrustTier.Managed);
+
+    // 5. Upgrade approval with P0 degradation when default feature flags (attestationAvailable = false) are active
+    const degradedManagedResult = middleware.evaluateTierUpgrade({
+      currentTier: TrustTier.Expedient,
+      targetTier: TrustTier.Managed,
+      reputationScore: 75,
+      headers: {
+        "x-conxian-enclave-attestation": "valid_jwt_attestation",
+      },
+    });
+    expect(degradedManagedResult.status).toBe("APPROVED");
+    expect(degradedManagedResult.newTier).toBe(TrustTier.Expedient);
+
+    // 6. Upgrade approval to Strict with rep = 95 and TEE + ZK proofs
+    const strictResult = fullMiddleware.evaluateTierUpgrade({
+      currentTier: TrustTier.Managed,
+      targetTier: TrustTier.Strict,
+      reputationScore: 95,
+      headers: {
+        "x-conxian-tee-proof": "nitro_quote_data",
+        "x-conxian-zk-proof": "groth16_proof_data",
+      },
+    });
+    expect(strictResult.status).toBe("APPROVED");
+    expect(strictResult.newTier).toBe(TrustTier.Strict);
+  });
+
+  it("evaluates tier downgrade triggers for consecutive breaches and P0 gaps", () => {
+    // 2 consecutive breaches downgrades Strict to Managed
+    const downgrade2Breaches = middleware.evaluateTierDowngrade({
+      currentTier: TrustTier.Strict,
+      consecutiveBreaches: 2,
+    });
+    expect(downgrade2Breaches.downgraded).toBe(true);
+    expect(downgrade2Breaches.newTier).toBe(TrustTier.Managed);
+
+    // 3 consecutive breaches downgrades to ObserverOnly
+    const downgrade3Breaches = middleware.evaluateTierDowngrade({
+      currentTier: TrustTier.Managed,
+      consecutiveBreaches: 3,
+    });
+    expect(downgrade3Breaches.downgraded).toBe(true);
+    expect(downgrade3Breaches.newTier).toBe(TrustTier.ObserverOnly);
+
+    // Active P0 gap degrades Strict tier
+    const p0Middleware = new TrustTierMiddleware({
+      ...DEFAULT_FEATURE_FLAGS,
+      attestationAvailable: false,
+    });
+    const p0Downgrade = p0Middleware.evaluateTierDowngrade({
+      currentTier: TrustTier.Strict,
+      consecutiveBreaches: 0,
+      hasActiveP0Gap: true,
+    });
+    expect(p0Downgrade.downgraded).toBe(true);
+    expect(p0Downgrade.newTier).toBe(TrustTier.Expedient);
+  });
+});

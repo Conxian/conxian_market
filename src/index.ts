@@ -36,13 +36,18 @@ export type {
   TreasuryRunwayResult,
   UnifiedHealthSnapshot,
 } from "./monitoring_watcher";
-export { TrustTierMiddleware, SLA_TEMPLATES, RAIL_ROUTING_MATRIX } from "./trust_tier_middleware";
+export { TrustTierMiddleware, TrustTierLifecycleEngine, SLA_TEMPLATES, RAIL_ROUTING_MATRIX } from "./trust_tier_middleware";
 export type {
   TrustTierHeaders,
   TrustTierPipelineRequest,
   TrustTierPipelineResult,
   SlaTemplate,
   PipelineWireHeaders,
+  TierUpgradeRequest,
+  TierUpgradeResult,
+  TierDowngradeRequest,
+  TierDowngradeResult,
+  TierTransitionStatus,
 } from "./trust_tier_middleware";
 export { BosYieldSplitter, FEE_DECAY_TIMELINE } from "./bos_yield_splitter";
 export type {

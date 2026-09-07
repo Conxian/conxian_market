@@ -1,6 +1,6 @@
 # Conxian Ecosystem & Market SDK Roadmap
 
-> **Current Session:** Session 57
+> **Current Session:** Session 58
 > **Strategic Directive:** Hardening the Core (Functional Settlement, Non-Custodial Value Routing, M2M Economy Orchestration & Autonomous SLA Remediation)
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
 
@@ -61,13 +61,21 @@ The Conxian Market SDK serves as the value, settlement, and SLA enforcement laye
 - [x] Candidate Scoring: Multi-Rail x402 Escrow Gateway & Settlement Bridge scored #1 (100/100).
 - [x] Implemented `X402EscrowGateway`, `jobCardToMultiRailDemands`, and multi-rail payment pointers in `src/x402_facade.ts`.
 
-### Session 57 — Autonomous SLA Gap Auto-Resolution & Reputation Recovery Engine (CURRENT)
+### Session 57 — Autonomous SLA Gap Auto-Resolution & Reputation Recovery Engine
 - [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
 - [x] Research expansion and gap analysis (`SESSION_57_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
 - [x] Candidate Scoring: Autonomous SLA Gap Card Auto-Resolution & Reputation Recovery Engine scored #1 (100/100).
 - [x] Enhance `SlaEngine` in `src/sla_engine.ts` with `autoResolveGapCard` and `evaluateReputationRecovery`.
 - [x] Wire SLA auto-resolution capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
 - [x] Add comprehensive unit tests in `tests/sla_engine.test.ts` and `tests/sdk_bridge.test.ts`, verifying 100% type safety (`npm run typecheck`) and all vitest test suites passing (`npm test`).
+
+### Session 58 — TrustTier Upgrade & Downgrade Lifecycle Engine & Reputation Threshold Verification (CURRENT)
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_58_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: TrustTier Upgrade & Downgrade Lifecycle Engine & Autonomous Reputation Threshold Verifier scored #1 (100/100).
+- [x] Implement `TrustTierLifecycleEngine` in `src/trust_tier_middleware.ts` enforcing KB Section 6 reputation thresholds (40, 70, 90), proof attestation checks, and automatic downgrade circuit breakers.
+- [x] Wire `evaluateTierUpgrade` and `evaluateTierDowngrade` into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
+- [x] Add comprehensive unit tests in `tests/trust_tier_middleware.test.ts` and `tests/sdk_bridge.test.ts`, verifying 100% type safety (`npm run typecheck`) and all 93 vitest unit tests passing (`npm test`).
 
 ---
 

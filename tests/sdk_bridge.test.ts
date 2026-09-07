@@ -170,3 +170,33 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Int
     expect(recovered.consecutiveCompletions).toBe(7);
   });
 });
+
+describe("ConxianMarketSDK Bridge - TrustTier Lifecycle Engine Integration", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("exposes trustTierLifecycleEnabled in capability summary", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+    const summary = sdk.getCapabilitySummary();
+
+    expect(summary.trustTierLifecycleEnabled).toBe(true);
+  });
+
+  it("executes evaluateTierUpgrade and evaluateTierDowngrade via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const upgrade = sdk.evaluateTierUpgrade({
+      currentTier: TrustTier.ObserverOnly,
+      targetTier: TrustTier.Expedient,
+      reputationScore: 50,
+    });
+    expect(upgrade.status).toBe("APPROVED");
+    expect(upgrade.newTier).toBe(TrustTier.Expedient);
+
+    const downgrade = sdk.evaluateTierDowngrade({
+      currentTier: TrustTier.Strict,
+      consecutiveBreaches: 2,
+    });
+    expect(downgrade.downgraded).toBe(true);
+    expect(downgrade.newTier).toBe(TrustTier.Managed);
+  });
+});
