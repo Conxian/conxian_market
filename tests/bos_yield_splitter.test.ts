@@ -97,4 +97,82 @@ describe("BosYieldSplitter", () => {
     expect(invalidAgent.violations).toContain("Agent handoffs must use Model Context Protocol (MCP)");
     expect(invalidAgent.violations).toContain("Sensitive key handling requires conxius-enclave-sdk integration");
   });
+
+  it("validates Treasury Multi-Sig 48-Hour Timelock & Signature Quorum", () => {
+    const nowIso = "2026-09-08T12:00:00Z";
+    const earlyExecutionIso = "2026-09-09T12:00:00Z"; // only 24 hours
+    const validExecutionIso = "2026-09-10T12:00:00Z"; // 48 hours
+
+    // High-value transfer ($100K = 200M sats > 100M sats threshold) with early execution and insufficient signers
+    const invalidTransfer = BosYieldSplitter.validateTimelockAndMultisig({
+      transactionId: "TX-TREASURY-001",
+      proposedByDid: "did:conxian:treasurer",
+      amountSat: 200_000_000n,
+      targetAddress: "0xec23...",
+      purpose: "RWA Allocation",
+      proposedAtTimestampIso: nowIso,
+      executionTimestampIso: earlyExecutionIso,
+      signerSignatures: ["sig1", "sig2"], // Only 2 signers (needs 3)
+    });
+
+    expect(invalidTransfer.requiresTimelock).toBe(true);
+    expect(invalidTransfer.timelockSatisfied).toBe(false);
+    expect(invalidTransfer.signerQuorumMet).toBe(false);
+    expect(invalidTransfer.authorized).toBe(false);
+    expect(invalidTransfer.violations.length).toBe(2);
+
+    // Valid high-value transfer meeting timelock and 3-of-5 multisig
+    const validTransfer = BosYieldSplitter.validateTimelockAndMultisig({
+      transactionId: "TX-TREASURY-002",
+      proposedByDid: "did:conxian:treasurer",
+      amountSat: 200_000_000n,
+      targetAddress: "0xec23...",
+      purpose: "RWA Allocation",
+      proposedAtTimestampIso: nowIso,
+      executionTimestampIso: validExecutionIso,
+      signerSignatures: ["sig1", "sig2", "sig3"],
+    });
+
+    expect(validTransfer.requiresTimelock).toBe(true);
+    expect(validTransfer.timelockSatisfied).toBe(true);
+    expect(validTransfer.signerQuorumMet).toBe(true);
+    expect(validTransfer.authorized).toBe(true);
+    expect(validTransfer.violations.length).toBe(0);
+  });
+
+  it("processes Founder Compensation Escrow Payouts with vesting and DAO bonus caps", () => {
+    // Post-cliff (24 months = 50% vested) with DAO bonus approval
+    const validPayout = BosYieldSplitter.processFounderEscrowPayout({
+      founderId: "did:founder:alice",
+      totalAllocatedSat: 24_000_000n,
+      monthsElapsed: 24,
+      monthlyBaseCapSat: 200_000n,
+      requestedBonusSat: 100_000n,
+      daoApprovedBonus: true,
+      escrowBalanceSat: 1_000_000n, // Within 1.2M limit (6 * 200K)
+    });
+
+    expect(validPayout.isVested).toBe(true);
+    expect(validPayout.vestedAmountSat).toBe(12_000_000n);
+    expect(validPayout.authorizedMonthlyBaseSat).toBe(200_000n);
+    expect(validPayout.authorizedBonusSat).toBe(100_000n);
+    expect(validPayout.totalPayoutSat).toBe(300_000n);
+    expect(validPayout.isEscrowWithinLimit).toBe(true);
+    expect(validPayout.violations.length).toBe(0);
+
+    // Rejected bonus without DAO vote
+    const unapprovedBonusPayout = BosYieldSplitter.processFounderEscrowPayout({
+      founderId: "did:founder:bob",
+      totalAllocatedSat: 24_000_000n,
+      monthsElapsed: 24,
+      monthlyBaseCapSat: 200_000n,
+      requestedBonusSat: 100_000n,
+      daoApprovedBonus: false,
+      escrowBalanceSat: 1_000_000n,
+    });
+
+    expect(unapprovedBonusPayout.authorizedBonusSat).toBe(0n);
+    expect(unapprovedBonusPayout.totalPayoutSat).toBe(200_000n);
+    expect(unapprovedBonusPayout.violations).toContain("Requested bonus rejected: DAO vote approval required");
+  });
 });
