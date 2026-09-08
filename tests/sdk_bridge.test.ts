@@ -200,3 +200,37 @@ describe("ConxianMarketSDK Bridge - TrustTier Lifecycle Engine Integration", () 
     expect(downgrade.newTier).toBe(TrustTier.Managed);
   });
 });
+
+
+describe("ConxianMarketSDK Bridge - SLA Penalty Settlement Integration", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("exposes slaPenaltyEngineEnabled in capability summary", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+    const summary = sdk.getCapabilitySummary();
+
+    expect(summary.slaPenaltyEngineEnabled).toBe(true);
+  });
+
+  it("executes settleSLAPenalty and processSLAPenaltyClawback via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const result = sdk.settleSLAPenalty({
+      jobId: "JC-SLA-TEST-1",
+      builderId: "did:builder:sla",
+      clientId: "did:client:sla",
+      breachSeverity: "abandonment",
+      escrowBalanceSats: 200_000n,
+      contractBountySats: 200_000n,
+      reason: "Unannounced job abandonment",
+    });
+
+    expect(result.penaltyBps).toBe(5000); // 50%
+    expect(result.totalPenaltySats).toBe(100_000n);
+    expect(result.remainingEscrowBalanceSats).toBe(100_000n);
+    expect(result.clawback.clientRemediationBountySats).toBe(50_000n);
+    expect(result.clawback.treasuryFeeSats).toBe(50_000n);
+    expect(result.gapCardIssued).toBe(true);
+    expect(result.reputationDelta).toBe(-25);
+  });
+});

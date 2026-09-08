@@ -182,6 +182,27 @@ describe("SlaEngine", () => {
     expect(gapCard.state).toBe("resolved");
   });
 
+
+  it("should settle SLA fee penalty and process automated escrow clawback", () => {
+    const settlementResult = engine.settleSLAPenalty({
+      jobId: "JC-2026-001",
+      builderId: "did:conxian:builder-123",
+      clientId: "did:conxian:client-456",
+      breachSeverity: "critical",
+      escrowBalanceSats: 100_000n,
+      contractBountySats: 100_000n,
+      reason: "Critical SLA deadline breach",
+    });
+
+    expect(settlementResult.jobId).toBe("JC-2026-001");
+    expect(settlementResult.penaltyBps).toBe(3000); // 30%
+    expect(settlementResult.totalPenaltySats).toBe(30_000n);
+    expect(settlementResult.remainingEscrowBalanceSats).toBe(70_000n);
+    expect(settlementResult.clawback.clientRemediationBountySats).toBe(15_000n);
+    expect(settlementResult.clawback.treasuryFeeSats).toBe(15_000n);
+    expect(settlementResult.gapCardIssued).toBe(true);
+    expect(settlementResult.updatedReputationScore).toBe(70); // 80 - 10
+  });
   it("should evaluate builder reputation recovery trajectory", () => {
     const initialReputation: BuilderReputationRecord = {
       builderId: "did:conxian:recovering-builder",
