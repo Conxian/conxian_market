@@ -362,6 +362,7 @@ export interface CapabilitySummary {
   trustTierLifecycleEnabled?: boolean;
   slaPenaltyEngineEnabled?: boolean;
   treasuryGovernanceEnabled?: boolean;
+  clientInstallerEnabled?: boolean;
 }
 
 // ── SLA Penalty & Escrow Clawback Types (Session 59) ──
@@ -445,4 +446,58 @@ export interface FounderEscrowPayoutResult {
   emergencyLimitSat: bigint;
   isEscrowWithinLimit: boolean;
   violations: string[];
+}
+
+
+// ── Client Onboarding & Unified Installer Types (Session 61) ──
+
+export interface ClientOnboardingConfig {
+  clientDid: string;
+  gatewayUrl: string;
+  nexusUrl: string;
+  defaultSettlementRail: SettlementRail;
+  targetTrustTier: TrustTier;
+  byoLlmKeys?: {
+    deepseekApiKey?: string;
+    openaiApiKey?: string;
+    anthropicApiKey?: string;
+  };
+  customSettings?: Record<string, unknown>;
+}
+
+export interface ConnectivityDiagnosticItem {
+  target: "gateway" | "nexus" | "llm_provider" | "settlement_rail";
+  endpoint: string;
+  connected: boolean;
+  latencyMs: number;
+  statusMessage: string;
+}
+
+export interface SystemConnectivityReport {
+  overallHealth: "HEALTHY" | "DEGRADED" | "UNREACHABLE";
+  timestampIso: string;
+  diagnostics: ConnectivityDiagnosticItem[];
+}
+
+export interface ZeroCustodySanityCheck {
+  passed: boolean;
+  reasons: string[];
+  localKeyIsolationConfirmed: boolean;
+  byoDeFiDirectRoutingConfirmed: boolean;
+}
+
+export interface ClientProvisioningResult {
+  provisioned: boolean;
+  timestampIso: string;
+  configSummary: {
+    clientDid: string;
+    gatewayUrl: string;
+    nexusUrl: string;
+    settlementRail: SettlementRail;
+    trustTier: TrustTier;
+    hasByoLlmKeys: boolean;
+  };
+  connectivityReport: SystemConnectivityReport;
+  zeroCustodyCheck: ZeroCustodySanityCheck;
+  onboardingLogs: string[];
 }

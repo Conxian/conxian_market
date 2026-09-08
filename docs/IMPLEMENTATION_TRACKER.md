@@ -1,4 +1,4 @@
-# Session 59 → Session 60 Implementation Tracker
+# Session 60 → Session 61 Implementation Tracker
 
 > **Generated:** 2026-08-01 | **Source:** `CROSS_REPO_GAP_ANALYSIS_SESSION_48.md` | **Auto-run Approved**
 > **Updated:** 2026-09-08 | **Current issue reality:** Updated in Session 60 following research expansion, Treasury Multi-Sig Governance Timelock & Founder Compensation Escrow Controller (`SESSION_60_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
@@ -60,7 +60,8 @@ The current live execution chain is:
 | conxian_market | SLA Gap Resolution & Recovery (`sla_engine.ts`) | **COMPLETED (S57)** | Scoring matrix candidate #1 from `sla_bounty_system.md`. |
 | conxian_market | TrustTier Lifecycle Engine (`trust_tier_middleware.ts`) | **COMPLETED (S58)** | Scoring matrix candidate #1 from `trust_tier_pricing.md` Section 6. |
 | conxian_market | SLA Fee Penalty & Clawback Engine (`sla_engine.ts`) | **COMPLETED (S59)** | Scoring matrix candidate #1 from `sla_bounty_system.md` Section 4. |
-| conxian_market | Treasury Timelock & Founder Escrow (`bos_yield_splitter.ts`) | **ACTIVE (S60)** | Scoring matrix candidate #1 from `operating_manual.md` Section 3.C & 3.D. |
+| conxian_market | Treasury Timelock & Founder Escrow (`bos_yield_splitter.ts`) | **COMPLETED (S60)** | Scoring matrix candidate #1 from `operating_manual.md` Section 3.C & 3.D. |
+| conxian_market | Unified Client Installer (`client_onboarding.ts`) | **ACTIVE (S61)** | Scoring matrix candidate #1 from `CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md`. |
 | Conxian | Monorepo Smart Contracts | **DEPRECATED** | Recommended for archiving in favor of BYO DeFi adapters. |
 
 ---

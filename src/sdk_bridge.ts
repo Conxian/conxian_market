@@ -1,3 +1,4 @@
+import { ClientInstallerEngine } from "./client_onboarding";
 /**
  * Conxian Market SDK Bridge — Unified Client Interface for Marketplace Services.
  *
@@ -421,6 +422,35 @@ export class ConxianMarketSDK {
     );
   }
 
+  // ── Capability 13: Client Onboarding & System Installation Engine ──
+
+  validateClientConfig(config: import("./core_types").ClientOnboardingConfig): {
+    valid: boolean;
+    errors: string[];
+  } {
+    return ClientInstallerEngine.validateClientConfig(config);
+  }
+
+  testSystemConnectivity(
+    config: import("./core_types").ClientOnboardingConfig,
+    timestampIso?: string
+  ): import("./core_types").SystemConnectivityReport {
+    return ClientInstallerEngine.testSystemConnectivity(config, timestampIso);
+  }
+
+  auditZeroCustody(
+    config: import("./core_types").ClientOnboardingConfig
+  ): import("./core_types").ZeroCustodySanityCheck {
+    return ClientInstallerEngine.auditZeroCustody(config);
+  }
+
+  provisionClientEnvironment(
+    config: import("./core_types").ClientOnboardingConfig,
+    timestampIso?: string
+  ): import("./core_types").ClientProvisioningResult {
+    return ClientInstallerEngine.provisionClientEnvironment(config, timestampIso);
+  }
+
   // ── Capability Summary (All Modules Wired) ──
 
   getCapabilitySummary(): CapabilitySummary {
@@ -482,6 +512,7 @@ export class ConxianMarketSDK {
       trustTierLifecycleEnabled: true,
       slaPenaltyEngineEnabled: true,
       treasuryGovernanceEnabled: true,
+      clientInstallerEnabled: true,
     };
   }
 

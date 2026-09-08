@@ -270,3 +270,35 @@ describe("ConxianMarketSDK Bridge - Treasury Governance Integration", () => {
     expect(payoutResult.totalPayoutSat).toBe(225_000n);
   });
 });
+
+describe("ConxianMarketSDK Client Onboarding Integration", () => {
+  it("exposes ClientInstallerEngine capabilities on ConxianMarketSDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect({
+      baseUrl: "https://gateway.conxian.org",
+      apiKey: "test-key",
+    });
+
+    const config = {
+      clientDid: "did:conxian:client-sdk-test",
+      gatewayUrl: "https://gateway.conxian.org",
+      nexusUrl: "https://nexus.conxian.org",
+      defaultSettlementRail: SettlementRail.EvmErc8183,
+      targetTrustTier: TrustTier.Strict,
+    };
+
+    const validation = sdk.validateClientConfig(config);
+    expect(validation.valid).toBe(true);
+
+    const connectivity = sdk.testSystemConnectivity(config);
+    expect(connectivity.overallHealth).toBe("HEALTHY");
+
+    const audit = sdk.auditZeroCustody(config);
+    expect(audit.passed).toBe(true);
+
+    const provisioning = sdk.provisionClientEnvironment(config);
+    expect(provisioning.provisioned).toBe(true);
+
+    const summary = sdk.getCapabilitySummary();
+    expect(summary.clientInstallerEnabled).toBe(true);
+  });
+});

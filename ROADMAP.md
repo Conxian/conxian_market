@@ -100,3 +100,13 @@ The Conxian Market SDK serves as the value, settlement, and SLA enforcement laye
 
 ---
 *Roadmap maintained and updated per session cycle.*
+
+### Session 61 — Unified Client Installation, System Setup & Connectivity Orchestrator Engine (CURRENT)
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and architectural analysis (`CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md` & `SESSION_61_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Unified Client Installation, System Setup & Connectivity Orchestrator Engine scored #1 (100/100).
+- [x] Implement `ClientInstallerEngine` in `src/client_onboarding.ts`.
+- [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
+- [x] Add unit tests in `tests/client_onboarding.test.ts` and `tests/sdk_bridge.test.ts`, verifying 106 passing tests (`npm test`).
+
+---
