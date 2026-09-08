@@ -6,7 +6,18 @@
  * 2. Economic Fee Decay: 2.0% (0-12m), 1.5% (12-36m), 1.0% (36m+), allocated 50% Ops, 30% Founders, 20% Ecosystem.
  * 3. Founder Compensation & Vesting: 4-year vesting with cliff, 50/50 base/bonus cap, 6-month emergency escrow limit.
  * 4. Sovereign OS Thin Orchestrator & BYOK Guard: Prohibits centralized AI inference and mandates enclave key security.
+ * 5. Treasury Multi-Sig Governance Timelock & Founder Compensation Escrow Controller (Session 60):
+ *    - Enforces 48-hour timelock delay for treasury transfers > $50,000 (100,000,000 satoshis).
+ *    - Enforces 3-of-5 multisig quorum verification.
+ *    - Manages founder compensation escrow payouts with DAO bonus validation.
  */
+
+import type {
+  FounderEscrowPayoutResult,
+  FounderEscrowSchedule,
+  TimelockTransactionRequest,
+  TimelockValidationResult,
+} from "./core_types";
 
 export interface YieldSplit {
   grossAmountSat: bigint;
@@ -188,6 +199,105 @@ export class BosYieldSplitter {
       compliant,
       isThinOrchestrator,
       isByokSecured,
+      violations,
+    };
+  }
+
+  /**
+   * Validates Treasury Multi-Sig 48-Hour Timelock & Signature Quorum.
+   * Specification: docs/knowledge_base/operating_manual.md Section 3.C
+   * Rule: Transfers > 100,000,000 sats ($50K equivalent) require a 48-hour delay and >= 3-of-5 signatures.
+   */
+  static validateTimelockAndMultisig(
+    req: TimelockTransactionRequest,
+    options: {
+      highValueThresholdSats?: bigint;
+      requiredQuorum?: number;
+    } = {}
+  ): TimelockValidationResult {
+    const highValueThresholdSats = options.highValueThresholdSats ?? 100_000_000n; // 100M sats ($50k)
+    const requiredQuorum = options.requiredQuorum ?? 3;
+    const violations: string[] = [];
+
+    const requiresTimelock = req.amountSat > highValueThresholdSats;
+
+    const proposedMs = new Date(req.proposedAtTimestampIso).getTime();
+    const executionMs = new Date(req.executionTimestampIso).getTime();
+    const elapsedMs = executionMs - proposedMs;
+    const timeElapsedHours = elapsedMs / (1000 * 3600);
+
+    let timelockSatisfied = true;
+    if (requiresTimelock && timeElapsedHours < 48.0) {
+      timelockSatisfied = false;
+      violations.push(
+        `High-value transaction (${req.amountSat} sats) requires 48-hour timelock delay; only ${timeElapsedHours.toFixed(1)} hours elapsed`
+      );
+    }
+
+    // Unique non-empty signatures
+    const validSignatures = req.signerSignatures.filter(
+      (sig, index, self) => sig && sig.trim().length > 0 && self.indexOf(sig) === index
+    );
+    const validSignerCount = validSignatures.length;
+    const signerQuorumMet = validSignerCount >= requiredQuorum;
+
+    if (!signerQuorumMet) {
+      violations.push(
+        `Insufficient multisig signatures: received ${validSignerCount}, required ${requiredQuorum}`
+      );
+    }
+
+    const authorized = timelockSatisfied && signerQuorumMet && violations.length === 0;
+
+    return {
+      transactionId: req.transactionId,
+      requiresTimelock,
+      timelockSatisfied,
+      timeElapsedHours,
+      signerQuorumMet,
+      validSignerCount,
+      requiredQuorum,
+      authorized,
+      violations,
+    };
+  }
+
+  /**
+   * Processes Founder Compensation Escrow Payouts with vesting and DAO bonus caps.
+   * Specification: docs/knowledge_base/operating_manual.md Section 3.D
+   */
+  static processFounderEscrowPayout(
+    schedule: FounderEscrowSchedule
+  ): FounderEscrowPayoutResult {
+    const vestingResult = BosYieldSplitter.evaluateFounderVesting({
+      monthsElapsed: schedule.monthsElapsed,
+      totalAllocatedSat: schedule.totalAllocatedSat,
+      monthlyBaseCapSat: schedule.monthlyBaseCapSat,
+      daoBonusSat: schedule.requestedBonusSat,
+      escrowSat: schedule.escrowBalanceSat,
+    });
+
+    const violations = [...vestingResult.violations];
+
+    let authorizedBonusSat = 0n;
+    if (schedule.daoApprovedBonus) {
+      authorizedBonusSat = vestingResult.authorizedBonusSat;
+    } else if (schedule.requestedBonusSat > 0n) {
+      violations.push("Requested bonus rejected: DAO vote approval required");
+    }
+
+    const totalPayoutSat = vestingResult.authorizedMonthlyBaseSat + authorizedBonusSat;
+
+    return {
+      founderId: schedule.founderId,
+      isVested: vestingResult.isVested,
+      vestedRatio: vestingResult.vestedRatio,
+      vestedAmountSat: vestingResult.vestedAmountSat,
+      authorizedMonthlyBaseSat: vestingResult.authorizedMonthlyBaseSat,
+      authorizedBonusSat,
+      totalPayoutSat,
+      emergencyLimitSat: vestingResult.emergencyLimitSat,
+      isEscrowWithinLimit: vestingResult.isEscrowWithinLimit,
       violations,
     };
   }

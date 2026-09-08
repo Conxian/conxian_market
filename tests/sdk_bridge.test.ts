@@ -23,12 +23,13 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(32);
-    expect(summary.coreCapabilities).toBe(12);
+    expect(summary.totalCapabilities).toBe(33);
+    expect(summary.coreCapabilities).toBe(13);
     expect(summary.trustTierMiddlewareEnabled).toBe(true);
     expect(summary.bosYieldSplitterEnabled).toBe(true);
     expect(summary.marketAgnosticRouterEnabled).toBe(true);
     expect(summary.jobCardEscrowEngineEnabled).toBe(true);
+    expect(summary.treasuryGovernanceEnabled).toBe(true);
   });
 
   it("executes trust tier pipeline directly via SDK bridge", async () => {
@@ -72,7 +73,7 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Int
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(32);
+    expect(summary.totalCapabilities).toBe(33);
     expect(summary.marketAgnosticRouterEnabled).toBe(true);
     expect(summary.jobCardEscrowEngineEnabled).toBe(true);
   });
@@ -232,5 +233,40 @@ describe("ConxianMarketSDK Bridge - SLA Penalty Settlement Integration", () => {
     expect(result.clawback.treasuryFeeSats).toBe(50_000n);
     expect(result.gapCardIssued).toBe(true);
     expect(result.reputationDelta).toBe(-25);
+  });
+});
+
+describe("ConxianMarketSDK Bridge - Treasury Governance Integration", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("exposes validateTimelockAndMultisig and processFounderEscrowPayout via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const timelockResult = sdk.validateTimelockAndMultisig({
+      transactionId: "TX-BRIDGE-001",
+      proposedByDid: "did:conxian:treasurer",
+      amountSat: 150_000_000n,
+      targetAddress: "0xaddress",
+      purpose: "Ecosystem Liquidity",
+      proposedAtTimestampIso: "2026-09-08T00:00:00Z",
+      executionTimestampIso: "2026-09-10T00:00:00Z", // 48 hours
+      signerSignatures: ["sig1", "sig2", "sig3"],
+    });
+
+    expect(timelockResult.authorized).toBe(true);
+    expect(timelockResult.validSignerCount).toBe(3);
+
+    const payoutResult = sdk.processFounderEscrowPayout({
+      founderId: "did:founder:charlie",
+      totalAllocatedSat: 12_000_000n,
+      monthsElapsed: 36,
+      monthlyBaseCapSat: 150_000n,
+      requestedBonusSat: 75_000n,
+      daoApprovedBonus: true,
+      escrowBalanceSat: 500_000n,
+    });
+
+    expect(payoutResult.isVested).toBe(true);
+    expect(payoutResult.totalPayoutSat).toBe(225_000n);
   });
 });

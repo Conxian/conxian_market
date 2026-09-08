@@ -361,6 +361,7 @@ export interface CapabilitySummary {
   x402EscrowGatewayEnabled?: boolean;
   trustTierLifecycleEnabled?: boolean;
   slaPenaltyEngineEnabled?: boolean;
+  treasuryGovernanceEnabled?: boolean;
 }
 
 // ── SLA Penalty & Escrow Clawback Types (Session 59) ──
@@ -396,4 +397,52 @@ export interface SLAPenaltySettlementResult {
   reputationDelta: number;
   gapCardIssued: boolean;
   settledAtIso: string;
+}
+
+// ── Treasury Governance & Founder Escrow Types (Session 60) ──
+
+export interface TimelockTransactionRequest {
+  transactionId: string;
+  proposedByDid: string;
+  amountSat: bigint;
+  targetAddress: string;
+  purpose: string;
+  proposedAtTimestampIso: string;
+  executionTimestampIso: string;
+  signerSignatures: string[];
+}
+
+export interface TimelockValidationResult {
+  transactionId: string;
+  requiresTimelock: boolean;
+  timelockSatisfied: boolean;
+  timeElapsedHours: number;
+  signerQuorumMet: boolean;
+  validSignerCount: number;
+  requiredQuorum: number;
+  authorized: boolean;
+  violations: string[];
+}
+
+export interface FounderEscrowSchedule {
+  founderId: string;
+  totalAllocatedSat: bigint;
+  monthsElapsed: number;
+  monthlyBaseCapSat: bigint;
+  requestedBonusSat: bigint;
+  daoApprovedBonus: boolean;
+  escrowBalanceSat: bigint;
+}
+
+export interface FounderEscrowPayoutResult {
+  founderId: string;
+  isVested: boolean;
+  vestedRatio: number;
+  vestedAmountSat: bigint;
+  authorizedMonthlyBaseSat: bigint;
+  authorizedBonusSat: bigint;
+  totalPayoutSat: bigint;
+  emergencyLimitSat: bigint;
+  isEscrowWithinLimit: boolean;
+  violations: string[];
 }

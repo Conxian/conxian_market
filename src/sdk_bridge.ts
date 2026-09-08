@@ -8,7 +8,7 @@
  *   - SLA Engine (autonomous SLA evaluation, gap card bounties & auto-resolution)
  *   - Monitoring Watcher (sBTC, Fedimint, Babylon, and Treasury health monitoring)
  *   - TrustTier Middleware (HTTP/MCP request verification & routing pipeline)
- *   - BOS Yield Splitter (80/10/10 yield matrix, fee decay, founder vesting, inference policy)
+ *   - BOS Yield Splitter (80/10/10 yield matrix, fee decay, founder vesting, inference policy, Treasury Timelock & Founder Escrow)
  *   - Market-Agnostic Router (Zero-custody validation, BYO DeFi protocol adapter resolution, M2M route execution, Conxian/Conxian deprecation advisory)
  *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission, SLA-integrated release, dispute/refund handling)
  *   - Fee Calculator (2% protocol fee with tier/rail breakdown)
@@ -48,6 +48,10 @@ import {
   type SLAPenaltySettlementRequest,
   type SLAPenaltySettlementResult,
   type SLAPenaltyClawbackRecord,
+  type TimelockTransactionRequest,
+  type TimelockValidationResult,
+  type FounderEscrowSchedule,
+  type FounderEscrowPayoutResult,
 } from "./core_types";
 import { MonitoringWatcher, type UnifiedHealthSnapshot } from "./monitoring_watcher";
 import type {
@@ -279,7 +283,7 @@ export class ConxianMarketSDK {
     return this.trustTierMiddleware.evaluateTierDowngrade(req);
   }
 
-  // ── Capability 9: BOS Commercial Yield Matrix & Thin Orchestrator Guard ──
+  // ── Capability 9: BOS Yield Splitter & Treasury Multi-Sig Timelock ──
 
   calculateYieldSplit(grossAmountSat: bigint): YieldSplit {
     return BosYieldSplitter.calculateYieldSplit(grossAmountSat);
@@ -298,6 +302,22 @@ export class ConxianMarketSDK {
 
   verifyInferencePolicy(input: InferencePolicyInput): InferencePolicyResult {
     return BosYieldSplitter.verifyInferencePolicy(input);
+  }
+
+  validateTimelockAndMultisig(
+    req: TimelockTransactionRequest,
+    options?: {
+      highValueThresholdSats?: bigint;
+      requiredQuorum?: number;
+    }
+  ): TimelockValidationResult {
+    return BosYieldSplitter.validateTimelockAndMultisig(req, options);
+  }
+
+  processFounderEscrowPayout(
+    schedule: FounderEscrowSchedule
+  ): FounderEscrowPayoutResult {
+    return BosYieldSplitter.processFounderEscrowPayout(schedule);
   }
 
   // ── Capability 10: Market-Agnostic Non-Custodial Router & BYO DeFi ──
@@ -414,9 +434,9 @@ export class ConxianMarketSDK {
     }
 
     return {
-      coreCapabilities: 12,
+      coreCapabilities: 13,
       enclaveCapabilities: 16,
-      totalCapabilities: 32,
+      totalCapabilities: 33,
       activeRails: this.settlement.availableRails(Tier.Strict),
       activeTiers: this.flags.attestationAvailable
         ? [Tier.ObserverOnly, Tier.Expedient, Tier.Managed, Tier.Strict]
@@ -461,6 +481,7 @@ export class ConxianMarketSDK {
       x402EscrowGatewayEnabled: true,
       trustTierLifecycleEnabled: true,
       slaPenaltyEngineEnabled: true,
+      treasuryGovernanceEnabled: true,
     };
   }
 
