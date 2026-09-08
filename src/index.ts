@@ -86,3 +86,12 @@ export {
 } from "./x402_facade";
 export type { X402PaymentDemand, X402PaymentReceipt } from "./x402_facade";
 export { ConxianMarketSDK } from "./sdk_bridge";
+
+export { ClientInstallerEngine } from "./client_onboarding";
+export type {
+  ClientOnboardingConfig,
+  ClientProvisioningResult,
+  SystemConnectivityReport,
+  ZeroCustodySanityCheck,
+  ConnectivityDiagnosticItem,
+} from "./core_types";

@@ -118,3 +118,9 @@ console.log(`Zero Custody Compliant: ${custody.isZeroCustodyCompliant}`);
 
 ---
 *Intelligence is a Utility. Sovereignty is a Right.*
+
+### Session 61 Capabilities (Client Onboarding & Unified Installer Engine)
+- **`validateClientConfig(config)`**: Validates client DIDs, HTTP/HTTPS endpoint URLs (`https://gateway.conxian.org`), default settlement rails, and trust tiers.
+- **`testSystemConnectivity(config)`**: Conducts automated ping and health-check diagnostics across Gateway, Nexus Glass Node (`https://nexus.conxian.org`), and BYO LLM provider endpoints.
+- **`auditZeroCustody(config)`**: Audits client environment settings to ensure local key isolation and prevent accidental credential leaks.
+- **`provisionClientEnvironment(config)`**: Orchestrates full first-time system installation and provisioning workflow for client applications.

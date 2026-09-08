@@ -73,11 +73,11 @@ When a client installs Conxian for the first time, they interact with three prim
 
 ### 2. Conxian Gateway (`conxian-gateway`)
 - **Role:** High-performance edge middleware bridging M2M REST/gRPC traffic with non-custodial settlement rails.
-- **Connectivity:** Default public endpoints (e.g., `https://gateway.conxian.io` on Neon/Render) or client-hosted Docker instance (`conxian/gateway:latest`).
+- **Connectivity:** Default public endpoints (e.g., `https://gateway.conxian.org` on Neon/Render) or client-hosted Docker instance (`conxian/gateway:latest`).
 
 ### 3. Conxian Nexus (`conxian-nexus`)
 - **Role:** Verification & attestation Glass Node verifying hardware TEE/Enclave proofs.
-- **Connectivity:** `https://nexus.conxian.io`.
+- **Connectivity:** `https://nexus.conxian.org`.
 
 ---
 
