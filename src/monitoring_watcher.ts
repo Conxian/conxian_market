@@ -9,10 +9,11 @@
  *   - Fedimint Mint Health & Liquidity Checking
  *   - Babylon Staking Concentration & Slashing Watcher
  *   - Treasury Runway & Asset Allocation Split Calculator
+ *   - CJCS SLA Rule Audit & Telemetry Health Watcher
  *   - Unified Health Snapshot & Alert Generation
  */
 
-import type { TrustTier } from "./core_types";
+import { TrustTier } from "./core_types";
 
 // ── Health Severity Status ──
 
@@ -64,11 +65,11 @@ export interface FedimintHealthResult {
 // ── Babylon Staking Monitoring Types ──
 
 export interface BabylonStakingInput {
-  totalTreasuryBtc: number;
-  totalStakedBtc: number;
-  maxSingleProviderPct: number; // e.g. 25.0
+  totalStakedBtc: number; // BTC
+  totalTreasuryBtc: number; // BTC
+  maxSingleProviderPct: number; // 0-100
   slashingEventsCount: number;
-  yieldDeviationPct: number; // e.g. 5.0 (5% difference from expected)
+  yieldDeviationPct: number; // deviation from expected yield (+/- %)
 }
 
 export interface BabylonHealthResult {
@@ -77,7 +78,7 @@ export interface BabylonHealthResult {
   alerts: string[];
 }
 
-// ── Treasury Runway & Asset Allocation Types ──
+// ── Treasury Runway Types ──
 
 export interface AssetAllocation {
   stablecoinsZar: number;
@@ -86,37 +87,88 @@ export interface AssetAllocation {
   nativeTokenZar: number;
 }
 
-export interface TargetAllocationPct {
-  stablecoinsPct: number; // Target: 40%
-  rwaPct: number; // Target: 30%
-  liquidStakingPct: number; // Target: 20%
-  nativeTokenPct: number; // Target: 10%
-}
-
-export const DEFAULT_TARGET_ALLOCATION: TargetAllocationPct = {
-  stablecoinsPct: 40,
-  rwaPct: 30,
-  liquidStakingPct: 20,
-  nativeTokenPct: 10,
-};
-
 export interface TreasuryRunwayInput {
   fiatBalanceZar: number;
   cryptoBalanceZar: number;
   monthlyBurnRateZar: number;
   allocation: AssetAllocation;
-  targetAllocation?: TargetAllocationPct;
+  targetAllocation?: {
+    stablecoinsPct: number; // Target 40%
+    rwaPct: number; // Target 30%
+    liquidStakingPct: number; // Target 20%
+    nativeTokenPct: number; // Target 10%
+  };
+}
+
+export interface AllocationDeviation {
+  actualPct: number;
+  targetPct: number;
+  deltaPct: number;
 }
 
 export interface TreasuryRunwayResult {
   status: HealthStatus;
   runwayMonths: number;
   totalAssetsZar: number;
-  allocationDeviations: Record<keyof AssetAllocation, { actualPct: number; targetPct: number; deltaPct: number }>;
+  allocationDeviations: Record<keyof AssetAllocation, AllocationDeviation>;
   alerts: string[];
 }
 
-// ── Unified Health Report ──
+// ── CJCS SLA Telemetry Types ──
+
+export type SlaGapKind =
+  | "stale_jobcard"
+  | "sla_breach"
+  | "builder_abandonment"
+  | "trust_tier_violation"
+  | "fee_shortfall";
+
+export interface SlaGapRuleViolation {
+  ruleId: string;
+  kind: SlaGapKind;
+  jobId: string;
+  severity: "YELLOW" | "RED";
+  description: string;
+}
+
+export interface JobCardSlaAuditInput {
+  jobId: string;
+  state: "Pending" | "Accepted" | "Completed" | "Disputed";
+  createdAt: number; // timestamp in ms
+  deadline: number; // timestamp in ms
+  lastActivityAt?: number; // timestamp in ms
+  requiredTrustTier: TrustTier;
+  builderTrustTier?: TrustTier;
+  expectedFeeSat: bigint;
+  collectedFeeSat: bigint;
+}
+
+export interface SlaHealthInput {
+  activeJobCardsCount: number;
+  jobCards: JobCardSlaAuditInput[];
+}
+
+export interface SlaHealthResult {
+  status: HealthStatus;
+  totalAudited: number;
+  breachCount: number;
+  abandonmentCount: number;
+  staleCount: number;
+  violationCount: number;
+  complianceRatePct: number;
+  violations: SlaGapRuleViolation[];
+  alerts: string[];
+}
+
+// Default Target Treasury Allocations (40/30/20/10)
+export const DEFAULT_TARGET_ALLOCATION = {
+  stablecoinsPct: 40,
+  rwaPct: 30,
+  liquidStakingPct: 20,
+  nativeTokenPct: 10,
+};
+
+// ── Unified Health Snapshot ──
 
 export interface UnifiedHealthSnapshot {
   timestamp: string;
@@ -125,12 +177,14 @@ export interface UnifiedHealthSnapshot {
   fedimint: FedimintHealthResult[];
   babylon: BabylonHealthResult;
   treasury: TreasuryRunwayResult;
+  sla?: SlaHealthResult;
   criticalAlertCount: number;
   warningAlertCount: number;
 }
 
-// ── Monitoring Watcher Engine Class ──
-
+/**
+ * MonitoringWatcher Engine.
+ */
 export class MonitoringWatcher {
   /** Evaluate sBTC Peg and Signer Quorum Health */
   evaluateSbtcHealth(input: SbtcHealthInput): SbtcHealthResult {
@@ -351,19 +405,160 @@ export class MonitoringWatcher {
     };
   }
 
+  /** Audit a single JobCard for SLA gap rule violations */
+  auditJobCardSla(job: JobCardSlaAuditInput, now: number = Date.now()): SlaGapRuleViolation[] {
+    const violations: SlaGapRuleViolation[] = [];
+
+    // Rule 1: Stale JobCard (state = Pending AND age > 24h)
+    const ageHours = (now - job.createdAt) / (1000 * 60 * 60);
+    if (job.state === "Pending" && ageHours > 24) {
+      violations.push({
+        ruleId: "SLA-RULE-001",
+        kind: "stale_jobcard",
+        jobId: job.jobId,
+        severity: "YELLOW",
+        description: `JobCard ${job.jobId} is pending and stale (${ageHours.toFixed(1)}h old > 24h)`,
+      });
+    }
+
+    // Rule 2: SLA Breach (state != Completed AND now > deadline)
+    if (job.state !== "Completed" && now > job.deadline) {
+      const delayHours = (now - job.deadline) / (1000 * 60 * 60);
+      violations.push({
+        ruleId: "SLA-RULE-002",
+        kind: "sla_breach",
+        jobId: job.jobId,
+        severity: "RED",
+        description: `JobCard ${job.jobId} exceeded SLA deadline by ${delayHours.toFixed(1)}h`,
+      });
+    }
+
+    // Rule 3: Builder Abandonment (state = Accepted AND idle > 48h)
+    if (job.state === "Accepted" && job.lastActivityAt) {
+      const idleHours = (now - job.lastActivityAt) / (1000 * 60 * 60);
+      if (idleHours > 48) {
+        violations.push({
+          ruleId: "SLA-RULE-003",
+          kind: "builder_abandonment",
+          jobId: job.jobId,
+          severity: "RED",
+          description: `JobCard ${job.jobId} assigned builder idle for ${idleHours.toFixed(1)}h (>48h)`,
+        });
+      }
+    }
+
+    // Rule 4: TrustTier Violation (builderTrustTier < requiredTrustTier)
+    const tierRanks: Record<TrustTier, number> = {
+      [TrustTier.ObserverOnly]: 0,
+      [TrustTier.Expedient]: 1,
+      [TrustTier.Managed]: 2,
+      [TrustTier.Strict]: 3,
+    };
+    if (
+      job.builderTrustTier &&
+      tierRanks[job.builderTrustTier] < tierRanks[job.requiredTrustTier]
+    ) {
+      violations.push({
+        ruleId: "SLA-RULE-004",
+        kind: "trust_tier_violation",
+        jobId: job.jobId,
+        severity: "RED",
+        description: `JobCard ${job.jobId} builder TrustTier (${job.builderTrustTier}) below required (${job.requiredTrustTier})`,
+      });
+    }
+
+    // Rule 5: Fee Shortfall (collectedFee < expectedFee)
+    if (job.state === "Completed" && job.collectedFeeSat < job.expectedFeeSat) {
+      violations.push({
+        ruleId: "SLA-RULE-005",
+        kind: "fee_shortfall",
+        jobId: job.jobId,
+        severity: "YELLOW",
+        description: `JobCard ${job.jobId} collected fee (${job.collectedFeeSat} sat) below expected (${job.expectedFeeSat} sat)`,
+      });
+    }
+
+    return violations;
+  }
+
+  /** Evaluate Aggregate CJCS SLA Telemetry Health */
+  evaluateSlaHealth(input: SlaHealthInput, now: number = Date.now()): SlaHealthResult {
+    const alerts: string[] = [];
+    let status: HealthStatus = "GREEN";
+    const allViolations: SlaGapRuleViolation[] = [];
+
+    let breachCount = 0;
+    let abandonmentCount = 0;
+    let staleCount = 0;
+    let violationCount = 0;
+
+    for (const job of input.jobCards) {
+      const vList = this.auditJobCardSla(job, now);
+      allViolations.push(...vList);
+
+      for (const v of vList) {
+        if (v.kind === "sla_breach") breachCount++;
+        if (v.kind === "builder_abandonment") abandonmentCount++;
+        if (v.kind === "stale_jobcard") staleCount++;
+        if (v.kind === "trust_tier_violation" || v.kind === "fee_shortfall") violationCount++;
+      }
+    }
+
+    const totalAudited = input.jobCards.length;
+    const compliantCount = totalAudited - breachCount - abandonmentCount;
+    const complianceRatePct = totalAudited > 0 ? (Math.max(0, compliantCount) / totalAudited) * 100 : 100;
+
+    // Status evaluation rules:
+    // Breach or abandonment present -> RED
+    // Stale or fee/tier violation present OR compliance < 95% -> YELLOW
+    if (breachCount > 0 || abandonmentCount > 0) {
+      status = escalateStatus(status, "RED");
+      alerts.push(
+        `CRITICAL: SLA breaches detected (Breaches: ${breachCount}, Abandonments: ${abandonmentCount})`,
+      );
+    }
+
+    if (staleCount > 0 || violationCount > 0 || complianceRatePct < 95) {
+      status = escalateStatus(status, "YELLOW");
+      alerts.push(
+        `WARNING: SLA telemetry degraded (Compliance: ${complianceRatePct.toFixed(1)}%, Stale: ${staleCount})`,
+      );
+    }
+
+    return {
+      status,
+      totalAudited,
+      breachCount,
+      abandonmentCount,
+      staleCount,
+      violationCount,
+      complianceRatePct,
+      violations: allViolations,
+      alerts,
+    };
+  }
+
   /** Create a Unified Health Snapshot across all telemetry streams */
   createSnapshot(params: {
     sbtc: SbtcHealthInput;
     fedimints: FedimintMintInput[];
     babylon: BabylonStakingInput;
     treasury: TreasuryRunwayInput;
+    sla?: SlaHealthInput;
   }): UnifiedHealthSnapshot {
     const sbtcRes = this.evaluateSbtcHealth(params.sbtc);
     const fedimintRes = params.fedimints.map((f) => this.evaluateFedimintMintHealth(f));
     const babylonRes = this.evaluateBabylonHealth(params.babylon);
     const treasuryRes = this.evaluateTreasuryRunway(params.treasury);
+    const slaRes = params.sla ? this.evaluateSlaHealth(params.sla) : undefined;
 
-    const allStatuses = [sbtcRes.status, ...fedimintRes.map((f) => f.status), babylonRes.status, treasuryRes.status];
+    const allStatuses = [
+      sbtcRes.status,
+      ...fedimintRes.map((f) => f.status),
+      babylonRes.status,
+      treasuryRes.status,
+      ...(slaRes ? [slaRes.status] : []),
+    ];
 
     let overallStatus: HealthStatus = "GREEN";
     if (allStatuses.includes("RED")) {
@@ -377,6 +572,7 @@ export class MonitoringWatcher {
       ...fedimintRes.flatMap((f) => f.alerts),
       ...babylonRes.alerts,
       ...treasuryRes.alerts,
+      ...(slaRes ? slaRes.alerts : []),
     ];
 
     const criticalAlertCount = allAlerts.filter((a) => a.startsWith("CRITICAL")).length;
@@ -389,6 +585,7 @@ export class MonitoringWatcher {
       fedimint: fedimintRes,
       babylon: babylonRes,
       treasury: treasuryRes,
+      sla: slaRes,
       criticalAlertCount,
       warningAlertCount,
     };

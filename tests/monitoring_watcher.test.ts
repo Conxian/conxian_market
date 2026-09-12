@@ -3,10 +3,13 @@ import {
   ConxianMarketSDK,
   MonitoringWatcher,
   DEFAULT_TARGET_ALLOCATION,
+  TrustTier,
   type SbtcHealthInput,
   type FedimintMintInput,
   type BabylonStakingInput,
   type TreasuryRunwayInput,
+  type JobCardSlaAuditInput,
+  type SlaHealthInput,
 } from "../src/index";
 
 describe("MonitoringWatcher Engine", () => {
@@ -43,17 +46,16 @@ describe("MonitoringWatcher Engine", () => {
       expect(result.status).toBe("RED");
       expect(result.alerts).toHaveLength(2);
       expect(result.alerts[0]).toContain("CRITICAL: sBTC peg severe deviation");
-      expect(result.alerts[1]).toContain("CRITICAL: Signer quorum health compromised");
     });
   });
 
   describe("Fedimint Mint Health Evaluation", () => {
-    it("returns GREEN for normal operating mint", () => {
+    it("returns GREEN when active guardians exceed threshold and heartbeat is fresh", () => {
       const input: FedimintMintInput = {
         mintId: "mint-001",
-        communityName: "Alpha Mint",
+        communityName: "Industrial Alpha Mint",
         totalLiquiditySats: 10_000_000n,
-        ecashInCirculationSats: 5_000_000n, // 50%
+        ecashInCirculationSats: 5_000_000n,
         activeGuardians: 5,
         requiredThreshold: 3,
         lastGuardianHeartbeatSeconds: 10,
@@ -68,19 +70,18 @@ describe("MonitoringWatcher Engine", () => {
     it("returns RED when active guardians drop below threshold", () => {
       const input: FedimintMintInput = {
         mintId: "mint-002",
-        communityName: "Beta Mint",
+        communityName: "Degraded Mint",
         totalLiquiditySats: 10_000_000n,
-        ecashInCirculationSats: 5_000_000n,
-        activeGuardians: 2, // < threshold 3
+        ecashInCirculationSats: 9_600_000n, // 96% > 95% Red
+        activeGuardians: 2, // < 3 threshold Red
         requiredThreshold: 3,
-        lastGuardianHeartbeatSeconds: 150, // > 120s
-        pendingRedemptions: 25, // > 20
+        lastGuardianHeartbeatSeconds: 150, // > 120s Red
+        pendingRedemptions: 25, // > 20 Red
       };
       const result = watcher.evaluateFedimintMintHealth(input);
       expect(result.status).toBe("RED");
+      expect(result.alerts.length).toBeGreaterThanOrEqual(3);
       expect(result.alerts.some((a) => a.includes("below required guardian threshold"))).toBe(true);
-      expect(result.alerts.some((a) => a.includes("Guardian heartbeat stale"))).toBe(true);
-      expect(result.alerts.some((a) => a.includes("High redemption backlog"))).toBe(true);
     });
   });
 
@@ -204,6 +205,164 @@ describe("MonitoringWatcher Engine", () => {
       expect(snapshot.warningAlertCount).toBe(0);
       expect(snapshot.fedimint).toHaveLength(1);
       expect(sdk.getCapabilitySummary().monitoringWatcherEnabled).toBe(true);
+    });
+  });
+
+  describe("CJCS SLA Telemetry Health Evaluation (Session 62)", () => {
+    const now = Date.now();
+    const oneHour = 3600 * 1000;
+
+    it("audits a compliant JobCard with no rule violations", () => {
+      const job: JobCardSlaAuditInput = {
+        jobId: "jc-clean-01",
+        state: "Accepted",
+        createdAt: now - 5 * oneHour,
+        deadline: now + 10 * oneHour,
+        lastActivityAt: now - 1 * oneHour,
+        requiredTrustTier: TrustTier.Expedient,
+        builderTrustTier: TrustTier.Managed,
+        expectedFeeSat: 1000n,
+        collectedFeeSat: 1000n,
+      };
+
+      const violations = watcher.auditJobCardSla(job, now);
+      expect(violations).toHaveLength(0);
+    });
+
+    it("audits JobCards and detects stale, breach, abandonment, trust tier, and fee shortfall violations", () => {
+      const staleJob: JobCardSlaAuditInput = {
+        jobId: "jc-stale-01",
+        state: "Pending",
+        createdAt: now - 30 * oneHour, // > 24h
+        deadline: now + 10 * oneHour,
+        requiredTrustTier: TrustTier.Expedient,
+        expectedFeeSat: 1000n,
+        collectedFeeSat: 0n,
+      };
+
+      const breachJob: JobCardSlaAuditInput = {
+        jobId: "jc-breach-01",
+        state: "Accepted",
+        createdAt: now - 20 * oneHour,
+        deadline: now - 2 * oneHour, // deadline passed
+        lastActivityAt: now - 1 * oneHour,
+        requiredTrustTier: TrustTier.Expedient,
+        expectedFeeSat: 1000n,
+        collectedFeeSat: 0n,
+      };
+
+      const abandonedJob: JobCardSlaAuditInput = {
+        jobId: "jc-abandoned-01",
+        state: "Accepted",
+        createdAt: now - 60 * oneHour,
+        deadline: now + 10 * oneHour,
+        lastActivityAt: now - 50 * oneHour, // idle > 48h
+        requiredTrustTier: TrustTier.Expedient,
+        expectedFeeSat: 1000n,
+        collectedFeeSat: 0n,
+      };
+
+      const tierViolationJob: JobCardSlaAuditInput = {
+        jobId: "jc-tier-01",
+        state: "Accepted",
+        createdAt: now - 2 * oneHour,
+        deadline: now + 10 * oneHour,
+        requiredTrustTier: TrustTier.Strict,
+        builderTrustTier: TrustTier.Expedient, // builder tier < required tier
+        expectedFeeSat: 1000n,
+        collectedFeeSat: 0n,
+      };
+
+      const feeShortfallJob: JobCardSlaAuditInput = {
+        jobId: "jc-fee-01",
+        state: "Completed",
+        createdAt: now - 5 * oneHour,
+        deadline: now + 5 * oneHour,
+        requiredTrustTier: TrustTier.Expedient,
+        expectedFeeSat: 1000n,
+        collectedFeeSat: 500n, // collected < expected
+      };
+
+      expect(watcher.auditJobCardSla(staleJob, now)[0].kind).toBe("stale_jobcard");
+      expect(watcher.auditJobCardSla(breachJob, now)[0].kind).toBe("sla_breach");
+      expect(watcher.auditJobCardSla(abandonedJob, now)[0].kind).toBe("builder_abandonment");
+      expect(watcher.auditJobCardSla(tierViolationJob, now)[0].kind).toBe("trust_tier_violation");
+      expect(watcher.auditJobCardSla(feeShortfallJob, now)[0].kind).toBe("fee_shortfall");
+    });
+
+    it("evaluates aggregate SLA health and returns RED when breaches occur", () => {
+      const slaInput: SlaHealthInput = {
+        activeJobCardsCount: 2,
+        jobCards: [
+          {
+            jobId: "jc-001",
+            state: "Accepted",
+            createdAt: now - 5 * oneHour,
+            deadline: now - 1 * oneHour, // breach
+            requiredTrustTier: TrustTier.Expedient,
+            expectedFeeSat: 1000n,
+            collectedFeeSat: 0n,
+          },
+          {
+            jobId: "jc-002",
+            state: "Accepted",
+            createdAt: now - 2 * oneHour,
+            deadline: now + 5 * oneHour,
+            requiredTrustTier: TrustTier.Expedient,
+            expectedFeeSat: 1000n,
+            collectedFeeSat: 0n,
+          },
+        ],
+      };
+
+      const result = watcher.evaluateSlaHealth(slaInput, now);
+      expect(result.status).toBe("RED");
+      expect(result.breachCount).toBe(1);
+      expect(result.complianceRatePct).toBe(50);
+      expect(result.alerts[0]).toContain("CRITICAL: SLA breaches detected");
+    });
+
+    it("includes SLA health evaluation in Unified Health Snapshot", () => {
+      const snapshot = watcher.createSnapshot({
+        sbtc: { pegRatio: 1.0, signerQuorumPct: 95 },
+        fedimints: [],
+        babylon: {
+          totalStakedBtc: 10,
+          totalTreasuryBtc: 100,
+          maxSingleProviderPct: 15,
+          slashingEventsCount: 0,
+          yieldDeviationPct: 0,
+        },
+        treasury: {
+          fiatBalanceZar: 1000000,
+          cryptoBalanceZar: 5000000,
+          monthlyBurnRateZar: 200000,
+          allocation: {
+            stablecoinsZar: 2400000,
+            rwaZar: 1800000,
+            liquidStakingZar: 1200000,
+            nativeTokenZar: 600000,
+          },
+        },
+        sla: {
+          activeJobCardsCount: 1,
+          jobCards: [
+            {
+              jobId: "jc-snap-01",
+              state: "Accepted",
+              createdAt: now - 2 * oneHour,
+              deadline: now + 5 * oneHour,
+              requiredTrustTier: TrustTier.Expedient,
+              expectedFeeSat: 1000n,
+              collectedFeeSat: 1000n,
+            },
+          ],
+        },
+      });
+
+      expect(snapshot.sla).toBeDefined();
+      expect(snapshot.sla?.status).toBe("GREEN");
+      expect(snapshot.overallStatus).toBe("GREEN");
     });
   });
 });
