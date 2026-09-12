@@ -31,9 +31,13 @@ export type {
   BabylonStakingInput,
   BabylonHealthResult,
   AssetAllocation,
-  TargetAllocationPct,
   TreasuryRunwayInput,
   TreasuryRunwayResult,
+  SlaGapKind,
+  SlaGapRuleViolation,
+  JobCardSlaAuditInput,
+  SlaHealthInput,
+  SlaHealthResult,
   UnifiedHealthSnapshot,
 } from "./monitoring_watcher";
 export { TrustTierMiddleware, TrustTierLifecycleEngine, SLA_TEMPLATES, RAIL_ROUTING_MATRIX } from "./trust_tier_middleware";
