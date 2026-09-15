@@ -23,6 +23,21 @@ import {
 
 export class ClientInstallerEngine {
   /**
+   * Helper to check if a URL belongs to the corporate surface (conxian-labs.com).
+   * Parses the URL safely to prevent incomplete URL substring sanitization vulnerabilities.
+   */
+  private static isCorporateUrl(urlStr?: string): boolean {
+    if (!urlStr) return false;
+    try {
+      const parsed = new URL(urlStr);
+      const host = parsed.hostname.toLowerCase();
+      return host === "conxian-labs.com" || host.endsWith(".conxian-labs.com");
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Verify domain routing firewall between Protocol surface (conxian.org)
    * and Corporate surface (conxian-labs.com).
    */
@@ -32,20 +47,20 @@ export class ClientInstallerEngine {
   ): DomainRoutingCheckResult {
     const violations: string[] = [];
 
-    if (config.gatewayUrl && config.gatewayUrl.includes("conxian-labs.com")) {
+    if (this.isCorporateUrl(config.gatewayUrl)) {
       violations.push(
         "Gateway endpoint violation: gateway must route to conxian.org surface (gateway.conxian.org), not corporate conxian-labs.com"
       );
     }
-    if (config.nexusUrl && config.nexusUrl.includes("conxian-labs.com")) {
+    if (this.isCorporateUrl(config.nexusUrl)) {
       violations.push(
         "Nexus Glass Node endpoint violation: nexus must route to conxian.org surface (nexus.conxian.org), not corporate conxian-labs.com"
       );
     }
 
     const protocolEndpointsVerified =
-      !config.gatewayUrl?.includes("conxian-labs.com") &&
-      !config.nexusUrl?.includes("conxian-labs.com");
+      !this.isCorporateUrl(config.gatewayUrl) &&
+      !this.isCorporateUrl(config.nexusUrl);
     const corporateEndpointsVerified = true;
     const firewallEnforced = violations.length === 0;
 
