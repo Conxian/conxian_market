@@ -548,3 +548,41 @@ export interface UnifiedCliInstallerRunResult {
   provisioning: ClientProvisioningResult;
   timestampIso: string;
 }
+
+// ── Session 64: Master Reconnaissance & B2B Domain Routing Types ──
+
+export interface DomainRoutingRule {
+  surface: "protocol" | "corporate";
+  repository: string;
+  canonicalHost: string;
+  description: string;
+}
+
+export interface DomainRoutingCheckResult {
+  valid: boolean;
+  violations: string[];
+  protocolEndpointsVerified: boolean;
+  corporateEndpointsVerified: boolean;
+  firewallEnforced: boolean;
+  timestampIso: string;
+}
+
+export interface ScoredGapItem {
+  id: string;
+  repository: string;
+  category: "Security" | "Enterprise Routing" | "UI/UX";
+  criticalityScore: number; // 0-100
+  title: string;
+  description: string;
+  recommendedAction: string;
+}
+
+export interface MasterArchitectureReviewReport {
+  session: number;
+  generatedAtIso: string;
+  repositoryBaselineCount: number;
+  coreRepositoriesIndexed: string[];
+  domainRoutingFirewallVerified: boolean;
+  topScoredGaps: ScoredGapItem[];
+  nextImmediateTasks: string[];
+}

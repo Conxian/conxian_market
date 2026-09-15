@@ -14,6 +14,7 @@ import { ClientInstallerEngine } from "./client_onboarding";
  *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission, SLA-integrated release, dispute/refund handling)
  *   - Fee Calculator (2% protocol fee with tier/rail breakdown)
  *   - x402 Escrow Gateway (Multi-rail HTTP 402 payment demands & ERC-8183 budget locking)
+ *   - Client Installer Engine (Client onboarding, system setup, domain routing firewall, and unified CLI installer)
  */
 
 import { GatewayClient, type GatewayConfig } from "./gateway_client";
@@ -470,6 +471,13 @@ export class ConxianMarketSDK {
     timestampIso?: string
   ): import("./core_types").AssetConnectivityProbeResult {
     return ClientInstallerEngine.probeAssetConnectivity(config, timestampIso);
+  }
+
+  verifyDomainRoutingFirewall(
+    config: import("./core_types").ClientOnboardingConfig,
+    timestampIso?: string
+  ): import("./core_types").DomainRoutingCheckResult {
+    return ClientInstallerEngine.verifyDomainRoutingFirewall(config, timestampIso);
   }
 
   runUnifiedInstallerCli(
