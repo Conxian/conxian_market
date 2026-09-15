@@ -95,6 +95,20 @@ describe("ClientInstallerEngine", () => {
     expect(probe.edgeAgentConnected).toBe(true);
   });
 
+  it("verifies domain routing firewall and catches domain misconfiguration", () => {
+    const validRouting = ClientInstallerEngine.verifyDomainRoutingFirewall(validConfig);
+    expect(validRouting.valid).toBe(true);
+    expect(validRouting.firewallEnforced).toBe(true);
+
+    const invalidRoutingConfig: ClientOnboardingConfig = {
+      ...validConfig,
+      gatewayUrl: "https://gateway.conxian-labs.com",
+    };
+    const invalidCheck = ClientInstallerEngine.verifyDomainRoutingFirewall(invalidRoutingConfig);
+    expect(invalidCheck.valid).toBe(false);
+    expect(invalidCheck.violations[0]).toContain("Gateway endpoint violation");
+  });
+
   it("executes unified CLI installer end-to-end pipeline successfully", () => {
     const cliResult = ClientInstallerEngine.runUnifiedInstallerCli(validConfig);
     expect(cliResult.success).toBe(true);

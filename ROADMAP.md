@@ -1,7 +1,7 @@
 # Conxian Ecosystem & Market SDK Roadmap
 
-> **Current Session:** Session 63
-> **Strategic Directive:** Hardening the Core (Functional Settlement, Non-Custodial Value Routing, M2M Economy Orchestration & Autonomous SLA Remediation)
+> **Current Session:** Session 64
+> **Strategic Directive:** Master Reconnaissance, Hardening the Core, B2B Enterprise Domain Separation & Non-Custodial Value Routing
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
 
 ---
@@ -89,6 +89,30 @@ The Conxian Market SDK serves as the value, settlement, and SLA enforcement laye
 - [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
 - [x] Add unit tests in `tests/bos_yield_splitter.test.ts` and `tests/sdk_bridge.test.ts`, verifying 99 passing tests (`npx vitest run`).
 
+### Session 61 — Unified Client Installation, System Setup & Connectivity Orchestrator Engine
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and architectural analysis (`CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md` & `SESSION_61_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Unified Client Installation, System Setup & Connectivity Orchestrator Engine scored #1 (100/100).
+- [x] Implement `ClientInstallerEngine` in `src/client_onboarding.ts`.
+- [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
+- [x] Add unit tests in `tests/client_onboarding.test.ts` and `tests/sdk_bridge.test.ts`, verifying 106 passing tests (`npm test`).
+
+### Session 63 — End-to-End Client Purchase Verification, System Deployment & Unified Installer Engine
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and architectural analysis (`SESSION_63_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: End-to-End Client Purchase Verification, System Deployment & Unified Installer Engine scored #1 (100/100).
+- [x] Implement purchase entitlement verification (`verifyClientEntitlements`), deployment manifest alignment (`alignClientDeployment`), multi-asset connectivity probing (`probeAssetConnectivity`), and unified installer execution (`runUnifiedInstallerCli`) in `src/client_onboarding.ts`.
+- [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
+- [x] Add unit tests in `tests/client_onboarding.test.ts` and `tests/sdk_bridge.test.ts`, verifying 114 passing tests (`npx vitest run`).
+
+### Session 64 — Master Reconnaissance & Architecture Review (CURRENT)
+- [x] Execute Phase 1: Organization repository sync (`git fetch --all -p`, `git submodule update --init --recursive`) and baseline index across 12 core repositories.
+- [x] Execute Phase 2: Org-wide platform review (`conxius-platform` audit against core primitives in `lib-conxian-core`, `conxian-nexus`, `conxian-gateway`, `conxius-enclave-sdk`, purging deprecated smart contract stubs).
+- [x] Execute Phase 3: B2B client deployment simulation (purchase & licensing, `.env` config, Gateway/Nexus deployment, ISO 20022 banking -> Bitcoin L1 settlement flow, CLI installer efficacy).
+- [x] Execute Phase 4: Issue mapping & scored gap analysis (cross-repo issue audit, criticality scoring: Security > Enterprise Routing > UI/UX).
+- [x] Execute Phase 5: End-to-end cycle maintenance (`verifyDomainRoutingFirewall` in `src/client_onboarding.ts`, `docs/research/MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md`, `SESSION_64_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Add unit tests in `tests/client_onboarding.test.ts` verifying 115 passing tests (`npx vitest run`).
+
 ---
 
 ## 🔮 Upstream Dependencies & Future Work
@@ -100,23 +124,3 @@ The Conxian Market SDK serves as the value, settlement, and SLA enforcement laye
 
 ---
 *Roadmap maintained and updated per session cycle.*
-
-### Session 61 — Unified Client Installation, System Setup & Connectivity Orchestrator Engine
-- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
-- [x] Research expansion and architectural analysis (`CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md` & `SESSION_61_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
-- [x] Candidate Scoring: Unified Client Installation, System Setup & Connectivity Orchestrator Engine scored #1 (100/100).
-- [x] Implement `ClientInstallerEngine` in `src/client_onboarding.ts`.
-- [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
-- [x] Add unit tests in `tests/client_onboarding.test.ts` and `tests/sdk_bridge.test.ts`, verifying 106 passing tests (`npm test`).
-
----
-
-### Session 63 — End-to-End Client Purchase Verification, System Deployment & Unified Installer Engine (CURRENT)
-- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
-- [x] Research expansion and architectural analysis (`SESSION_63_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
-- [x] Candidate Scoring: End-to-End Client Purchase Verification, System Deployment & Unified Installer Engine scored #1 (100/100).
-- [x] Implement purchase entitlement verification (`verifyClientEntitlements`), deployment manifest alignment (`alignClientDeployment`), multi-asset connectivity probing (`probeAssetConnectivity`), and unified installer execution (`runUnifiedInstallerCli`) in `src/client_onboarding.ts`.
-- [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
-- [x] Add unit tests in `tests/client_onboarding.test.ts` and `tests/sdk_bridge.test.ts`, verifying 114 passing tests (`npx vitest run`).
-
----

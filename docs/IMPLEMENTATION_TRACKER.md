@@ -1,7 +1,7 @@
-# Session 60 → Session 61 Implementation Tracker
+# Session 63 → Session 64 Implementation Tracker
 
 > **Generated:** 2026-08-01 | **Source:** `CROSS_REPO_GAP_ANALYSIS_SESSION_48.md` | **Auto-run Approved**
-> **Updated:** 2026-09-08 | **Current issue reality:** Updated in Session 60 following research expansion, Treasury Multi-Sig Governance Timelock & Founder Compensation Escrow Controller (`SESSION_60_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+> **Updated:** 2026-09-16 | **Current issue reality:** Updated in Session 64 following Master Reconnaissance & Architecture Review (`MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` & `SESSION_64_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
 
 ---
 
@@ -28,6 +28,10 @@ The live issue set shows this direct implementation path is active and relevant:
    - Candidate #10 (`TrustTier Upgrade & Downgrade Lifecycle Engine`): `trust_tier_middleware.ts` (Session 58).
    - Candidate #11 (`Automated SLA Fee Penalty Settlement & Escrow Penalty Clawback Engine`): `sla_engine.ts` (Session 59).
    - Candidate #12 (`Treasury Multi-Sig Governance Timelock & Founder Compensation Escrow Controller`): `bos_yield_splitter.ts` (Session 60).
+   - Candidate #13 (`Unified Client Installation & Connectivity Orchestrator Engine`): `client_onboarding.ts` (Session 61).
+   - Candidate #14 (`Real-Time SLA Telemetry Watcher`): `monitoring_watcher.ts` (Session 62).
+   - Candidate #15 (`Client Entitlements & Deployment Engine`): `client_onboarding.ts` (Session 63).
+   - Candidate #16 (`Master Reconnaissance, Architecture Review & Domain Firewall Engine`): `client_onboarding.ts` (Session 64).
 
 This repo remains focused on the value and orchestration layer while upstream repos resolve enabling infrastructure.
 
@@ -37,8 +41,8 @@ This repo remains focused on the value and orchestration layer while upstream re
 
 The current live execution chain is:
 
-1. **Session 60 KB Runtime Implementation (conxian_market)**: Implemented Treasury Multi-Sig Governance Timelock & Founder Compensation Escrow Controller in `src/bos_yield_splitter.ts` and `src/sdk_bridge.ts` per KB candidate score #1 (`operating_manual.md` Section 3.C & 3.D & `SESSION_60_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
-2. **Session 59 KB Runtime Implementation (conxian_market)**: Implemented Automated SLA Fee Penalty Settlement & Escrow Penalty Clawback Engine in `src/sla_engine.ts` and `src/sdk_bridge.ts` per KB candidate score #1 (`sla_bounty_system.md` Section 4).
+1. **Session 64 Master Reconnaissance & Architecture Review (conxian_market)**: Completed 5-phase org-wide review, verified domain routing firewall (`conxian.org` vs `conxian-labs.com`), and produced `MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` and `SESSION_64_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`.
+2. **Session 63 Client Entitlements & Deployment Alignment (conxian_market)**: Implemented purchase entitlement verification (`verifyClientEntitlements`), deployment manifest alignment (`alignClientDeployment`), and multi-asset connectivity probing (`probeAssetConnectivity`) in `src/client_onboarding.ts`.
 3. **Org enforcement (conxius-platform)**: [#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854), [#1223](https://github.com/Conxian/conxius-platform/issues/1223)
 4. **Trust chain hardening (conxius-enclave-sdk)**: [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242), [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241), [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240), [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202)
 5. **Wallet gate enforcement (conxius-wallet)**: [#444](https://github.com/Conxian/conxius-wallet/issues/444), [#356](https://github.com/Conxian/conxius-wallet/issues/356)
@@ -64,6 +68,7 @@ The current live execution chain is:
 | conxian_market | Unified Client Installer (`client_onboarding.ts`) | **COMPLETED (S61)** | Scoring matrix candidate #1 from `CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md`. |
 | conxian_market | Real-Time SLA Telemetry Watcher (`monitoring_watcher.ts`) | **COMPLETED (S62)** | Scoring matrix candidate #1 from `monitoring.md` §5 & `sla_bounty_system.md`. |
 | conxian_market | Client Entitlements & Deployment Engine (`client_onboarding.ts`) | **COMPLETED (S63)** | Scoring matrix candidate #1 from `CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md`. |
+| conxian_market | Master Reconnaissance & Domain Firewall Engine (`client_onboarding.ts`) | **COMPLETED (S64)** | Master Reconnaissance & B2B Architecture Review (`MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md`). |
 | Conxian | Monorepo Smart Contracts | **DEPRECATED** | Recommended for archiving in favor of BYO DeFi adapters. |
 
 ---
