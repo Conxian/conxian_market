@@ -298,6 +298,18 @@ describe("ConxianMarketSDK Client Onboarding Integration", () => {
     const provisioning = sdk.provisionClientEnvironment(config);
     expect(provisioning.provisioned).toBe(true);
 
+    const entitlement = sdk.verifyClientEntitlements(config);
+    expect(entitlement.clientDid).toBe("did:conxian:client-sdk-test");
+
+    const manifest = sdk.alignClientDeployment(config);
+    expect(manifest.checksum).toBeDefined();
+
+    const probe = sdk.probeAssetConnectivity(config);
+    expect(probe.gatewayConnected).toBe(true);
+
+    const cliResult = sdk.runUnifiedInstallerCli(config);
+    expect(cliResult.success).toBe(true);
+
     const summary = sdk.getCapabilitySummary();
     expect(summary.clientInstallerEnabled).toBe(true);
   });
