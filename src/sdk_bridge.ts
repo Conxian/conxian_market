@@ -451,6 +451,34 @@ export class ConxianMarketSDK {
     return ClientInstallerEngine.provisionClientEnvironment(config, timestampIso);
   }
 
+  verifyClientEntitlements(
+    config: import("./core_types").ClientOnboardingConfig,
+    licenseOverride?: Partial<import("./core_types").ClientEntitlementLicense>
+  ): import("./core_types").ClientEntitlementLicense {
+    return ClientInstallerEngine.verifyClientEntitlements(config, licenseOverride);
+  }
+
+  alignClientDeployment(
+    config: import("./core_types").ClientOnboardingConfig,
+    timestampIso?: string
+  ): import("./core_types").ClientDeploymentManifest {
+    return ClientInstallerEngine.alignClientDeployment(config, timestampIso);
+  }
+
+  probeAssetConnectivity(
+    config: import("./core_types").ClientOnboardingConfig,
+    timestampIso?: string
+  ): import("./core_types").AssetConnectivityProbeResult {
+    return ClientInstallerEngine.probeAssetConnectivity(config, timestampIso);
+  }
+
+  runUnifiedInstallerCli(
+    config: import("./core_types").ClientOnboardingConfig,
+    timestampIso?: string
+  ): import("./core_types").UnifiedCliInstallerRunResult {
+    return ClientInstallerEngine.runUnifiedInstallerCli(config, timestampIso);
+  }
+
   // ── Capability Summary (All Modules Wired) ──
 
   getCapabilitySummary(): CapabilitySummary {

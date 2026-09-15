@@ -98,4 +98,8 @@ export type {
   SystemConnectivityReport,
   ZeroCustodySanityCheck,
   ConnectivityDiagnosticItem,
+  ClientEntitlementLicense,
+  ClientDeploymentManifest,
+  AssetConnectivityProbeResult,
+  UnifiedCliInstallerRunResult,
 } from "./core_types";

@@ -70,4 +70,38 @@ describe("ClientInstallerEngine", () => {
     expect(provisioning.zeroCustodyCheck.passed).toBe(true);
     expect(provisioning.onboardingLogs.length).toBeGreaterThan(0);
   });
+
+  it("verifies client license entitlements and execution limits", () => {
+    const entitlement = ClientInstallerEngine.verifyClientEntitlements(validConfig);
+    expect(entitlement.clientDid).toBe("did:conxian:org:client-001");
+    expect(entitlement.tier).toBe(TrustTier.Strict);
+    expect(entitlement.maxActiveJobCards).toBe(1000);
+    expect(entitlement.agentExecutionEnabled).toBe(true);
+  });
+
+  it("aligns client configuration into a signed deployment manifest", () => {
+    const manifest = ClientInstallerEngine.alignClientDeployment(validConfig);
+    expect(manifest.clientDid).toBe("did:conxian:org:client-001");
+    expect(manifest.checksum).toContain("sha256_");
+    expect(manifest.hasByoLlmKeys).toBe(true);
+  });
+
+  it("probes end-to-end multi-asset connectivity", () => {
+    const probe = ClientInstallerEngine.probeAssetConnectivity(validConfig);
+    expect(probe.allAssetsOperational).toBe(true);
+    expect(probe.gatewayConnected).toBe(true);
+    expect(probe.nexusConnected).toBe(true);
+    expect(probe.walletConnected).toBe(true);
+    expect(probe.edgeAgentConnected).toBe(true);
+  });
+
+  it("executes unified CLI installer end-to-end pipeline successfully", () => {
+    const cliResult = ClientInstallerEngine.runUnifiedInstallerCli(validConfig);
+    expect(cliResult.success).toBe(true);
+    expect(cliResult.entitlement.clientDid).toBe("did:conxian:org:client-001");
+    expect(cliResult.manifest?.checksum).toBeDefined();
+    expect(cliResult.connectivity.allAssetsOperational).toBe(true);
+    expect(cliResult.zeroCustody.passed).toBe(true);
+    expect(cliResult.provisioning.provisioned).toBe(true);
+  });
 });

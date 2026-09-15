@@ -501,3 +501,50 @@ export interface ClientProvisioningResult {
   zeroCustodyCheck: ZeroCustodySanityCheck;
   onboardingLogs: string[];
 }
+
+// ── Session 63: End-to-End Client Purchase & Unified Installer Types ──
+
+export interface ClientEntitlementLicense {
+  licenseId: string;
+  clientDid: string;
+  tier: TrustTier;
+  allowedRails: SettlementRail[];
+  maxActiveJobCards: number;
+  agentExecutionEnabled: boolean;
+  expiresAtIso?: string;
+}
+
+export interface ClientDeploymentManifest {
+  manifestId: string;
+  clientDid: string;
+  gatewayUrl: string;
+  nexusUrl: string;
+  defaultRail: SettlementRail;
+  targetTrustTier: TrustTier;
+  hasByoLlmKeys: boolean;
+  checksum: string;
+  generatedAtIso: string;
+}
+
+export interface AssetConnectivityProbeResult {
+  probeId: string;
+  walletConnected: boolean;
+  edgeAgentConnected: boolean;
+  gatewayConnected: boolean;
+  nexusConnected: boolean;
+  probedAtIso: string;
+  allAssetsOperational: boolean;
+  details: string[];
+}
+
+export interface UnifiedCliInstallerRunResult {
+  success: boolean;
+  runId: string;
+  clientDid: string;
+  entitlement: ClientEntitlementLicense;
+  manifest?: ClientDeploymentManifest;
+  connectivity: AssetConnectivityProbeResult;
+  zeroCustody: ZeroCustodySanityCheck;
+  provisioning: ClientProvisioningResult;
+  timestampIso: string;
+}
