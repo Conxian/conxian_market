@@ -2,12 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   JobCardEscrowEngine,
   EscrowState,
+  JobCardStatus,
   TrustTier,
   SettlementRail,
   ConxianMarketSDK,
 } from "../src";
 
-describe("JobCardEscrowEngine (Session 54 Candidate #6)", () => {
+describe("JobCardEscrowEngine (Session 54 Candidate #6 & Session 65 Candidate #1)", () => {
   let engine: JobCardEscrowEngine;
 
   beforeEach(() => {
@@ -113,14 +114,9 @@ describe("JobCardEscrowEngine (Session 54 Candidate #6)", () => {
     expect(release.status).toBe(EscrowState.Released);
     expect(release.grossBudgetSat).toBe(10_000_000n);
 
-    // Managed tier fee (150 bps) + EVM rail offset (+10 bps) = 160 bps = 160,000 Sat
     expect(release.feeSat).toBe(160_000n);
     expect(release.netPayoutSat).toBe(9_840_000n);
 
-    // 80/10/10 yield split on 9,840,000 sat:
-    // Builder (80%) = 7,872,000 sat
-    // Treasury (10%) = 984,000 sat
-    // Ecosystem (10%) = 984,000 sat
     expect(release.yieldSplit.builderSat).toBe(7_872_000n);
     expect(release.yieldSplit.platformTreasurySat).toBe(984_000n);
     expect(release.yieldSplit.ecosystemStakeholdersSat).toBe(984_000n);
@@ -130,6 +126,31 @@ describe("JobCardEscrowEngine (Session 54 Candidate #6)", () => {
 
     const record = engine.getEscrowRecord("job-303");
     expect(record?.state).toBe(EscrowState.Released);
+  });
+
+  it("should reconcile escrow state accurately", () => {
+    engine.createEscrow({
+      jobId: "job-recon-1",
+      clientDid: "did:conxian:client:alpha",
+      agentProviderDid: "did:conxian:agent:beta",
+      budgetSat: 5_000_000n,
+      deadlineTimestamp: Date.now() + 86400000,
+      tier: TrustTier.Managed,
+      rail: SettlementRail.EvmErc8183,
+    });
+
+    engine.submitJobOutput({
+      jobId: "job-recon-1",
+      outputHash: "0xrecon1",
+      completedAtTimestamp: Date.now(),
+    });
+
+    engine.evaluateAndRelease("job-recon-1", new Date().toISOString());
+
+    const result = engine.reconcileJobCardEscrow("job-recon-1", JobCardStatus.Completed);
+    expect(result.isReconciled).toBe(true);
+    expect(result.onChainState).toBe(EscrowState.Released);
+    expect(result.discrepancies.length).toBe(0);
   });
 
   it("should dispute escrow and issue non-custodial refund and bounty", () => {
@@ -177,6 +198,9 @@ describe("JobCardEscrowEngine (Session 54 Candidate #6)", () => {
 
     const release = sdk.evaluateAndReleaseJobCardEscrow("sdk-job-1", new Date().toISOString());
     expect(release.status).toBe(EscrowState.Released);
+
+    const recon = sdk.reconcileJobCardEscrow("sdk-job-1", JobCardStatus.Completed);
+    expect(recon.isReconciled).toBe(true);
 
     const summary = sdk.getCapabilitySummary();
     expect(summary.jobCardEscrowEngineEnabled).toBe(true);

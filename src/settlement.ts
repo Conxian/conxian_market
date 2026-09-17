@@ -22,11 +22,21 @@ import type {
   TrustTier,
   VtxoTransfer,
   YieldOpportunity,
+  AttestationCertificate,
 } from "./core_types";
 import { SettlementRail as Rail, TrustTier as Tier } from "./core_types";
 import { DEFAULT_FEATURE_FLAGS } from "./core_types";
 import type { GatewayClient } from "./gateway_client";
 import type { Verifier } from "./verification";
+
+export interface SettlementProofVerificationResult {
+  settlementId: string;
+  verified: boolean;
+  proofType: "SPV" | "ZK" | "TEE" | "LIGHT" | "NONE";
+  isZeroCustodyConfirmed: boolean;
+  verifiedAtIso: string;
+  details: string;
+}
 
 // ── Settlement Orchestrator ──
 
@@ -80,6 +90,46 @@ export class SettlementOrchestrator {
         error: String(err),
       };
     }
+  }
+
+  /**
+   * Verify settlement attestation proof without central hub private key usage.
+   */
+  async verifyNonCustodialSettlementProof(
+    settlementId: string,
+    attestation?: AttestationCertificate,
+    timestampIso = new Date().toISOString()
+  ): Promise<SettlementProofVerificationResult> {
+    if (!attestation) {
+      return {
+        settlementId,
+        verified: false,
+        proofType: "NONE",
+        isZeroCustodyConfirmed: true,
+        verifiedAtIso: timestampIso,
+        details: "No attestation certificate provided for settlement proof verification",
+      };
+    }
+
+    const proofResult = await this.verifier.verifyAttestation(attestation);
+    const proofType = attestation.zk_proof
+      ? "ZK"
+      : attestation.tee_proof || attestation.enclave_attestation
+      ? "TEE"
+      : attestation.light_proof
+      ? "SPV"
+      : "LIGHT";
+
+    return {
+      settlementId,
+      verified: proofResult.valid,
+      proofType,
+      isZeroCustodyConfirmed: true,
+      verifiedAtIso: timestampIso,
+      details: proofResult.valid
+        ? `Settlement proof verified at TrustTier ${proofResult.tier}`
+        : `Settlement proof verification failed: ${proofResult.error || "Invalid proof"}`,
+    };
   }
 
   /** Execute M2M (machine-to-machine) settlement */

@@ -11,6 +11,7 @@ export { GatewayClient } from "./gateway_client";
 export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification";
 export type { AttestationCapabilities } from "./verification";
 export { SettlementOrchestrator } from "./settlement";
+export type { SettlementProofVerificationResult } from "./settlement";
 export { SlaEngine, DEFAULT_SLA_RULESET, URGENCY_PRICING_TABLE } from "./sla_engine";
 export type {
   GapCard,
@@ -77,6 +78,7 @@ export type {
   JobOutputSubmission,
   EscrowReleaseResult,
   EscrowRefundResult,
+  EscrowReconciliationResult,
   EscrowRecord,
 } from "./job_card_escrow";
 export {
