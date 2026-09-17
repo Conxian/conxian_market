@@ -24,6 +24,7 @@ export interface AttestationCapabilities {
 
 export interface Verifier {
   detectTier(cert: AttestationCertificate): Promise<TrustTier>;
+  verifyAttestation(cert: AttestationCertificate): Promise<{ valid: boolean; tier: TrustTier; error?: string }>;
   verifyTeeZk(teeProof: string, zkProof: string): Promise<boolean>;
   verifyEnclave(proof: string): Promise<boolean>;
   verifyLight(proof: string): Promise<boolean>;
@@ -82,6 +83,16 @@ export class GatewayVerifier implements Verifier {
     } catch {
       return false;
     }
+  }
+
+  async verifyAttestation(cert: AttestationCertificate): Promise<{ valid: boolean; tier: TrustTier; error?: string }> {
+    const tier = await this.detectTier(cert);
+    const valid = tier !== Tier.ObserverOnly;
+    return {
+      valid,
+      tier,
+      error: valid ? undefined : "Attestation certificate could not be verified for higher trust tier",
+    };
   }
 
   async detectTier(cert: AttestationCertificate): Promise<TrustTier> {

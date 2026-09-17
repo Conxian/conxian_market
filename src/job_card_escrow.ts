@@ -76,6 +76,15 @@ export interface EscrowRefundResult {
   reason: string;
 }
 
+export interface EscrowReconciliationResult {
+  jobId: string;
+  isReconciled: boolean;
+  onChainState: EscrowState;
+  jobCardStatus: JobCardStatus;
+  discrepancies: string[];
+  reconciledAtIso: string;
+}
+
 export interface EscrowRecord {
   jobId: string;
   clientDid: string;
@@ -304,6 +313,51 @@ export class JobCardEscrowEngine {
     record.state = EscrowState.Refunded;
     record.refundResult = refundResult;
     return refundResult;
+  }
+
+  /**
+   * Reconcile job card escrow state against expected status and on-chain contract state.
+   */
+  reconcileJobCardEscrow(
+    jobId: string,
+    expectedStatus?: JobCardStatus,
+    timestampIso = new Date().toISOString()
+  ): EscrowReconciliationResult {
+    const record = this.escrows.get(jobId);
+    if (!record) {
+      return {
+        jobId,
+        isReconciled: false,
+        onChainState: EscrowState.Open,
+        jobCardStatus: expectedStatus || JobCardStatus.Open,
+        discrepancies: [`Escrow record not found for jobId: ${jobId}`],
+        reconciledAtIso: timestampIso,
+      };
+    }
+
+    const discrepancies: string[] = [];
+    let isReconciled = true;
+
+    // Check status mapping
+    if (expectedStatus) {
+      if (record.state === EscrowState.Released && expectedStatus !== JobCardStatus.Completed) {
+        discrepancies.push(`State mismatch: Escrow released but job card status is ${expectedStatus}`);
+        isReconciled = false;
+      }
+      if (record.state === EscrowState.Refunded && expectedStatus !== JobCardStatus.Disputed && expectedStatus !== JobCardStatus.Cancelled) {
+        discrepancies.push(`State mismatch: Escrow refunded but job card status is ${expectedStatus}`);
+        isReconciled = false;
+      }
+    }
+
+    return {
+      jobId,
+      isReconciled,
+      onChainState: record.state,
+      jobCardStatus: expectedStatus || (record.state === EscrowState.Released ? JobCardStatus.Completed : JobCardStatus.Open),
+      discrepancies,
+      reconciledAtIso: timestampIso,
+    };
   }
 
   /**

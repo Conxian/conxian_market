@@ -24,6 +24,26 @@ describe("settlement", () => {
       expect(orchestrator.isRailAvailable(TrustTier.Managed, SettlementRail.Statechain)).toBe(false);
     });
 
+    it("verifyNonCustodialSettlementProof handles attestation validation", async () => {
+      const mockVerifier = {
+        verifyAttestation: vi.fn().mockResolvedValue({
+          valid: true,
+          tier: TrustTier.Managed,
+        }),
+      } as unknown as GatewayVerifier;
+
+      const orchestrator = new SettlementOrchestrator({} as GatewayClient, mockVerifier);
+
+      const res = await orchestrator.verifyNonCustodialSettlementProof("settle-proof-1", {
+        tee_proof: "0xtee_proof_bytes",
+      });
+
+      expect(res.settlementId).toBe("settle-proof-1");
+      expect(res.verified).toBe(true);
+      expect(res.proofType).toBe("TEE");
+      expect(res.isZeroCustodyConfirmed).toBe(true);
+    });
+
     it("execute handles rail unavailable error", async () => {
       const orchestrator = new SettlementOrchestrator(
         {} as GatewayClient,

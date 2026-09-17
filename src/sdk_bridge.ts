@@ -5,13 +5,13 @@ import { ClientInstallerEngine } from "./client_onboarding";
  * Integrates:
  *   - Gateway Client (relay, RWA verification, blocks, NTT)
  *   - Gateway Verifier (attestation cert verification, trust tier detection)
- *   - Settlement Orchestrator (cross-chain settlement routing across 8 rails)
+ *   - Settlement Orchestrator (cross-chain settlement routing across 8 rails & non-custodial proof verification)
  *   - SLA Engine (autonomous SLA evaluation, gap card bounties & auto-resolution)
  *   - Monitoring Watcher (sBTC, Fedimint, Babylon, and Treasury health monitoring)
  *   - TrustTier Middleware (HTTP/MCP request verification & routing pipeline)
  *   - BOS Yield Splitter (80/10/10 yield matrix, fee decay, founder vesting, inference policy, Treasury Timelock & Founder Escrow)
  *   - Market-Agnostic Router (Zero-custody validation, BYO DeFi protocol adapter resolution, M2M route execution, Conxian/Conxian deprecation advisory)
- *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission, SLA-integrated release, dispute/refund handling)
+ *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission, SLA-integrated release, dispute/refund handling, escrow reconciliation)
  *   - Fee Calculator (2% protocol fee with tier/rail breakdown)
  *   - x402 Escrow Gateway (Multi-rail HTTP 402 payment demands & ERC-8183 budget locking)
  *   - Client Installer Engine (Client onboarding, system setup, domain routing firewall, and unified CLI installer)
@@ -19,7 +19,7 @@ import { ClientInstallerEngine } from "./client_onboarding";
 
 import { GatewayClient, type GatewayConfig } from "./gateway_client";
 import { GatewayVerifier, degradeTierForP0Gaps } from "./verification";
-import { SettlementOrchestrator } from "./settlement";
+import { SettlementOrchestrator, type SettlementProofVerificationResult } from "./settlement";
 import {
   SlaEngine,
   type BuilderReputationRecord,
@@ -41,6 +41,7 @@ import {
   type AttestationCertificate,
   type FeatureFlags,
   type JobCard,
+  type JobCardStatus,
   type ProtocolFeeRecord as FeeResult,
   type RevenueProjection,
   type RevenueScenario,
@@ -95,6 +96,7 @@ import {
   type EscrowRecord,
   type EscrowRefundResult,
   type EscrowReleaseResult,
+  type EscrowReconciliationResult,
   type JobOutputSubmission,
 } from "./job_card_escrow";
 import {
@@ -196,12 +198,24 @@ export class ConxianMarketSDK {
     return projectRevenue(scenario);
   }
 
-  // ── Capability 5: Settlement Orchestration ──
+  // ── Capability 5: Settlement Orchestration & Non-Custodial Proof Verification ──
 
   async executeSettlement(
     request: SettlementRequest
   ): Promise<SettlementResult> {
     return this.settlement.execute(request);
+  }
+
+  async verifyNonCustodialSettlementProof(
+    settlementId: string,
+    attestation?: AttestationCertificate,
+    timestampIso?: string
+  ): Promise<SettlementProofVerificationResult> {
+    return this.settlement.verifyNonCustodialSettlementProof(
+      settlementId,
+      attestation,
+      timestampIso
+    );
   }
 
   // ── Capability 6: Autonomous SLA Enforcement, CJCS Gap Cards & Auto-Resolution ──
@@ -357,7 +371,7 @@ export class ConxianMarketSDK {
     return MarketAgnosticRouter.getDeprecationAdvisory();
   }
 
-  // ── Capability 11: ERC-8183 Job Card Escrow Engine ──
+  // ── Capability 11: ERC-8183 Job Card Escrow Engine & Reconciliation ──
 
   createJobCardEscrow(params: EscrowCreationParams): EscrowRecord {
     return this.jobCardEscrowEngine.createEscrow(params);
@@ -388,6 +402,18 @@ export class ConxianMarketSDK {
       jobId,
       reason,
       currentTimeIso
+    );
+  }
+
+  reconcileJobCardEscrow(
+    jobId: string,
+    expectedStatus?: JobCardStatus,
+    timestampIso?: string
+  ): EscrowReconciliationResult {
+    return this.jobCardEscrowEngine.reconcileJobCardEscrow(
+      jobId,
+      expectedStatus,
+      timestampIso
     );
   }
 
