@@ -586,3 +586,24 @@ export interface MasterArchitectureReviewReport {
   topScoredGaps: ScoredGapItem[];
   nextImmediateTasks: string[];
 }
+
+// ── Session 65: B2B Enterprise Client Onboarding SLA Diagnostics Types ──
+
+export interface SlaDiagnosticItem {
+  target: string;
+  endpointUrl: string;
+  expectedMaxLatencyMs: number;
+  measuredLatencyMs: number;
+  slaCompliant: boolean;
+  status: "OPTIMAL" | "DEGRADED" | "CRITICAL";
+  detail: string;
+}
+
+export interface EnterpriseSlaDiagnosticsReport {
+  clientDid: string;
+  overallSlaStatus: "HEALTHY" | "DEGRADED" | "NON_COMPLIANT";
+  latencyThresholdMs: number;
+  diagnostics: SlaDiagnosticItem[];
+  allEndpointsSlaCompliant: boolean;
+  timestampIso: string;
+}
