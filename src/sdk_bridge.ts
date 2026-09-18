@@ -13,7 +13,7 @@ import { ClientInstallerEngine } from "./client_onboarding";
  *   - Market-Agnostic Router (Zero-custody validation, BYO DeFi protocol adapter resolution, M2M route execution, Conxian/Conxian deprecation advisory)
  *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission, SLA-integrated release, dispute/refund handling, escrow reconciliation)
  *   - Fee Calculator (2% protocol fee with tier/rail breakdown)
- *   - x402 Escrow Gateway (Multi-rail HTTP 402 payment demands & ERC-8183 budget locking)
+ *   - x402 Escrow Gateway (Multi-rail HTTP 402 payment demands, attestation verification & ERC-8183 budget locking)
  *   - Client Installer Engine (Client onboarding, system setup, domain routing firewall, and unified CLI installer)
  */
 
@@ -102,9 +102,12 @@ import {
 import {
   jobCardToDemand,
   jobCardToMultiRailDemands,
+  verifyPaymentReceiptWithAttestation,
   X402EscrowGateway,
   type X402PaymentDemand,
   type X402PaymentReceipt,
+  type X402TrustProofArtifact,
+  type X402AttestationVerificationResult,
 } from "./x402_facade";
 
 export class ConxianMarketSDK {
@@ -417,7 +420,7 @@ export class ConxianMarketSDK {
     );
   }
 
-  // ── Capability 12: x402 Escrow Gateway ──
+  // ── Capability 12: x402 Escrow Gateway & Attestation Proofs ──
 
   createX402Demand(
     job: Pick<JobCard, "id" | "title" | "description" | "bountySat" | "deadline">,
@@ -446,6 +449,38 @@ export class ConxianMarketSDK {
       agentProviderDid,
       rail,
       tier
+    );
+  }
+
+  async verifyX402PaymentReceiptWithAttestation(
+    demand: X402PaymentDemand,
+    receipt: X402PaymentReceipt,
+    cert: AttestationCertificate,
+    agentProviderDid: string
+  ): Promise<X402AttestationVerificationResult> {
+    return verifyPaymentReceiptWithAttestation(
+      demand,
+      receipt,
+      cert,
+      agentProviderDid,
+      this.verifier
+    );
+  }
+
+  async processX402PaymentAndLockEscrowWithAttestation(
+    demand: X402PaymentDemand,
+    receipt: X402PaymentReceipt,
+    agentProviderDid: string,
+    rail: SettlementRail,
+    cert: AttestationCertificate
+  ): Promise<{ escrowRecord: EscrowRecord; trustProof: X402TrustProofArtifact }> {
+    return this.x402EscrowGateway.processPaymentAndLockEscrowWithAttestation(
+      demand,
+      receipt,
+      agentProviderDid,
+      rail,
+      cert,
+      this.verifier
     );
   }
 

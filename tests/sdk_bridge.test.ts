@@ -172,6 +172,55 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Int
   });
 });
 
+describe("ConxianMarketSDK Bridge - x402 Attestation Gateway Integration", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("verifies x402 payment receipt with attestation proof artifact via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const demand = sdk.createX402Demand({
+      id: "sdk-x402-job-1",
+      title: "Agent Verification Task",
+      bountySat: 500_000n,
+    });
+
+    const receipt = {
+      demandId: "sdk-x402-job-1",
+      transactionId: "tx-sdk-attestation",
+      amountSat: "500000",
+      paidAt: Date.now(),
+      payerDid: "did:conxian:client:sdk",
+    };
+
+    const cert = {
+      enclave_attestation: "0xenclave_bytes_sdk",
+      timestamp: Date.now(),
+    };
+
+    const verification = await sdk.verifyX402PaymentReceiptWithAttestation(
+      demand,
+      receipt,
+      cert,
+      "did:conxian:agent:sdk"
+    );
+
+    expect(verification.valid).toBe(true);
+    expect(verification.verifiedTier).toBe(TrustTier.Managed);
+    expect(verification.trustProof.proofHash).toBeDefined();
+
+    const { escrowRecord, trustProof } = await sdk.processX402PaymentAndLockEscrowWithAttestation(
+      demand,
+      receipt,
+      "did:conxian:agent:sdk",
+      SettlementRail.EvmErc8183,
+      cert
+    );
+
+    expect(escrowRecord.jobId).toBe("sdk-x402-job-1");
+    expect(trustProof.verifiedTier).toBe(TrustTier.Managed);
+  });
+});
+
 describe("ConxianMarketSDK Bridge - TrustTier Lifecycle Engine Integration", () => {
   const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
 
@@ -201,7 +250,6 @@ describe("ConxianMarketSDK Bridge - TrustTier Lifecycle Engine Integration", () 
     expect(downgrade.newTier).toBe(TrustTier.Managed);
   });
 });
-
 
 describe("ConxianMarketSDK Bridge - SLA Penalty Settlement Integration", () => {
   const dummyConfig = { baseUrl: "https://gateway.conxian.io" };

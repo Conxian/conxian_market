@@ -1,13 +1,13 @@
 # Conxian Ecosystem & Market SDK Roadmap
 
-> **Current Session:** Session 64
-> **Strategic Directive:** Master Reconnaissance, Hardening the Core, B2B Enterprise Domain Separation & Non-Custodial Value Routing
+> **Current Session:** Session 66
+> **Strategic Directive:** M2M Trust Layer Research Expansion, Project Alignment & Implementation
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
 
 ---
 
 ## 🎯 Executive Vision
-The Conxian Market SDK serves as the value, settlement, and SLA enforcement layer for the Conxian Ecosystem. Rather than building proprietary smart contracts or AI agents, Conxian operates as a **Market-Agnostic, Zero-Custody Value Router** that orchestrates and monetizes industrial agent labor through programmable escrow (ERC-8183 / CJCS Job Cards), multi-rail Bitcoin/Stacks settlement, TrustTier verification, autonomous SLA enforcement, telemetry monitoring, and BYO DeFi protocol routing.
+The Conxian Market SDK serves as the value, settlement, SLA enforcement, and trust layer for the Conxian Ecosystem. Rather than building proprietary smart contracts or AI agents, Conxian operates as a **Market-Agnostic, Zero-Custody Value Router and Verifiable Trust Layer on top of x402** that orchestrates and monetizes industrial agent labor through hardware enclave attestation proof verification, programmable escrow (ERC-8183 / CJCS Job Cards), multi-rail Bitcoin/Stacks settlement, TrustTier verification, autonomous SLA enforcement, telemetry monitoring, and BYO DeFi protocol routing.
 
 ---
 
@@ -105,13 +105,28 @@ The Conxian Market SDK serves as the value, settlement, and SLA enforcement laye
 - [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
 - [x] Add unit tests in `tests/client_onboarding.test.ts` and `tests/sdk_bridge.test.ts`, verifying 114 passing tests (`npx vitest run`).
 
-### Session 64 — Master Reconnaissance & Architecture Review (CURRENT)
+### Session 64 — Master Reconnaissance & Architecture Review
 - [x] Execute Phase 1: Organization repository sync (`git fetch --all -p`, `git submodule update --init --recursive`) and baseline index across 12 core repositories.
 - [x] Execute Phase 2: Org-wide platform review (`conxius-platform` audit against core primitives in `lib-conxian-core`, `conxian-nexus`, `conxian-gateway`, `conxius-enclave-sdk`, purging deprecated smart contract stubs).
 - [x] Execute Phase 3: B2B client deployment simulation (purchase & licensing, `.env` config, Gateway/Nexus deployment, ISO 20022 banking -> Bitcoin L1 settlement flow, CLI installer efficacy).
 - [x] Execute Phase 4: Issue mapping & scored gap analysis (cross-repo issue audit, criticality scoring: Security > Enterprise Routing > UI/UX).
 - [x] Execute Phase 5: End-to-end cycle maintenance (`verifyDomainRoutingFirewall` in `src/client_onboarding.ts`, `docs/research/MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md`, `SESSION_64_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
 - [x] Add unit tests in `tests/client_onboarding.test.ts` verifying 115 passing tests (`npx vitest run`).
+
+### Session 65 — Comprehensive Organizational Reconnaissance & Gap Matrix
+- [x] Synchronize repository submodules and workspace state (`git fetch origin main -p --recurse-submodules`).
+- [x] Conduct cross-repo gap analysis and update `MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` with candidate gap matrix.
+- [x] Verify B2B domain routing firewall and enterprise onboarding installer pipeline across 115 test cases (`npm test`).
+
+### Session 66 — M2M Trust Layer Research Expansion, Project Alignment & Implementation (CURRENT)
+- [x] Execute session initialization from ledger at `.session/ledger.md`.
+- [x] Synchronize repository submodules per declared policy and re-evaluate `conxian_market` override.
+- [x] Conduct systematic reconnaissance across assets (`conxian-gateway`, `conxius-enclave-sdk`, `lib-conxian-core`, `conxian_market`, `conxian-nexus`), external standards (Linux Foundation x402, Visa/Mastercard agent protocols, W3C DID, ERC-8004, ISO 20022 pacs.008, M2M market sizing primary sources), and GitHub surfaces.
+- [x] Build Gap Register across 8 categories and score candidate features on weighted matrix.
+- [x] Implement candidate CAN-66-A: Attestation-Backed x402 Verification & Trust Layer Engine in `src/x402_facade.ts`, `src/sdk_bridge.ts`, and `src/index.ts`.
+- [x] Author unit tests in `tests/x402_facade.test.ts` and `tests/sdk_bridge.test.ts`.
+- [x] Create research document `docs/research/SESSION_66_RESEARCH_EXPANSION_AND_GAP_MATRIX.md` and Architectural Decision Record `docs/adr/ADR_002_M2M_X402_TRUST_LAYER.md`.
+- [x] Update `README.md` positioning to "verifiable settlement, escrow, and trust layer for autonomous agent commerce (x402)".
 
 ---
 
@@ -124,8 +139,3 @@ The Conxian Market SDK serves as the value, settlement, and SLA enforcement laye
 
 ---
 *Roadmap maintained and updated per session cycle.*
-
-### Session 65 — Comprehensive Organizational Reconnaissance & Gap Matrix
-- [x] Synchronize repository submodules and workspace state (`git fetch origin main -p --recurse-submodules`).
-- [x] Conduct cross-repo gap analysis and update `MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` with candidate gap matrix.
-- [x] Verify B2B domain routing firewall and enterprise onboarding installer pipeline across 115 test cases (`npm test`).
