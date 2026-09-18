@@ -4,6 +4,8 @@ import {
   jobCardToMultiRailDemands,
   toEscrowParams,
   verifyPaymentReceipt,
+  verifyPaymentReceiptWithAttestation,
+  createTrustProofArtifact,
   X402EscrowGateway,
 } from "../src/x402_facade";
 import { SettlementRail, TrustTier } from "../src/core_types";
@@ -122,5 +124,68 @@ describe("x402 facade & gateway", () => {
     expect(yieldSplit.builderSat).toBe(800_000n);
     expect(yieldSplit.platformTreasurySat).toBe(100_000n);
     expect(yieldSplit.ecosystemStakeholdersSat).toBe(100_000n);
+  });
+
+  it("verifies payment receipt with TEE/ZK attestation and constructs trust proof artifact", async () => {
+    const demand = jobCardToDemand(job, SettlementRail.Sbtc);
+    const receipt = {
+      demandId: "job-1",
+      transactionId: "tx-attested-123",
+      amountSat: "1000000",
+      paidAt: 1_700_000_000_000,
+      payerDid: "did:conxian:client:attested",
+    };
+    const cert = {
+      tee_proof: "0xtee_proof_bytes",
+      zk_proof: "0xzk_proof_bytes",
+      timestamp: 1_700_000_000_000,
+    };
+
+    const verificationResult = await verifyPaymentReceiptWithAttestation(
+      demand,
+      receipt,
+      cert,
+      "did:conxian:agent:provider"
+    );
+
+    expect(verificationResult.valid).toBe(true);
+    expect(verificationResult.verifiedTier).toBe(TrustTier.Strict);
+    expect(verificationResult.attestationValid).toBe(true);
+    expect(verificationResult.trustProof.issuer).toBe("conxian.org/trust-layer");
+    expect(verificationResult.trustProof.proofHash).toBeDefined();
+    expect(verificationResult.trustProof.verifiedTier).toBe(TrustTier.Strict);
+  });
+
+  it("locks escrow with attestation proof through X402EscrowGateway", async () => {
+    const slaEngine = new SlaEngine();
+    const escrowEngine = new JobCardEscrowEngine(slaEngine);
+    const gateway = new X402EscrowGateway(escrowEngine);
+
+    const demand = jobCardToDemand(job, SettlementRail.Sbtc);
+    const receipt = {
+      demandId: "job-1",
+      transactionId: "tx-attested-456",
+      amountSat: "1000000",
+      paidAt: 1_700_000_000_000,
+      payerDid: "did:conxian:client:attested",
+    };
+    const cert = {
+      enclave_attestation: "0xenclave_attestation_bytes",
+      timestamp: 1_700_000_000_000,
+    };
+
+    const { escrowRecord, trustProof } = await gateway.processPaymentAndLockEscrowWithAttestation(
+      demand,
+      receipt,
+      "did:conxian:agent:provider",
+      SettlementRail.Sbtc,
+      cert
+    );
+
+    expect(escrowRecord.jobId).toBe("job-1");
+    expect(escrowRecord.state).toBe(EscrowState.Open);
+    expect(escrowRecord.tier).toBe(TrustTier.Managed);
+    expect(trustProof.verifiedTier).toBe(TrustTier.Managed);
+    expect(trustProof.attestationVerified).toBe(true);
   });
 });

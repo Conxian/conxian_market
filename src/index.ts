@@ -3,7 +3,7 @@
  *
  * Core exports for non-custodial value routing, SLA enforcement, TrustTier pricing,
  * telemetry monitoring, BOS yield splitting, ERC-8183 escrow management, attestation proof verification,
- * x402 gateway integration, and autonomous SLA gap card auto-resolution.
+ * x402 gateway integration with attestation proof artifacts, and autonomous SLA gap card auto-resolution.
  */
 
 export * from "./core_types";
@@ -87,10 +87,17 @@ export {
   jobCardToDemand,
   jobCardToMultiRailDemands,
   verifyPaymentReceipt,
+  verifyPaymentReceiptWithAttestation,
+  createTrustProofArtifact,
   toEscrowParams,
   X402EscrowGateway,
 } from "./x402_facade";
-export type { X402PaymentDemand, X402PaymentReceipt } from "./x402_facade";
+export type {
+  X402PaymentDemand,
+  X402PaymentReceipt,
+  X402TrustProofArtifact,
+  X402AttestationVerificationResult,
+} from "./x402_facade";
 export { ConxianMarketSDK } from "./sdk_bridge";
 
 export { ClientInstallerEngine } from "./client_onboarding";
