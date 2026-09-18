@@ -1,18 +1,18 @@
-# Session Ledger — Session 66
+# Session Ledger — Session 67
 
-> **Initialized:** 2026-09-17T18:00:00Z | **Session:** 66 | **Status:** Completed
+> **Initialized:** 2026-09-18T17:45:00Z | **Session:** 67 | **Status:** Completed
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
 
 ---
 
 ## 0. Baseline State & SHA Record
 
-- **UTC Timestamp:** 2026-09-17T18:00:00Z
-- **Active Branch:** main
-- **Root Repo HEAD SHA:** 39136c0 (conxian_market)
-- **Submodule Policy & Override Decision:**
-  - Standard policy: Pin-to-parent across all submodules.
-  - `conxian_market` override re-evaluation: As `conxian_market` (`@conxian/market-sdk`) now functions as the primary runtime orchestration and trust layer surface for agentic M2M payments, `conxian_market` is confirmed as the active orchestration repo while parent pins are maintained.
+- **UTC Timestamp:** 2026-09-18T17:45:00Z
+- **Active Branch:** main (jules-15148986541129350765-23b8d5a3)
+- **Root Repo HEAD SHA:** c65cc70e5217eb8f7d5956e157906a269eef9123
+- **Submodule Policy & Disposition:**
+  - Policy: Pin-to-parent across all submodules.
+  - Submodules: No submodules configured in this repository scope.
 - **Working-Tree State:** Clean / Session Complete.
 
 ---
@@ -21,35 +21,29 @@
 
 - [x] **A0: Session Initialization & Baseline Record**
 - [x] **A1: Repository Synchronization & Submodule Disposition**
-- [x] **A2: Systematic Reconnaissance (M2M Trust Layer, Assets, Standards, GitHub)**
+- [x] **A2: Systematic Reconnaissance & Test Failure Diagnosis**
 - [x] **A3: Gap Identification & Prioritization Register**
 - [x] **A4: Research Expansion & Candidate Scoring Matrix**
-- [x] **A5: Best Candidate Implementation & Verification Script**
-- [x] **A6: GitHub Surface Updates (ADR, README, Roadmap)**
-- [x] **A7: Session Close & Continuity Handoff**
+- [x] **A5: Production Code Initiation & Bug Resolution (`src/x402_facade.ts`)**
+- [x] **A6: Session Close & Continuity Handoff**
 
 ---
 
 ## 2. Selected Candidate & Implementation Log
 
-- **Selected Candidate:** `CAN-66-A` — Attestation-Backed x402 Verification & Trust Layer Engine
-- **Weighted Score:** `4.80 / 5.00` (96/100) — Rank #1
+- **Target Bug / Gap:** `GAP-02 / CAN-66-A` static fallback attestation verification in x402 facade.
+- **Root Cause:** Unmocked `GatewayVerifier` in `sdk_bridge.test.ts` attempted network fetch to dummy endpoint, failing `verifyPaymentReceiptWithAttestation` without executing static attestation fallback.
 - **Code Changes:**
-  - `src/x402_facade.ts`: Added `X402TrustProofArtifact`, `X402AttestationVerificationResult`, `verifyPaymentReceiptWithAttestation`, `createTrustProofArtifact`, and `X402EscrowGateway.processPaymentAndLockEscrowWithAttestation`.
-  - `src/sdk_bridge.ts`: Wired `verifyX402PaymentReceiptWithAttestation` and `processX402PaymentAndLockEscrowWithAttestation` onto `ConxianMarketSDK`.
-  - `src/index.ts`: Exported all new x402 facade types and functions.
+  - `src/x402_facade.ts`: Wrapped `verifier.verifyAttestation(cert)` call in `verifyPaymentReceiptWithAttestation` in a try/catch block and ensured `detectTrustTierStatic` executes whenever static attestation signals are present in `cert`.
 - **Verification Script:** `scripts/verify_gap_66_a.py`
 - **Verification Log:**
-  - `tests/x402_facade.test.ts`: 8/8 passing
-  - `tests/sdk_bridge.test.ts`: 15/15 passing
-- **Documentation & ADRs:**
-  - `docs/research/SESSION_66_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`
-  - `docs/adr/ADR_002_M2M_X402_TRUST_LAYER.md`
-  - `README.md`
-  - `ROADMAP.md`
+  - `npm test`: 13 test files passed (120/120 tests passing)
+  - `npm run typecheck`: clean
+  - `npm run build`: clean
+  - `scripts/verify_gap_66_a.py`: 2/2 test files passed, GAP-02 verified closed.
 
 ---
 
 ## 3. Next Session's First Action
 
-Next Session's First Action: Execute `scripts/verify_gap_66_a.py` and query the gateway attestation REST endpoint to monitor live enclave attestation proofs for x402 agent payments.
+Next Session's First Action: Run `npm test` and `python3 scripts/verify_gap_66_a.py` to confirm zero regression across all 120 test cases and continue expanding production capabilities.
