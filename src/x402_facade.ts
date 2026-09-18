@@ -153,18 +153,27 @@ export async function verifyPaymentReceiptWithAttestation(
   let attestationValid = false;
 
   if (verifier) {
-    const res = await verifier.verifyAttestation(cert);
-    verifiedTier = res.tier;
-    attestationValid = res.valid;
-  } else {
+    try {
+      const res = await verifier.verifyAttestation(cert);
+      verifiedTier = res.tier;
+      attestationValid = res.valid;
+    } catch {
+      // Fall through to static inspection
+    }
+  }
+
+  if (!attestationValid || verifiedTier === Tier.ObserverOnly) {
     // Static fallback inspection
-    verifiedTier = detectTrustTierStatic({
+    const staticTier = detectTrustTierStatic({
       "x-conxian-tee-proof": cert.tee_proof,
       "x-conxian-zk-proof": cert.zk_proof,
       "x-conxian-enclave-attestation": cert.enclave_attestation,
       "x-conxian-light-proof": cert.light_proof,
     });
-    attestationValid = verifiedTier !== Tier.ObserverOnly;
+    if (staticTier !== Tier.ObserverOnly) {
+      verifiedTier = staticTier;
+      attestationValid = true;
+    }
   }
 
   const summary = attestationValid
