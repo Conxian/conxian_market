@@ -550,6 +550,15 @@ export class ConxianMarketSDK {
 
   // ── Capability Summary (All Modules Wired) ──
 
+
+  runEnterpriseSlaDiagnostics(
+    config: import("./core_types").ClientOnboardingConfig,
+    latencyThresholdMs?: number,
+    timestampIso?: string
+  ): import("./core_types").EnterpriseSlaDiagnosticsReport {
+    return ClientInstallerEngine.runEnterpriseSlaDiagnostics(config, latencyThresholdMs, timestampIso);
+  }
+
   getCapabilitySummary(): CapabilitySummary {
     const p0Gaps: string[] = [];
     if (!this.flags.attestationAvailable) {
