@@ -16,13 +16,15 @@
 | Settlement Rails | Lightning, Fedimint, Stacks/ALEX, Citrea, RGB, Statechain (Spark) |
 | Trust Tiers | Strict (TEE+ZK) / Managed (Enclave) / Expedient (Light) / ObserverOnly (Free) |
 | Wallet Custody | SAB multisigs (3-of-5 deployer, 3-of-5 payout, 2-of-3 emergency) |
-| Key Package | `src/fee_calculator.ts` — CON-1427 tier/rail/fee computation |
-| Auth Docs | `docs/AGENTS.md` (canonical), `docs/research/` (economic decisions) |
+| Key Package | `src/sdk_bridge.ts` — ConxianMarketSDK: 32 capabilities, gateway client, verification, settlement, SLA penalty engine |
+| Auth Docs | `docs/AGENTS.md` (canonical), `docs/adr/` (decisions), `docs/research/` (economic decisions) |
 | Governance | Issue #9 — repository disposition pending |
 
 ## Authoritative Documents
 
 Research chain (in order):
+0. `docs/adr/ADR_001_FEE_MODEL.md` — **AUTHORITATIVE** — Fee basis, percentages, custody, exposure caps, pause/exit
+0a. `docs/research/ECOSYSTEM_GRAPH.md` — **Full ecosystem map** — 16 repos, 55 issues, 5-phase roadmap
 1. `docs/research/FUNDING_AND_ECONOMICS.md` — Fee model, revenue streams, break-even
 2. `docs/research/SETTLEMENT_RAILS.md` — 6 rails, bridge status
 3. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` — Integration map, 17 modules
@@ -35,7 +37,12 @@ Research chain (in order):
 | Component | Status |
 |-----------|--------|
 | Implementation plan | ✅ `docs/research/CON1427_IMPLEMENTATION_PLAN.md` |
-| FeeCalculator (src) | ✅ 280 lines — tier detection, rail routing, fee report |
+| FeeCalculator (src) | ✅ 366 lines — tier detection, rail routing, fee report |
+| SDK Bridge (src) | ✅ 1,600+ lines across modules — `ConxianMarketSDK` wires all 32 capabilities + SLA penalty settlement |
+| Core Types (src) | ✅ 281 lines — TypeScript mirror of lib-conxian-core + enclave-sdk |
+| Gateway Client (src) | ✅ 202 lines — typed HTTP client for 50+ gateway endpoints |
+| Verification (src) | ✅ 117 lines — Gateway-backed verifier, P0-aware degradation |
+| Settlement (src) | ✅ 211 lines — Multi-rail settlement orchestrator (8 rails) |
 | Gateway bridge | ✅ `conxian-gateway:billing.rs` — ProtocolFeeRecord + 5 tests |
 | Clarity contract | ⬜ Phase C — needs testnet deploy keys |
 | Contract-bridge wire-up | ⬜ Phase C |

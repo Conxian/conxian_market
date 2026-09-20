@@ -1,107 +1,75 @@
-# Session 48 → Session 49 Implementation Tracker
+# Session 63 → Session 64 Implementation Tracker
 
 > **Generated:** 2026-08-01 | **Source:** `CROSS_REPO_GAP_ANALYSIS_SESSION_48.md` | **Auto-run Approved**
+> **Updated:** 2026-09-16 | **Current issue reality:** Updated in Session 64 following Master Reconnaissance & Architecture Review (`MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` & `SESSION_64_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
 
 ---
 
-## Sprint 1: Foundation (Week 1)
+## Current org issue reality
 
-| # | Action | Repo | Issue | Owner | Status |
-|---|--------|------|-------|-------|:------:|
-| S1-1 | Complete Linear→GitHub migration map | business | [#943](https://github.com/Conxian/conxian-business/issues/943) | Ops | ⬜ |
-| S1-2 | Retire Linear-first references | business | [#944](https://github.com/Conxian/conxian-business/issues/944) | Ops | ⬜ |
-| S1-3 | Implement CI validation scripts | platform | [#1082](https://github.com/Conxian/conxius-platform/issues/1082) | CI/CD | ⬜ |
-| S1-4 | Enforce org-wide GitHub rulesets | platform | [#854](https://github.com/Conxian/conxius-platform/issues/854) | Security | ⬜ |
-| S1-5 | Resolve Gitleaks false positives | nexus | [#178](https://github.com/Conxian/conxian-nexus/issues/178) | CI/CD | ⬜ |
-| S1-6 | Enforce strict CI/CD baseline | gateway | [#222](https://github.com/Conxian/conxian-gateway/issues/222) | CI/CD | ⬜ |
-| S1-7 | Enforce CI/CD baseline | wallet | [#356](https://github.com/Conxian/conxius-wallet/issues/356) | CI/CD | ⬜ |
+The live issue set shows this direct implementation path is active and relevant:
 
-**Gate:** BOS Gate 1 (Green CI) — all repos passing.
+1. **Conxian/Conxian** — **DEPRECATED / ARCHIVED REFERENCE**: On-chain smart contract development in this repo is frozen to avoid maintenance debt. All settlement routing and value orchestration are handled by `conxian_market` (`@conxian/market-sdk`) via external BYO DeFi protocols.
+2. **conxian-gateway** — completed follow-on work includes [#306](https://github.com/Conxian/conxian-gateway/issues/306), [#228](https://github.com/Conxian/conxian-gateway/issues/228), and [#220](https://github.com/Conxian/conxian-gateway/issues/220); gateway client integration active in market-sdk.
+3. **conxius-platform** — active org hardening work: [#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854), [#1223](https://github.com/Conxian/conxius-platform/issues/1223), [#1212](https://github.com/Conxian/conxius-platform/issues/1212)
+4. **conxius-enclave-sdk** — active P0 blockers: [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242), [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241), [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240), [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202), [#200](https://github.com/Conxian/conxius-enclave-sdk/issues/200), [#267](https://github.com/Conxian/conxius-enclave-sdk/issues/267), [#271](https://github.com/Conxian/conxius-enclave-sdk/issues/271)
+5. **conxius-wallet** — active wallet safety work: [#444](https://github.com/Conxian/conxius-wallet/issues/444), [#357](https://github.com/Conxian/conxius-wallet/issues/357), [#356](https://github.com/Conxian/conxius-wallet/issues/356)
+6. **conxian-business** — strategy research active on [#989](https://github.com/Conxian/conxian-business/issues/989).
+7. **conxian_market** — value layer runtime active:
+   - Candidate #1 (`SLA Bounty Engine`): `sla_engine.ts` (Session 49).
+   - Candidate #2 (`Telemetry & Treasury Health Watcher`): `monitoring_watcher.ts` (Session 50).
+   - Candidate #3 (`TrustTier Pricing & Routing Middleware`): `trust_tier_middleware.ts` (Session 51).
+   - Candidate #4 (`BOS Yield Splitter & Thin Orchestrator Guard`): `bos_yield_splitter.ts` (Session 52).
+   - Candidate #5 (`Market-Agnostic Non-Custodial Router & BYO DeFi`): `market_agnostic_router.ts` (Session 53).
+   - Candidate #6 (`ERC-8183 Job Card Escrow Engine`): `job_card_escrow.ts` (Session 54).
+   - Candidate #7 (`Attestation-Aware Proof Verification & Fallback`): `verification.ts` (Session 55).
+   - Candidate #8 (`Multi-Rail x402 Escrow Gateway & Settlement Bridge`): `x402_facade.ts` (Session 56).
+   - Candidate #9 (`SLA Gap Auto-Resolution & Reputation Recovery Engine`): `sla_engine.ts` (Session 57).
+   - Candidate #10 (`TrustTier Upgrade & Downgrade Lifecycle Engine`): `trust_tier_middleware.ts` (Session 58).
+   - Candidate #11 (`Automated SLA Fee Penalty Settlement & Escrow Penalty Clawback Engine`): `sla_engine.ts` (Session 59).
+   - Candidate #12 (`Treasury Multi-Sig Governance Timelock & Founder Compensation Escrow Controller`): `bos_yield_splitter.ts` (Session 60).
+   - Candidate #13 (`Unified Client Installation & Connectivity Orchestrator Engine`): `client_onboarding.ts` (Session 61).
+   - Candidate #14 (`Real-Time SLA Telemetry Watcher`): `monitoring_watcher.ts` (Session 62).
+   - Candidate #15 (`Client Entitlements & Deployment Engine`): `client_onboarding.ts` (Session 63).
+   - Candidate #16 (`Master Reconnaissance, Architecture Review & Domain Firewall Engine`): `client_onboarding.ts` (Session 64).
 
----
-
-## Sprint 2: Attestation Chain (Week 2)
-
-| # | Action | Repo | Issue | Owner | Status |
-|---|--------|------|-------|-------|:------:|
-| S2-1 | Qualify AWS Nitro attestation | enclave-sdk | [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242) | Security | ⬜ |
-| S2-2 | Qualify Android KeyMint/StrongBox | enclave-sdk | [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241) | Mobile | ⬜ |
-| S2-3 | Operationalize attestation roots | enclave-sdk | [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240) | Security | ⬜ |
-| S2-4 | Make CCTP/AA fail-closed | enclave-sdk | [#198](https://github.com/Conxian/conxius-enclave-sdk/issues/198) | Protocol | ⬜ |
-| S2-5 | WASM secret boundary hardening | enclave-sdk | [#200](https://github.com/Conxian/conxius-enclave-sdk/issues/200) | Architecture | ⬜ |
-
-**Gate:** BOS Gate 4 (Hardware attestation) — Managed tier operational.
-
----
-
-## Sprint 3: Revenue Activation (Week 3-4)
-
-| # | Action | Repo | Issue | Owner | Status |
-|---|--------|------|-------|-------|:------:|
-| S3-1 | Implement 2% protocol fee collection | Conxian | [#488](https://github.com/Conxian/Conxian/issues/488) | Protocol | ⬜ |
-| S3-2 | Decide partnership fee policy | Conxian | [#527](https://github.com/Conxian/Conxian/issues/527) | Legal | ⬜ |
-| S3-3 | Implement partnership fee contracts | Conxian | [#496](https://github.com/Conxian/Conxian/issues/496) | Protocol | ⬜ |
-| S3-4 | Partnership gateway SDK + indexing | Conxian | [#530](https://github.com/Conxian/Conxian/issues/530) | Gateway | ⬜ |
-| S3-5 | Complete partnership security gate | Conxian | [#532](https://github.com/Conxian/Conxian/issues/532) | Legal | ⬜ |
-| S3-6 | P2: MRR/billing module | gateway | [#306](https://github.com/Conxian/conxian-gateway/issues/306) | Gateway | ⬜ |
-
-**Gate:** CON-1427 live — market can collect 2% protocol fees on Expedient rails.
+This repo remains focused on the value and orchestration layer while upstream repos resolve enabling infrastructure.
 
 ---
 
-## Sprint 4: Builder Ecosystem (Week 5)
+## Priority execution chain
 
-| # | Action | Repo | Issue | Owner | Status |
-|---|--------|------|-------|-------|:------:|
-| S4-1 | Developer sandbox TTFV < 15 min | Conxian | [#480](https://github.com/Conxian/Conxian/issues/480) | DX | ⬜ |
-| S4-2 | Centralized wallet value-operation gate | wallet | [#444](https://github.com/Conxian/conxius-wallet/issues/444) | Mobile | ⬜ |
-| S4-3 | Treasury dashboard frontend | market | [#8](https://github.com/Conxian/conxian_market/issues/8) | Market | ⬜ |
-| S4-4 | Repository governance disposition | market | [#9](https://github.com/Conxian/conxian_market/issues/9) | Governance | ⬜ |
+The current live execution chain is:
 
-**Gate:** BOS Gate 5 (Security acceptance) — independent review complete.
-
----
-
-## Sprint 5: Protocol Depth (Week 6+)
-
-| # | Action | Repo | Issue | Owner | Status |
-|---|--------|------|-------|-------|:------:|
-| S5-1 | FROST statechain operations audit | enclave-sdk | [#260](https://github.com/Conxian/conxius-enclave-sdk/issues/260) | Crypto | ⬜ |
-| S5-2 | RGB stash resolver integration | gateway | [#228](https://github.com/Conxian/conxian-gateway/issues/228) | Gateway | ⬜ |
-| S5-3 | DLC CET construction path | gateway | [#220](https://github.com/Conxian/conxian-gateway/issues/220) | Gateway | ⬜ |
-| S5-4 | sBTC vault implementation | Conxian | [#507](https://github.com/Conxian/Conxian/issues/507) | Protocol | ⬜ |
-| S5-5 | Production oracle/DEX wiring | Conxian | [#500](https://github.com/Conxian/Conxian/issues/500) | Protocol | ⬜ |
-| S5-6 | Chain transport isolation | lib-conxian-core | [#233](https://github.com/Conxian/lib-conxian-core/issues/233) | Architecture | ⬜ |
-| S5-7 | Enforce main branch merge gates | Conxian | [#515](https://github.com/Conxian/Conxian/issues/515) | Governance | ⬜ |
-| S5-8 | Security review + release evidence | enclave-sdk | [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202) | Security | ⬜ |
-
-**Gate:** BOS Gate 6 (Mainnet handoff) — all systems operational.
+1. **Session 64 Master Reconnaissance & Architecture Review (conxian_market)**: Completed 5-phase org-wide review, verified domain routing firewall (`conxian.org` vs `conxian-labs.com`), and produced `MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` and `SESSION_64_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`.
+2. **Session 63 Client Entitlements & Deployment Alignment (conxian_market)**: Implemented purchase entitlement verification (`verifyClientEntitlements`), deployment manifest alignment (`alignClientDeployment`), and multi-asset connectivity probing (`probeAssetConnectivity`) in `src/client_onboarding.ts`.
+3. **Org enforcement (conxius-platform)**: [#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854), [#1223](https://github.com/Conxian/conxius-platform/issues/1223)
+4. **Trust chain hardening (conxius-enclave-sdk)**: [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242), [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241), [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240), [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202)
+5. **Wallet gate enforcement (conxius-wallet)**: [#444](https://github.com/Conxian/conxius-wallet/issues/444), [#356](https://github.com/Conxian/conxius-wallet/issues/356)
 
 ---
 
-## Dependency Heatmap
+## Relevant active work list
 
-```
-                   S1 (Foundation)
-                  /        \
-          S2 (Attestation)  S3 (Revenue)
-                  \        /
-              S4 (Builders)  ←  Both S2 + S3 must complete
-                    |
-              S5 (Protocol Depth)  ←  S2 gates remain
-```
+| Repo | Issue / Component | Status | Notes |
+|:-----|:------------------|:------:|:------|
+| conxian_market | SLA Bounty Engine (`sla_engine.ts`) | **COMPLETED (S49)** | Scoring matrix candidate #1 from `sla_bounty_system.md`. |
+| conxian_market | Monitoring Watcher (`monitoring_watcher.ts`) | **COMPLETED (S50)** | Scoring matrix candidate #2 from `monitoring.md`. |
+| conxian_market | TrustTier Middleware (`trust_tier_middleware.ts`) | **COMPLETED (S51)** | Scoring matrix candidate #3 from `trust_tier_pricing.md`. |
+| conxian_market | BOS Yield Splitter (`bos_yield_splitter.ts`) | **COMPLETED (S52)** | Scoring matrix candidate #4 from `operating_manual.md`. |
+| conxian_market | Non-Custodial Router (`market_agnostic_router.ts`) | **COMPLETED (S53)** | Scoring matrix candidate #5 from `GOVERNANCE.md`. |
+| conxian_market | ERC-8183 Escrow Engine (`job_card_escrow.ts`) | **COMPLETED (S54)** | Scoring matrix candidate #6 from `trust_tier_pricing.md`. |
+| conxian_market | Attestation Proof Verifier (`verification.ts`) | **COMPLETED (S55)** | Scoring matrix candidate #7 from `trust_tier_pricing.md`. |
+| conxian_market | Multi-Rail x402 Escrow Gateway (`x402_facade.ts`) | **COMPLETED (S56)** | Scoring matrix candidate #8 from `operating_manual.md`. |
+| conxian_market | SLA Gap Resolution & Recovery (`sla_engine.ts`) | **COMPLETED (S57)** | Scoring matrix candidate #1 from `sla_bounty_system.md`. |
+| conxian_market | TrustTier Lifecycle Engine (`trust_tier_middleware.ts`) | **COMPLETED (S58)** | Scoring matrix candidate #1 from `trust_tier_pricing.md` Section 6. |
+| conxian_market | SLA Fee Penalty & Clawback Engine (`sla_engine.ts`) | **COMPLETED (S59)** | Scoring matrix candidate #1 from `sla_bounty_system.md` Section 4. |
+| conxian_market | Treasury Timelock & Founder Escrow (`bos_yield_splitter.ts`) | **COMPLETED (S60)** | Scoring matrix candidate #1 from `operating_manual.md` Section 3.C & 3.D. |
+| conxian_market | Unified Client Installer (`client_onboarding.ts`) | **COMPLETED (S61)** | Scoring matrix candidate #1 from `CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md`. |
+| conxian_market | Real-Time SLA Telemetry Watcher (`monitoring_watcher.ts`) | **COMPLETED (S62)** | Scoring matrix candidate #1 from `monitoring.md` §5 & `sla_bounty_system.md`. |
+| conxian_market | Client Entitlements & Deployment Engine (`client_onboarding.ts`) | **COMPLETED (S63)** | Scoring matrix candidate #1 from `CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md`. |
+| conxian_market | Master Reconnaissance & Domain Firewall Engine (`client_onboarding.ts`) | **COMPLETED (S64)** | Master Reconnaissance & B2B Architecture Review (`MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md`). |
+| conxian_market | Enterprise SLA Diagnostics (`client_onboarding.ts`) | **COMPLETED (S68)** | Scoring matrix candidate #1 (CAN-68-A) from Session 68 research expansion. |
+| Conxian | Monorepo Smart Contracts | **DEPRECATED** | Recommended for archiving in favor of BYO DeFi adapters. |
 
 ---
-
-## Progress Summary
-
-| Sprint | Items | Complete | Remaining |
-|:------:|:-----:|:--------:|:---------:|
-| S1 — Foundation | 7 | 0 | 7 |
-| S2 — Attestation | 5 | 0 | 5 |
-| S3 — Revenue | 6 | 0 | 6 |
-| S4 — Builders | 4 | 0 | 4 |
-| S5 — Protocol | 8 | 0 | 8 |
-| **Total** | **30** | **0** | **30** |
-
-> **Updated:** 2026-08-01 (Session 48). Tracked from `CROSS_REPO_GAP_ANALYSIS_SESSION_48.md`.
