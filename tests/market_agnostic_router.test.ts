@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { SettlementRail } from "../src/core_types";
 import { MarketAgnosticRouter } from "../src/market_agnostic_router";
 
@@ -67,5 +67,78 @@ describe("MarketAgnosticRouter", () => {
     expect(advisory.targetRepo).toBe("Conxian/Conxian");
     expect(advisory.status).toBe("DEPRECATED_RECOMMENDED_ARCHIVE");
     expect(advisory.keyBenefits.length).toBeGreaterThan(0);
+  });
+
+  it("emits runtime deprecation notice with console warning logging", () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const notice = MarketAgnosticRouter.emitDeprecationNotice("Conxian/Conxian:legacy-vault", false);
+
+    expect(notice.targetContract).toBe("Conxian/Conxian:legacy-vault");
+    expect(notice.warning).toContain("DEPRECATION NOTICE");
+    expect(notice.actionTaken).toContain("re-routed");
+    expect(notice.advisory.targetRepo).toBe("Conxian/Conxian");
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[CONXIAN_DEPRECATION_WARNING]"));
+
+    consoleSpy.mockRestore();
+  });
+
+  it("detects direct contract call in validateZeroCustody and attaches deprecation notice", () => {
+    const res = MarketAgnosticRouter.validateZeroCustody({
+      id: "settle-direct-01",
+      sourceWalletAddress: "0xalice",
+      destinationWalletAddress: "0xbob",
+      amountSat: 25_000n,
+      rail: SettlementRail.EvmErc8183,
+      isClientKeyIsolated: true,
+      storesClientDataOnHub: false,
+      isDirectContractCall: true,
+      targetContractAddress: "0xLegacyProprietaryContract",
+      suppressConsole: true,
+    });
+
+    expect(res.isZeroCustodyCompliant).toBe(true);
+    expect(res.isDirectContractCallDetected).toBe(true);
+    expect(res.deprecationNotice).toBeDefined();
+    expect(res.deprecationNotice?.targetContract).toBe("0xLegacyProprietaryContract");
+  });
+
+  it("intercepts direct contract call during M2M settlement routing and redirects via BYO adapter", () => {
+    const route = MarketAgnosticRouter.routeM2mSettlement(
+      "did:conxian:agent-alice",
+      "did:conxian:agent-bob",
+      100_000n,
+      SettlementRail.Sbtc,
+      undefined,
+      {
+        isDirectContractCall: true,
+        targetContractAddress: "SP3K8...legacy-clarity-amm",
+        suppressConsole: true,
+      }
+    );
+
+    expect(route.isDirectContractCallIntercepted).toBe(true);
+    expect(route.deprecationNotice).toBeDefined();
+    expect(route.adapter.protocolName).toContain("ALEX");
+    expect(route.mcpContextWire["x-conxian-direct-contract-intercepted"]).toBe("true");
+  });
+
+  it("executes routeDirectContractCall to intercept direct contract calls and produce complete route result", () => {
+    const result = MarketAgnosticRouter.routeDirectContractCall({
+      targetContractAddress: "0xProprietaryVaultContract",
+      methodName: "depositAndSwap",
+      rail: SettlementRail.EvmErc8183,
+      fromAgentDid: "did:conxian:agent-alice",
+      toAgentDid: "did:conxian:agent-bob",
+      amountSat: 75_000n,
+      suppressConsole: true,
+    });
+
+    expect(result.isDirectCallIntercepted).toBe(true);
+    expect(result.originalTargetContract).toBe("0xProprietaryVaultContract");
+    expect(result.deprecationNotice.actionTaken).toContain("re-routed");
+    expect(result.assignedAdapter.protocolName).toContain("Uniswap");
+    expect(result.m2mRoute.isNonCustodial).toBe(true);
+    expect(result.m2mRoute.isDirectContractCallIntercepted).toBe(true);
   });
 });
