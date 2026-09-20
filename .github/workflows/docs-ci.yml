@@ -115,3 +115,27 @@ jobs:
           done
           if [ $found -eq 0 ]; then echo "✅ No secrets detected"; fi
           exit $found
+
+      - name: Verify no sensitive or generated paths are tracked
+        run: |
+          python3 - <<'PY'
+          import re
+          import subprocess
+          import sys
+
+          forbidden = re.compile(
+              r"(^|/)(\.env(?:\..*)?|node_modules|dist|build|coverage|"
+              r"test-results|playwright-report|blob-report|\.next|out|target)(/|$)"
+              r"|(^|/)(credentials|secrets)\.(json|ya?ml)$"
+              r"|\.(pem|key|pfx|cert|crt)$"
+          )
+          tracked = subprocess.check_output(
+              ["git", "ls-files", "-z"], text=False
+          ).decode().split("\0")
+          violations = sorted(path for path in tracked if path and forbidden.search(path))
+          if violations:
+              print("❌ Forbidden tracked paths:")
+              print("\n".join(violations))
+              sys.exit(1)
+          print("✅ No sensitive or generated paths are tracked")
+          PY
