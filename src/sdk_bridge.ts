@@ -85,9 +85,13 @@ import {
 import {
   MarketAgnosticRouter,
   type DeprecationAdvisory,
+  type DeprecationNotice,
   type DefiProtocolAdapter,
+  type DirectContractCallRequest,
+  type DirectContractRouteResult,
   type M2mRouteResult,
   type NonCustodialSettlementRequest,
+  type RouterOptions,
   type ZeroCustodyValidationResult,
 } from "./market_agnostic_router";
 import {
@@ -349,9 +353,10 @@ export class ConxianMarketSDK {
 
   resolveDefiAdapter(
     rail: SettlementRail,
-    preferredProtocol?: string
+    preferredProtocol?: string,
+    options?: RouterOptions
   ): DefiProtocolAdapter {
-    return MarketAgnosticRouter.resolveDefiAdapter(rail, preferredProtocol);
+    return MarketAgnosticRouter.resolveDefiAdapter(rail, preferredProtocol, options);
   }
 
   routeM2mSettlement(
@@ -359,15 +364,30 @@ export class ConxianMarketSDK {
     toAgentDid: string,
     amountSat: bigint,
     rail: SettlementRail,
-    preferredProtocol?: string
+    preferredProtocol?: string,
+    options?: RouterOptions
   ): M2mRouteResult {
     return MarketAgnosticRouter.routeM2mSettlement(
       fromAgentDid,
       toAgentDid,
       amountSat,
       rail,
-      preferredProtocol
+      preferredProtocol,
+      options
     );
+  }
+
+  routeDirectContractCall(
+    request: DirectContractCallRequest
+  ): DirectContractRouteResult {
+    return MarketAgnosticRouter.routeDirectContractCall(request);
+  }
+
+  emitDeprecationNotice(
+    targetContract?: string,
+    suppressConsole?: boolean
+  ): DeprecationNotice {
+    return MarketAgnosticRouter.emitDeprecationNotice(targetContract, suppressConsole);
   }
 
   getDeprecationAdvisory(): DeprecationAdvisory {

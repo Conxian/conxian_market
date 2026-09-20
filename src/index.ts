@@ -71,6 +71,10 @@ export type {
   DefiProtocolAdapter,
   M2mRouteResult,
   DeprecationAdvisory,
+  DeprecationNotice,
+  DirectContractCallRequest,
+  DirectContractRouteResult,
+  RouterOptions,
 } from "./market_agnostic_router";
 export { JobCardEscrowEngine, EscrowState } from "./job_card_escrow";
 export type {

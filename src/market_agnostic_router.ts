@@ -7,6 +7,7 @@
  * 2. BYO DeFi Protocol Adapter Resolution: Routes transactions to established external protocols (ALEX, Uniswap, Fedimint, Lightning, Citrea) rather than proprietary contracts.
  * 3. Market-Agnostic M2M Handoff Engine: Facilitates autonomous agent-to-agent settlement via MCP (Model Context Protocol).
  * 4. Conxian/Conxian Deprecation Advisory: Exposes governance rationale for archiving proprietary contract repos in favor of external adapters.
+ * 5. Deprecation Warning Isolation: Cleanly emits runtime deprecation notices for direct contract calls while re-routing execution through BYO DeFi adapters.
  */
 
 import type { SettlementRail } from "./core_types";
@@ -21,6 +22,9 @@ export interface NonCustodialSettlementRequest {
   preferredDefiProtocol?: string;
   isClientKeyIsolated: boolean; // Must be true (BYOK)
   storesClientDataOnHub: boolean; // Must be false
+  isDirectContractCall?: boolean;
+  targetContractAddress?: string;
+  suppressConsole?: boolean;
 }
 
 export interface ZeroCustodyValidationResult {
@@ -29,6 +33,8 @@ export interface ZeroCustodyValidationResult {
   isDataIsolated: boolean;
   custodyRiskLevel: "ZERO" | "CRITICAL";
   violations: string[];
+  isDirectContractCallDetected?: boolean;
+  deprecationNotice?: DeprecationNotice;
 }
 
 export interface DefiProtocolAdapter {
@@ -48,6 +54,8 @@ export interface M2mRouteResult {
   adapter: DefiProtocolAdapter;
   mcpContextWire: Record<string, string>;
   isNonCustodial: boolean;
+  isDirectContractCallIntercepted?: boolean;
+  deprecationNotice?: DeprecationNotice;
 }
 
 export interface DeprecationAdvisory {
@@ -58,7 +66,66 @@ export interface DeprecationAdvisory {
   replacementArchitecture: string;
 }
 
+export interface DeprecationNotice {
+  timestamp: string;
+  targetContract?: string;
+  warning: string;
+  actionTaken: string;
+  recommendedAdapter: string;
+  advisory: DeprecationAdvisory;
+}
+
+export interface RouterOptions {
+  isDirectContractCall?: boolean;
+  targetContractAddress?: string;
+  suppressConsole?: boolean;
+}
+
+export interface DirectContractCallRequest {
+  targetContractAddress: string;
+  methodName?: string;
+  rail: SettlementRail;
+  fromAgentDid: string;
+  toAgentDid: string;
+  amountSat: bigint;
+  preferredProtocol?: string;
+  suppressConsole?: boolean;
+}
+
+export interface DirectContractRouteResult {
+  isDirectCallIntercepted: true;
+  originalTargetContract: string;
+  deprecationNotice: DeprecationNotice;
+  assignedAdapter: DefiProtocolAdapter;
+  m2mRoute: M2mRouteResult;
+}
+
 export class MarketAgnosticRouter {
+  /**
+   * Emit runtime deprecation notice for direct proprietary smart contract calls.
+   */
+  static emitDeprecationNotice(targetContract?: string, suppressConsole?: boolean): DeprecationNotice {
+    const advisory = MarketAgnosticRouter.getDeprecationAdvisory();
+    const notice: DeprecationNotice = {
+      timestamp: new Date().toISOString(),
+      targetContract: targetContract ?? "Conxian/Conxian",
+      warning: `DEPRECATION NOTICE: Direct on-chain smart contract calls to '${targetContract ?? "Conxian/Conxian"}' are deprecated and archived.`,
+      actionTaken: "Direct contract call intercepted and re-routed through audited BYO DeFi protocol adapter.",
+      recommendedAdapter: "@conxian/market-sdk BYO DeFi Protocol Adapter",
+      advisory,
+    };
+
+    if (!suppressConsole) {
+      console.warn(
+        `[CONXIAN_DEPRECATION_WARNING] ${notice.warning}\n` +
+          `Action Taken: ${notice.actionTaken}\n` +
+          `Rationale: ${advisory.rationale}`
+      );
+    }
+
+    return notice;
+  }
+
   /**
    * Validate that a settlement request complies with the Zero-Custody Doctrine.
    */
@@ -77,6 +144,16 @@ export class MarketAgnosticRouter {
       violations.push("Source and destination wallet addresses cannot be identical");
     }
 
+    const isDirectCall = !!request.isDirectContractCall || !!request.targetContractAddress;
+    let deprecationNotice: DeprecationNotice | undefined;
+
+    if (isDirectCall) {
+      deprecationNotice = MarketAgnosticRouter.emitDeprecationNotice(
+        request.targetContractAddress,
+        request.suppressConsole
+      );
+    }
+
     const isZeroCustodyCompliant = violations.length === 0;
 
     return {
@@ -85,13 +162,23 @@ export class MarketAgnosticRouter {
       isDataIsolated: !request.storesClientDataOnHub,
       custodyRiskLevel: isZeroCustodyCompliant ? "ZERO" : "CRITICAL",
       violations,
+      isDirectContractCallDetected: isDirectCall,
+      deprecationNotice,
     };
   }
 
   /**
    * Resolve BYO external DeFi protocol adapter based on settlement rail and client preference.
    */
-  static resolveDefiAdapter(rail: SettlementRail, preferredProtocol?: string): DefiProtocolAdapter {
+  static resolveDefiAdapter(
+    rail: SettlementRail,
+    preferredProtocol?: string,
+    options?: RouterOptions
+  ): DefiProtocolAdapter {
+    if (options?.isDirectContractCall || options?.targetContractAddress) {
+      MarketAgnosticRouter.emitDeprecationNotice(options.targetContractAddress, options.suppressConsole);
+    }
+
     switch (rail) {
       case Rail.Sbtc:
       case Rail.AlexStacks:
@@ -152,9 +239,23 @@ export class MarketAgnosticRouter {
     toAgentDid: string,
     amountSat: bigint,
     rail: SettlementRail,
-    preferredProtocol?: string
+    preferredProtocol?: string,
+    options?: RouterOptions
   ): M2mRouteResult {
-    const adapter = MarketAgnosticRouter.resolveDefiAdapter(rail, preferredProtocol);
+    const isDirectCall = !!options?.isDirectContractCall || !!options?.targetContractAddress;
+    let deprecationNotice: DeprecationNotice | undefined;
+
+    if (isDirectCall) {
+      deprecationNotice = MarketAgnosticRouter.emitDeprecationNotice(
+        options?.targetContractAddress,
+        options?.suppressConsole
+      );
+    }
+
+    const adapter = MarketAgnosticRouter.resolveDefiAdapter(rail, preferredProtocol, {
+      ...options,
+      suppressConsole: true, // Prevent duplicate logging if already logged above
+    });
 
     const mcpContextWire: Record<string, string> = {
       "x-mcp-protocol": "2024-11-05",
@@ -164,6 +265,7 @@ export class MarketAgnosticRouter {
       "x-conxian-rail": rail,
       "x-conxian-adapter": adapter.protocolName,
       "x-conxian-zero-custody": "true",
+      ...(isDirectCall ? { "x-conxian-direct-contract-intercepted": "true" } : {}),
     };
 
     return {
@@ -175,6 +277,45 @@ export class MarketAgnosticRouter {
       adapter,
       mcpContextWire,
       isNonCustodial: true,
+      isDirectContractCallIntercepted: isDirectCall,
+      deprecationNotice,
+    };
+  }
+
+  /**
+   * Intercept direct contract calls, cleanly emit runtime deprecation notices, and re-route via BYO DeFi adapter.
+   */
+  static routeDirectContractCall(request: DirectContractCallRequest): DirectContractRouteResult {
+    const notice = MarketAgnosticRouter.emitDeprecationNotice(
+      request.targetContractAddress,
+      request.suppressConsole
+    );
+
+    const adapter = MarketAgnosticRouter.resolveDefiAdapter(request.rail, request.preferredProtocol, {
+      isDirectContractCall: true,
+      targetContractAddress: request.targetContractAddress,
+      suppressConsole: true,
+    });
+
+    const m2mRoute = MarketAgnosticRouter.routeM2mSettlement(
+      request.fromAgentDid,
+      request.toAgentDid,
+      request.amountSat,
+      request.rail,
+      request.preferredProtocol,
+      {
+        isDirectContractCall: true,
+        targetContractAddress: request.targetContractAddress,
+        suppressConsole: true,
+      }
+    );
+
+    return {
+      isDirectCallIntercepted: true,
+      originalTargetContract: request.targetContractAddress,
+      deprecationNotice: notice,
+      assignedAdapter: adapter,
+      m2mRoute,
     };
   }
 

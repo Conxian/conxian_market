@@ -98,6 +98,20 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Int
     const advisory = sdk.getDeprecationAdvisory();
     expect(advisory.targetRepo).toBe("Conxian/Conxian");
     expect(advisory.status).toBe("DEPRECATED_RECOMMENDED_ARCHIVE");
+
+    const notice = sdk.emitDeprecationNotice("Conxian/Conxian:legacy-vault", true);
+    expect(notice.targetContract).toBe("Conxian/Conxian:legacy-vault");
+
+    const directCallRes = sdk.routeDirectContractCall({
+      targetContractAddress: "0xLegacyContract",
+      rail: SettlementRail.EvmErc8183,
+      fromAgentDid: "did:agent:alice",
+      toAgentDid: "did:agent:bob",
+      amountSat: 10_000n,
+      suppressConsole: true,
+    });
+    expect(directCallRes.isDirectCallIntercepted).toBe(true);
+    expect(directCallRes.assignedAdapter.protocolName).toContain("Uniswap");
   });
 
   it("exposes Job Card Escrow lifecycle methods via SDK bridge", async () => {
