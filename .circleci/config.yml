@@ -1,36 +1,51 @@
 version: 2.1
 
-jobs:
-  validate-repo:
+# Conxian Market — CircleCI
+# Fee calculator (CON-1427), TypeScript validation, secret scan.
+
+executors:
+  node:
     docker:
-      - image: cimg/base:current
+      - image: cimg/node:22.14
+    resource_class: medium
+
+jobs:
+  test:
+    executor: node
     steps:
       - checkout
       - run:
-          name: "Verify ZSE & Tracking Hygiene"
+          name: Install dependencies
+          command: npm install
+      - run:
+          name: Run fee calculator tests
+          command: npx vitest run
+          no_output_timeout: 5m
+
+  typecheck:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: TypeScript check
+          command: npx tsc --noEmit
+
+  secret-scan:
+    docker:
+      - image: cimg/base:current
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Gitleaks scan
           command: |
-            echo "Checking ZSE compliance..."
-            PROHIBITED=$(git ls-files | grep -i -E "\.env$|\.key$|\.pem$|credentials\.json|secrets\.json" || true)
-            if [ -n "$PROHIBITED" ]; then
-              echo "Prohibited secret files found in git index: $PROHIBITED"
-              exit 1
-            fi
-            echo "Checking artifact hygiene..."
-            ARTIFACTS=$(git ls-files | grep -i -E "^node_modules/|^dist/|^build/|^coverage/|^playwright-report/|test\.txt$" || true)
-            if [ -n "$ARTIFACTS" ]; then
-              echo "Tracked artifact files found: $ARTIFACTS"
-              exit 1
-            fi
-            echo "Checking documentation files..."
-            for doc in README.md SECURITY.md CONTRIBUTING.md LICENSE ROADMAP.md CHANGELOG.md; do
-              if [ ! -f "$doc" ]; then
-                echo "Missing required doc: $doc"
-                exit 1
-              fi
-            done
-            echo "CircleCI repository validation passed."
+            curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_amd64.tar.gz | tar xz
+            ./gitleaks detect --config gitleaks.toml --verbose
 
 workflows:
-  validation-workflow:
+  version: 2
+  main:
     jobs:
-      - validate-repo
+      - test
+      - typecheck
+      - secret-scan
