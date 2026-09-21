@@ -1,80 +1,148 @@
-# Conxian Strategic Roadmap: From Research to Economic Vitality
+# Conxian Ecosystem & Market SDK Roadmap
 
-*This roadmap aligns the Daemon-Dynamics (DD) blueprint, the Federated Agent Network strategy, and the pivot to DeFi-Agnostic Orchestration.*
-
-## 🌟 Strategic Vision: The Infrastructure of AI Labor
-We operate as a **Data-First** organization. We do not waste resources building proprietary DeFi systems (conxian/conxian). Instead, we build the **Orchestration** and **Settlement** layers that allow autonomous labor to utilize *existing* global financial primitives. We scale Multi-Dimensionally by moving compute to the Edge and capturing value through decentralized Escrow in a Federated Agent Network.
-
----
-
-## 💰 Phase 0: Funding & Treasury Foundation (Pre-Launch)
-**Goal:** Establish sustainable funding model and treasury infrastructure.
-
-### Financial Milestones
-| Milestone | Target | Timeline |
-|:----------|:------:|:--------:|
-| **Protocol Fee Activation** | 2% fee collection | Week 1 |
-| **Treasury Multisig Setup** | 3-of-5 SAFE | Week 2 |
-| **ALEX IDO Execution** | Token launch | Week 5 |
-| **12-Month Runway Target** | $240K reserve | Month 3 |
-| **Break-Even Volume** | $33K/day | Month 6 |
-
-### Deliverables
-- [ ] **ALEX Launchpad Integration:** Execute IDO with APower allocation
-- [ ] **Treasury Infrastructure:** Deploy multisig, reporting dashboard
-- [ ] **Settlement Pools:** sBTC/USDC pools for AI labor
-- [ ] **Fee Collection Contracts:** 2% protocol fee activation
+> **Current Session:** Session 66
+> **Strategic Directive:** M2M Trust Layer Research Expansion, Project Alignment & Implementation
+> **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
 
 ---
 
-## 🏗 Phase 1: Hardening the Orchestration & Integration Core (Months 1-2)
-**Goal:** Activate value capture through external rail integration and build trust infrastructure.
-- [ ] **External Settlement Integration (CON-1427 REDIRECT):** Implement functional adapters for established DeFi protocols (ALEX, Uniswap) to replace no-op internal fee placeholders.
-- [ ] **Build the Escrow Layer (ERC-8183):** Functional programmable settlement to ensure builders (internal/external) are paid using external liquidity.
-- [ ] **Unit of Account Standardization:** Standardize on external stablecoins (USDC, USDT, sBTC) for the AI Office rather than building a proprietary stablecoin (CON-1425 PIVOT).
-- [ ] **DAO-Governed Access (CON-1439):** Transition from Admin-Key control to on-chain governance to fulfill the "Sovereign" promise.
-
-### Financial Integration
-- [ ] **ALEX Settlement Rail:** sBTC/USDC pools with ALEX
-- [ ] **Fee Split Implementation:** 50/30/20 allocation
-- [ ] **Founder Vesting Setup:** 4-year cliff schedule
-- [ ] **Treasury Reporting:** Monthly transparency dashboard
-
-## 🤖 Phase 2: The "AI Office" & Federated Integration (Months 3-4)
-**Goal:** Launch the Sovereign OS (DD) as the interface for coordinating specialized federated agents.
-- [ ] **Deploy the 'Thin Orchestrator':** Refactor the Hub to coordinate MCP handoffs between external AI providers (Bittensor, Fetch.ai, etc.) without bearing inference costs.
-- [ ] **npm SDK Release (CON-1440):** Publish the canonical `@conxian/sdk` to npm with production-ready interfaces for hardware-backed signing and MCP discovery.
-- [ ] **Standardize 'Operating Lane' Specification:** Declarative YAML rules that agents must ingest to operate under business constraints.
-- [ ] **Launch Reputation Registry:** Implement on-chain tracking of agent performance and reliability to guide user discovery.
-
-### Revenue Milestones
-| Metric | Target | Target Date |
-|:-------|:------:|:-----------:|
-| **Daily Volume** | $33K+ | Month 6 |
-| **Active Builders** | 50+ | Month 4 |
-| **Monthly Revenue** | $20K | Month 6 |
-| **Treasury Runway** | 12+ months | Month 3 |
-
-## 🏭 Phase 3: Industrial Scaling & Client Optionality (Months 5+)
-**Goal:** Capture high-MRR industrial revenue areas and enable sovereign on-prem deployment.
-- [ ] **Sovereign On-Prem Bundle:** Package the Hub, Gateway, and Nexus as a dockerized "Sovereign Server" for behind-firewall enterprise deployment.
-- [ ] **Reduce Wallet to Reference App (CON-1135):** Constrain the Conxius Wallet to a minimal reference client to prove the SDK/security model across any external rail.
-- [ ] **Supply Chain Swarm Adapters:** Implement Nexus adapters for logistics protocols (Fedimint, Citrea).
-- [ ] **Developer Sandbox (CON-1437):** Frictionless onboarding (TTFV < 15 mins) for builders to publish to the Marketplace.
-
----
-## 🛑 The "Discard" Mandate
-- **Discard** any proprietary DeFi development (conxian/conxian). We orchestrate, we don't recreate.
-- **Stop** building broad architectural concepts. Every new line of code must contribute to **Functional Depth** in orchestration and settlement.
-- **Don't Build Agents:** Stop building proprietary agents that compete with the open market. Focus on **Orchestration** and **Marketplace Infrastructure**.
+## 🎯 Executive Vision
+The Conxian Market SDK serves as the value, settlement, SLA enforcement, and trust layer for the Conxian Ecosystem. Rather than building proprietary smart contracts or AI agents, Conxian operates as a **Market-Agnostic, Zero-Custody Value Router and Verifiable Trust Layer on top of x402** that orchestrates and monetizes industrial agent labor through hardware enclave attestation proof verification, programmable escrow (ERC-8183 / CJCS Job Cards), multi-rail Bitcoin/Stacks settlement, TrustTier verification, autonomous SLA enforcement, telemetry monitoring, and BYO DeFi protocol routing.
 
 ---
 
-## 📊 Treasury Health Indicators
+## 🧭 Multi-Session Execution Roadmap
 
-| Indicator | Healthy | Warning | Critical |
-|:----------|:-------:|:-------:|:--------:|
-| **Runway** | 12+ months | 6 months | 3 months |
-| **Daily Volume** | $33K+ | $15K | $5K |
-| **Monthly Revenue** | $20K+ | $10K | $3K |
-| **Stablecoin %** | 40%+ | 25% | 15% |
+### Session 48 — Foundation & Alignment
+- [x] Per-repo needs analysis across all 16 ecosystem repositories.
+- [x] Document repository boundary separation (Conxian/Conxian as reference, conxian_market as runtime marketplace).
+- [x] Define TrustTier pricing matrix, SLA rulesets, and 80/10/10 BOS yield model in `docs/knowledge_base/`.
+
+### Session 49 — Autonomous SLA Enforcement Engine
+- [x] Research expansion and cross-repo gap analysis (`SESSION_49_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: SLA Bounty Engine scored #1 (94/100).
+- [x] Implemented `SlaEngine` in `src/sla_engine.ts`.
+
+### Session 50 — Telemetry & Treasury Health Watcher
+- [x] Full ecosystem audit across Neon DBs (`orange-paper-76209725`, etc.), Supabase instances (`yauldfcpswnufgwfvnlr`), and Render deployments.
+- [x] Research expansion and candidate scoring matrix (`SESSION_50_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Implemented `MonitoringWatcher` in `src/monitoring_watcher.ts`.
+
+### Session 51 — TrustTier Pricing & Routing Middleware Pipeline
+- [x] Research expansion and gap analysis (`SESSION_51_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Implemented `TrustTierMiddleware` in `src/trust_tier_middleware.ts`.
+
+### Session 52 — BOS Yield Splitter & Thin Orchestrator Guard
+- [x] Research expansion and gap analysis (`SESSION_52_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Implemented `BosYieldSplitter` in `src/bos_yield_splitter.ts`.
+
+### Session 53 — Market-Agnostic Non-Custodial Router & Conxian/Conxian Deprecation
+- [x] Synthesize ecosystem audit across all repos, databases, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_53_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Market-Agnostic Non-Custodial Router scored #1 (97/100).
+- [x] Formulate formal architectural advisory to **Deprecate & Archive `Conxian/Conxian`** in favor of external BYO DeFi adapters and `@conxian/market-sdk` orchestration.
+- [x] Implemented `MarketAgnosticRouter` in `src/market_agnostic_router.ts`.
+
+### Session 54 — ERC-8183 Job Card Escrow & Programmable Settlement Engine
+- [x] Synthesize ecosystem audit across all repos, databases, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_54_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: ERC-8183 Job Card Escrow Engine scored #1 (98/100).
+- [x] Implemented `JobCardEscrowEngine` in `src/job_card_escrow.ts`.
+
+### Session 55 — Attestation-Aware TrustTier Verification & Proof Gateway Bridge
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_55_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Attestation-Aware Proof Verification & Fallback scored #1 (99/100).
+- [x] Implemented `AttestationCapabilities` and `getCapabilities()` in `src/verification.ts`.
+
+### Session 56 — Multi-Rail x402 Escrow Gateway & Zero-Custody Convergence
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_56_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Multi-Rail x402 Escrow Gateway & Settlement Bridge scored #1 (100/100).
+- [x] Implemented `X402EscrowGateway`, `jobCardToMultiRailDemands`, and multi-rail payment pointers in `src/x402_facade.ts`.
+
+### Session 57 — Autonomous SLA Gap Auto-Resolution & Reputation Recovery Engine
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_57_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Autonomous SLA Gap Card Auto-Resolution & Reputation Recovery Engine scored #1 (100/100).
+- [x] Enhance `SlaEngine` in `src/sla_engine.ts` with `autoResolveGapCard` and `evaluateReputationRecovery`.
+- [x] Wire SLA auto-resolution capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
+- [x] Add comprehensive unit tests in `tests/sla_engine.test.ts` and `tests/sdk_bridge.test.ts`.
+
+### Session 58 — TrustTier Upgrade & Downgrade Lifecycle Engine & Reputation Threshold Verification
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_58_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: TrustTier Upgrade & Downgrade Lifecycle Engine & Autonomous Reputation Threshold Verifier scored #1 (100/100).
+- [x] Implement `TrustTierLifecycleEngine` in `src/trust_tier_middleware.ts`.
+
+### Session 59 — Automated SLA Fee Penalty Settlement & Escrow Penalty Clawback Engine
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_59_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Automated SLA Fee Penalty Settlement & Escrow Penalty Clawback Engine scored #1 (100/100).
+- [x] Implement `settleSLAPenalty` and `processSLAPenaltyClawback` in `src/sla_engine.ts`.
+
+### Session 60 — Treasury Multi-Sig Governance Timelock & Founder Compensation Escrow Controller
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and gap analysis (`SESSION_60_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Treasury Multi-Sig Governance Timelock & Founder Compensation Escrow Controller scored #1 (100/100).
+- [x] Implement `validateTimelockAndMultisig` and `processFounderEscrowPayout` in `src/bos_yield_splitter.ts`.
+- [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
+- [x] Add unit tests in `tests/bos_yield_splitter.test.ts` and `tests/sdk_bridge.test.ts`, verifying 99 passing tests (`npx vitest run`).
+
+### Session 61 — Unified Client Installation, System Setup & Connectivity Orchestrator Engine
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and architectural analysis (`CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md` & `SESSION_61_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: Unified Client Installation, System Setup & Connectivity Orchestrator Engine scored #1 (100/100).
+- [x] Implement `ClientInstallerEngine` in `src/client_onboarding.ts`.
+- [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
+- [x] Add unit tests in `tests/client_onboarding.test.ts` and `tests/sdk_bridge.test.ts`, verifying 106 passing tests (`npm test`).
+
+### Session 63 — End-to-End Client Purchase Verification, System Deployment & Unified Installer Engine
+- [x] Synthesize ecosystem audit across all 16 repos, Neon DBs, Render web services, open PRs, and active issues.
+- [x] Research expansion and architectural analysis (`SESSION_63_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Candidate Scoring: End-to-End Client Purchase Verification, System Deployment & Unified Installer Engine scored #1 (100/100).
+- [x] Implement purchase entitlement verification (`verifyClientEntitlements`), deployment manifest alignment (`alignClientDeployment`), multi-asset connectivity probing (`probeAssetConnectivity`), and unified installer execution (`runUnifiedInstallerCli`) in `src/client_onboarding.ts`.
+- [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export in `src/index.ts`.
+- [x] Add unit tests in `tests/client_onboarding.test.ts` and `tests/sdk_bridge.test.ts`, verifying 114 passing tests (`npx vitest run`).
+
+### Session 64 — Master Reconnaissance & Architecture Review
+- [x] Execute Phase 1: Organization repository sync (`git fetch --all -p`, `git submodule update --init --recursive`) and baseline index across 12 core repositories.
+- [x] Execute Phase 2: Org-wide platform review (`conxius-platform` audit against core primitives in `lib-conxian-core`, `conxian-nexus`, `conxian-gateway`, `conxius-enclave-sdk`, purging deprecated smart contract stubs).
+- [x] Execute Phase 3: B2B client deployment simulation (purchase & licensing, `.env` config, Gateway/Nexus deployment, ISO 20022 banking -> Bitcoin L1 settlement flow, CLI installer efficacy).
+- [x] Execute Phase 4: Issue mapping & scored gap analysis (cross-repo issue audit, criticality scoring: Security > Enterprise Routing > UI/UX).
+- [x] Execute Phase 5: End-to-end cycle maintenance (`verifyDomainRoutingFirewall` in `src/client_onboarding.ts`, `docs/research/MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md`, `SESSION_64_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Add unit tests in `tests/client_onboarding.test.ts` verifying 115 passing tests (`npx vitest run`).
+
+### Session 65 — Comprehensive Organizational Reconnaissance & Gap Matrix
+- [x] Synchronize repository submodules and workspace state (`git fetch origin main -p --recurse-submodules`).
+- [x] Conduct cross-repo gap analysis and update `MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` with candidate gap matrix.
+- [x] Verify B2B domain routing firewall and enterprise onboarding installer pipeline across 115 test cases (`npm test`).
+
+### Session 66 — M2M Trust Layer Research Expansion, Project Alignment & Implementation (CURRENT)
+- [x] Execute session initialization from ledger at `.session/ledger.md`.
+- [x] Synchronize repository submodules per declared policy and re-evaluate `conxian_market` override.
+- [x] Conduct systematic reconnaissance across assets (`conxian-gateway`, `conxius-enclave-sdk`, `lib-conxian-core`, `conxian_market`, `conxian-nexus`), external standards (Linux Foundation x402, Visa/Mastercard agent protocols, W3C DID, ERC-8004, ISO 20022 pacs.008, M2M market sizing primary sources), and GitHub surfaces.
+- [x] Build Gap Register across 8 categories and score candidate features on weighted matrix.
+- [x] Implement candidate CAN-66-A: Attestation-Backed x402 Verification & Trust Layer Engine in `src/x402_facade.ts`, `src/sdk_bridge.ts`, and `src/index.ts`.
+- [x] Author unit tests in `tests/x402_facade.test.ts` and `tests/sdk_bridge.test.ts`.
+- [x] Create research document `docs/research/SESSION_66_RESEARCH_EXPANSION_AND_GAP_MATRIX.md` and Architectural Decision Record `docs/adr/ADR_002_M2M_X402_TRUST_LAYER.md`.
+- [x] Update `README.md` positioning to "verifiable settlement, escrow, and trust layer for autonomous agent commerce (x402)".
+
+---
+
+## 🔮 Upstream Dependencies & Future Work
+
+1. **Upstream Enclave Attestation (`conxius-enclave-sdk`)**:
+   - Resolve P0 blockers [#242](https://github.com/Conxian/Conxian/issues/242) (AWS Nitro), [#241](https://github.com/Conxian/Conxian/issues/241) (Android KeyMint), and [#240](https://github.com/Conxian/Conxian/issues/240) (Attestation Roots) to allow Strict and Managed trust tier promotion without P0 degradation.
+2. **Upstream CI & Org Rulesets (`conxius-platform`)**:
+   - Enforce unified CI validation scripts and rulesets ([#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854)).
+
+---
+*Roadmap maintained and updated per session cycle.*
+
+### Session 68 — B2B Enterprise Client Onboarding SLA Diagnostics Engine (CURRENT)
+- [x] Execute session initialization and baseline check (120 test cases passing).
+- [x] System reconnaissance across B2B client onboarding framework and core SLA types.
+- [x] Implement `runEnterpriseSlaDiagnostics` in `src/client_onboarding.ts`.
+- [x] Wire capabilities into `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`) and export via `src/index.ts`.
+- [x] Add unit tests in `tests/client_onboarding_sla.test.ts`, verifying 123 passing tests (`npm test`).

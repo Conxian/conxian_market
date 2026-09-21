@@ -2,7 +2,7 @@
 
 > **Purpose:** Permanent operational memory for AI agents working on the Conxian ecosystem.  
 > **Scope:** This file defines the canonical ethos, patterns, and boundaries for all agentic sessions.  
-> **Owner:** Conxian Labs | **Version:** 1.0 | **Last Updated:** 2026-07-15
+> **Owner:** Conxian Labs | **Version:** 1.3 | **Last Updated:** 2026-08-01 (Session 48 — Enhancement Complete)
 
 ---
 
@@ -39,9 +39,89 @@ A_S → Maximize (System Autonomy)
 - **conxius-enclave-sdk:** Hardware enclave SDK (v2.0.12 - Production)
 
 ### Infrastructure
-- **conxian-gateway:** Rust middleware, ISO 20022, industrial bridge
-- **conxian-nexus:** Glass Node, MMR proofs, multi-chain verification
-- **conxian_ui:** Public web interface
+- **conxian-gateway:** Rust middleware, ISO 20022, industrial bridge (v0.1.5+, 17 commits ahead)
+- **conxian-nexus:** Glass Node, MMR proofs, multi-chain verification (v0.4.0, all 13 core modules)
+
+---
+
+## 1a. SDK CAPABILITY INTEGRATION MAP (Session 52 — Real Wiring)
+
+Every Conxian SDK capability that the market layer can leverage for settlement,
+discovery, escrow, and treasury automation. **Now wired through `ConxianMarketSDK`**
+(`src/sdk_bridge.ts`) which connects to the Gateway REST API.
+
+### Core Module → Market Enhancement
+
+| Core Module | Market Use Case | SDK Bridge | Gateway |
+|-------------|----------------|:----------:|:-------:|
+| **control_model** (TrustTier) | Tiered settlement: ObserverOnly (free) → Expedient → Managed → Strict (premium) | ✅ `sdk.detectTrustTier()` | ✅ |
+| **cjcs** (JobCard, WorkIntent) | Autonomous bounty creation, SLA enforcement, gap job card generation | ✅ `sdk.toggleBountyPayouts()` | ✅ |
+| **verifier** | ZK-verified settlement proofs for premium tier escrow (ERC-8183) | ⚠️ P0-gated `sdk.verifyAttestation()` | 🔒 P0-1..3 |
+| **stacks** (SBTCBridge) | sBTC peg lifecycle monitoring for settlement liquidity tracking | ✅ `sdk.getStacksHeight()` | ✅ |
+| **rgb** (RGBAdapter) | Contract-backed asset settlement, RGB-20/21 token registry | ⚠️ Gateway #228 pending | ⚠️ |
+| **babylon** (StakingIntent) | BTC staking yield → market treasury diversification | ✅ `sdk.getYieldOpportunities()` | ✅ |
+| **fedimint** (FedimintMint) | Federation-based community settlement pools | ✅ `sdk.availableRails()` | ✅ |
+| **enclave** (AttestationCertificate) | Hardware-attested settlement for institutional clients | ⚠️ P0-gated `sdk.verifyCbtcAttestation()` | 🔒 P0-1..3 |
+| **deployment** (DeploymentPlan) | Contract rollout tracking, Nakamoto integrity hash | ✅ `sdk.requestReleaseApproval()` | ✅ |
+| **lightning** (LightningAdapter) | SRL-1 Lightning resilience for micro-settlement | ✅ Rail routing | ✅ |
+| **bitcoin** (taproot, bip322) | Silent payments, PSBT, Taproot settlement scripts | ✅ `sdk.getMempoolTelemetry()` | ✅ |
+
+### Enclave-SDK Protocol → Market Enhancement
+
+| SDK Module | Market Use Case | SDK Bridge |
+|------------|----------------|:----------:|
+| **statechain** (Spark VTXO) | Off-chain BTC settlement with 1-of-n trust | 🔒 `ProtocolUnsupported` gate |
+| **frost** | Threshold signing for SAB multisig treasury | ⚠️ `sdk.aggregateKeys()` → MuSig2 (not FROST DKG) |
+| **dlc** | Discreet Log Contracts for prediction-market settlement | ⚠️ `sdk.createDlcBond()` — CET stub |
+| **ark** | Ark VTXO-based payment pools for agent-to-agent settlement | 🔒 `ProtocolUnsupported` gate |
+| **swap_router** | Cross-rail yield optimization (ALEX ↔ Uniswap ↔ Fedimint) | ✅ `sdk.executeAlexSwap()` |
+| **settlement_service** | Multi-rail settlement orchestration | ✅ `sdk.executeSettlement()` |
+| **stablecoin_orchestrator** | USDC/USDT/sBTC yield routing for treasury | ✅ `sdk.getStablecoinRoute()` |
+| **solver** | Fill-or-Kill solver network for best-execution settlement | ✅ `sdk.findBestRoute()` |
+| **economy** | M2M machine economy settlement — AI agent payments | ✅ `sdk.settleM2M()` |
+| **job_card** | CJCS integration with SLA enforcement | ✅ `sdk.toggleBountyPayouts()` |
+| **identity** | DID-based builder reputation and discovery | ✅ `sdk.resolveIdentity()` |
+| **zkml** | ZK-ML proof verification for AI labor quality attestation | ✅ `sdk.verifyStateProof()` |
+| **opportunity** | Yield opportunity discovery for treasury yield optimization | ✅ `sdk.getYieldOpportunities()` |
+| **credit** | Agent credit scoring for escrow risk assessment | ✅ `sdk.computeCreditScore()` |
+| **intent** | Intent-based settlement (user declares intent, solver executes) | ✅ `sdk.routeIntent()` + `sdk.findBestRoute()` |
+| **sidl** | Sovereign IDL for cross-protocol contract interoperability | ✅ `sdk.prepareCrossChainTx()` |
+
+### Legend
+
+| Symbol | Meaning |
+|:------:|---------|
+| ✅ | Wired through SDK bridge → Gateway REST API |
+| ⚠️ | Partially wired — blocked by P0 gap or gateway stub |
+| 🔒 | Blocked — requires P0 resolution in enclave-sdk or gateway |
+
+### Implementation Status (Session 52)
+
+| Component | Lines | Status |
+|-----------|------:|:------:|
+| `src/fee_calculator.ts` | 366 | ✅ Tier detection, fee calc, rail routing, revenue projection |
+| `src/core_types.ts` | 281 | ✅ TypeScript mirror of all lib-conxian-core + enclave-sdk types |
+| `src/gateway_client.ts` | 202 | ✅ Typed HTTP client for all 50+ gateway REST endpoints |
+| `src/verification.ts` | 117 | ✅ Gateway-backed verifier + P0-aware tier degradation |
+| `src/settlement.ts` | 211 | ✅ Multi-rail settlement orchestrator (8 rails) |
+| `src/sdk_bridge.ts` | 347 | ✅ Comprehensive bridge: 27 capabilities, `connect()` + `offline()` |
+| `src/index.ts` | 71 | ✅ Barrel export with full type surface |
+
+### Trust Tier → Market Pricing Model
+
+| Trust Tier | Verification | Market Pricing | Use Case |
+|------------|-------------|---------------|----------|
+| **Strict** | TEE + ZK proof | Premium (negotiated) | Institutional settlement, treasury |
+| **Managed** | Enclave attestation | Standard (0.5% premium) | Professional builders, SAB operations |
+| **Expedient** | Light client verification | Basic (2% protocol fee) | Standard agent settlement |
+| **ObserverOnly** | No verification | Free tier | Discovery, reputation browsing |
+
+### Research Coverage (BTC L2 Ecosystem)
+
+| Status | Protocols |
+|--------|-----------|
+| **Covered (11)** | Lightning, Stacks, Rootstock, Liquid, RGB, BitVM2/Citrea, DLC, Ark, **Spark**, Fedimint, Babylon |
+| **Not Covered (4)** | Merlin Chain, SatoshiVM, Botanix/Spiderchain, Bitlayer (all EVM-compatible → ethereum.rs bridge) |
 
 ---
 
@@ -208,8 +288,9 @@ A_S → Maximize (System Autonomy)
 ### conxian_market (THIS REPO)
 - **Role:** The Value Layer - PRIMARY revenue mechanism
 - **Ethos:** Settlement core, marketplace, treasury
-- **Standards:** MCP-native, ERC-8183, 2% protocol fee
-- **Guided by:** FUNDING_AND_ECONOMICS.md, FULL_SYSTEM_ARCHITECTURE.md
+- **Standards:** MCP-native, ERC-8183, 2% protocol fee, 4-tier TrustTier pricing
+- **Enhancement:** Phase 1–3 complete — 6 settlement rails, SLA bounty system, tiered pricing middleware
+- **Guided by:** FUNDING_AND_ECONOMICS.md, SETTLEMENT_RAILS.md, FULL_SYSTEM_ARCHITECTURE.md
 
 ### conxian-business (PRIVATE)
 - **Role:** CNS - Business Operations System
@@ -218,15 +299,15 @@ A_S → Maximize (System Autonomy)
 
 ### conxius-enclave-sdk (Production v2.0.12)
 - **Role:** Hardware security primitives
-- **Features:** TEE, FROST DKG, BitVM2, MuSig2, BYOK
+- **Features:** TEE, FROST DKG, BitVM2, MuSig2, Statechain (Spark), BYOK, 46 modules
 
-### conxian-gateway (Active v0.1.4)
+### conxian-gateway (Active v0.1.5+)
 - **Role:** Industrial middleware
-- **Features:** ISO 20022, Fedimint, Citrea, X402
+- **Features:** ISO 20022, Fedimint, Babylon, sBTC Monitoring, RGB Adapter, Persistence (SovereignBackend)
 
-### conxian-nexus (Active v0.4.19)
+### conxian-nexus (Active v0.4.0+)
 - **Role:** Glass Node, verification layer
-- **Features:** MMR proofs, multi-chain, SRL-1
+- **Features:** MMR proofs, multi-chain, SRL-1, Enclave Attestation (PR #196 merged), 13/17 core modules
 
 ---
 
@@ -276,12 +357,60 @@ A_S → Maximize (System Autonomy)
 ## 12. RESEARCH DOCUMENT CHAIN
 
 For economic decisions, ALWAYS reference in order:
-1. `docs/research/FUNDING_AND_ECONOMICS.md` - Fee model
-2. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` - Integration
-3. `docs/research/MARKET_UNIFIED_POSITIONING.md` - Enhancement
-4. `docs/knowledge_base/operating_manual.md` - Operations
-5. `docs/GOVERNANCE.md` - Governance rules
-6. `ROADMAP.md` - Current milestones
+0. `docs/adr/ADR_001_FEE_MODEL.md` — **AUTHORITATIVE** — Fee basis, percentages, custody, exposure caps, pause/exit (resolves Gateway #247 conflict)
+0a. `docs/research/ECOSYSTEM_GRAPH.md` — **Full ecosystem map** — 16 repos, 55 issues, cross-repo dependencies, 5-phase roadmap
+1. `docs/research/FUNDING_AND_ECONOMICS.md` — Fee model, revenue streams, break-even (§3.4 Session 48)
+2. `docs/research/SETTLEMENT_RAILS.md` — 6 rails: Statechain, sBTC, RGB, Babylon, Fedimint, Lightning
+3. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` — Integration map, 17 modules, 4-tier TrustTier
+4. `docs/research/MARKET_UNIFIED_POSITIONING.md` — Enhancement matrix, 13 rows, gap closure log
+5. `docs/research/market_enhancement_strategy.md` — Phase 1-3 complete report, 5-stream revenue, before/after
+6. `docs/research/CROSS_REPO_GAP_ANALYSIS_SESSION_48.md` — 60 open issues, 23 code gaps, P0→P2 severity
+7. `docs/knowledge_base/monitoring.md` — sBTC, Fedimint, Babylon, SLA watcher, treasury dashboard
+8. `docs/knowledge_base/sla_bounty_system.md` — CJCS gap cards, auto-bounty templates, reputation
+9. `docs/knowledge_base/trust_tier_pricing.md` — Tier detection, fee calc, rail routing, SLA templates
+10. `docs/knowledge_base/operating_manual.md` — Operations
+11. `docs/GOVERNANCE.md` — Governance rules
+
+### Session 48 Enhancement Status (Phase 1–3 Complete)
+
+| Phase | Issues | Docs Created | Status |
+|:-----:|--------|-------------|:------:|
+| **P1** | MARKET-010, MARKET-011 | SETTLEMENT_RAILS.md, monitoring.md | ✅ Closed |
+| **P2** | MARKET-012–014 | sla_bounty_system.md, SETTLEMENT_RAILS §4-5, FUNDING §3.4 | ✅ Closed |
+| **P3** | MARKET-015, MARKET-016 | trust_tier_pricing.md, SETTLEMENT_RAILS §6 | ✅ Closed |
+
+> All 7 enhancement issues implemented in conxian_market@39136c0 (1,097 lines across 5 docs).
+
+### Current P0 Gap Status (from CROSS_REPO_GAP_ANALYSIS)
+
+| # | Gap | Repo | Blocks |
+|---|-----|------|--------|
+| P0-1 | AWS Nitro attestation (#242) | enclave-sdk | Managed/Strict tiers |
+| P0-2 | Android KeyMint (#241) | enclave-sdk | Mobile attestation |
+| P0-3 | Attestation roots (#240) | enclave-sdk | Trust chain verification |
+| P0-4 | CCTP fail-closed (#198) | enclave-sdk | Cross-chain security |
+| P0-5 | Dev sandbox (#480) | Conxian | Builder onboarding |
+| P0-6 | Value-op gate (#444) | wallet | Settlement verification |
+| P0-7 | Protocol fee (#488) | Conxian | 5-stream revenue |
+| P0-8 | CI validation (#1082) | platform | Green CI (BOS Gate 1) |
+
+> Market operates at **Expedient tier only** (Lightning + Fedimint, flat 2%) until P0-1 through P0-4 resolve.
+> Revenue model is **theoretical** until P0-7 (CON-1427) ships.
+
+### CON-1427 Status (Protocol Fee Collection)
+
+| Component | Status | File |
+|-----------|:------:|------|
+| Implementation plan | ✅ Done | `docs/research/CON1427_IMPLEMENTATION_PLAN.md` |
+| Market FeeCalculator | ✅ Done | `src/fee_calculator.ts` (280 lines) — tier detection, rail routing, fee report |
+| Gateway ProtocolFee bridge | ✅ Done | `conxian-gateway:billing.rs` (+247 lines) — `ProtocolFeeRecord`, `ProtocolFeeReport`, 5 tests |
+| Clarity contract activation | ⬜ Phase C | `contracts/vaults/fee-manager.clar` (stub → production) |
+| Contract-bridge wire-up | ⬜ Phase C | Gateway → `protocol-fee-collector.clar` integration |
+| Treasury auto-staking | ⬜ Phase D | Babylon staking of collected fees |
+
+> **Phase A+B shipped.** Fee calculation + gateway bridge implemented with tests.
+> **Phase C** (contract activation) requires Stacks testnet deployment keys.
+> **Revenue unlock:** $15,000/mo → $20,600/mo when Phases A-C complete.
 
 ---
 
