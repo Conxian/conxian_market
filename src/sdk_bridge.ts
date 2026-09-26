@@ -579,6 +579,14 @@ export class ConxianMarketSDK {
     return ClientInstallerEngine.runEnterpriseSlaDiagnostics(config, latencyThresholdMs, timestampIso);
   }
 
+  evaluateSlaPolicyAndExemptions(
+    config: import("./core_types").ClientOnboardingConfig,
+    isCommercialB2bContract: boolean = false,
+    activeExemptions: import("./core_types").SlaExemptionReason[] = []
+  ): import("./core_types").SlaPolicyEvaluationResult {
+    return ClientInstallerEngine.evaluateSlaPolicyAndExemptions(config, isCommercialB2bContract, activeExemptions);
+  }
+
   getCapabilitySummary(): CapabilitySummary {
     const p0Gaps: string[] = [];
     if (!this.flags.attestationAvailable) {
