@@ -646,4 +646,21 @@ export class ConxianMarketSDK {
   getAvailableRails(tier: TrustTier): SettlementRail[] {
     return this.settlement.availableRails(tier);
   }
+
+  /**
+   * Evaluates enterprise SLA diagnostics and automatically remediates breach conditions.
+   */
+  remediateEnterpriseSlaBreaches(
+    config: import("./core_types").ClientOnboardingConfig,
+    report: import("./core_types").EnterpriseSlaDiagnosticsReport,
+    fallbackGatewayUrl?: string,
+    timestampIso?: string
+  ): import("./core_types").SlaAutoRemediationReport {
+    return ClientInstallerEngine.remediateEnterpriseSlaBreaches(
+      config,
+      report,
+      fallbackGatewayUrl,
+      timestampIso
+    );
+  }
 }

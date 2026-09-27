@@ -8,6 +8,9 @@
 
 import {
   ClientOnboardingConfig,
+  EnterpriseSlaDiagnosticsReport,
+  SlaAutoRemediationReport,
+  SlaRemediationAction,
   ClientProvisioningResult,
   SystemConnectivityReport,
   ZeroCustodySanityCheck,
@@ -570,6 +573,72 @@ export class ClientInstallerEngine {
       latencyThresholdMs,
       diagnostics,
       allEndpointsSlaCompliant,
+      timestampIso,
+    };
+  }
+
+  /**
+   * Evaluates enterprise SLA diagnostics and automatically remediates breach conditions.
+   */
+  static remediateEnterpriseSlaBreaches(
+    config: ClientOnboardingConfig,
+    report: EnterpriseSlaDiagnosticsReport,
+    fallbackGatewayUrl = "https://gateway-fallback.conxian.org",
+    timestampIso = new Date().toISOString()
+  ): SlaAutoRemediationReport {
+    const actions: SlaRemediationAction[] = [];
+    const logs: string[] = [];
+    let remediatedGatewayUrl = config.gatewayUrl;
+    let remediationApplied = false;
+
+    logs.push(`Initiating SLA auto-remediation for client DID ${config.clientDid}`);
+    logs.push(`Initial SLA status: ${report.overallSlaStatus}`);
+
+    for (const item of report.diagnostics) {
+      if (!item.slaCompliant) {
+        remediationApplied = true;
+        if (item.target === "gateway" || item.target.toLowerCase().includes("gateway")) {
+          remediatedGatewayUrl = fallbackGatewayUrl;
+          actions.push({
+            target: item.target,
+            originalEndpointUrl: item.endpointUrl,
+            remediatedEndpointUrl: fallbackGatewayUrl,
+            actionTaken: "FAILOVER_FALLBACK",
+            reason: `Gateway latency (${item.measuredLatencyMs}ms) exceeded SLA threshold (${item.expectedMaxLatencyMs}ms)`,
+          });
+          logs.push(`Gateway failed SLA check. Re-routed to fallback gateway: ${fallbackGatewayUrl}`);
+        } else {
+          actions.push({
+            target: item.target,
+            originalEndpointUrl: item.endpointUrl,
+            remediatedEndpointUrl: `${item.endpointUrl}-failover`,
+            actionTaken: "FAILOVER_REROUTE",
+            reason: `${item.target} endpoint latency (${item.measuredLatencyMs}ms) exceeded SLA threshold (${item.expectedMaxLatencyMs}ms)`,
+          });
+          logs.push(`${item.target} failed SLA check. Applied endpoint failover reroute.`);
+        }
+      } else {
+        actions.push({
+          target: item.target,
+          originalEndpointUrl: item.endpointUrl,
+          remediatedEndpointUrl: item.endpointUrl,
+          actionTaken: "NO_ACTION_REQUIRED",
+          reason: `${item.target} endpoint compliant (${item.measuredLatencyMs}ms <= ${item.expectedMaxLatencyMs}ms)`,
+        });
+      }
+    }
+
+    if (!remediationApplied) {
+      logs.push("All diagnostic endpoints compliant. No remediation action required.");
+    }
+
+    return {
+      clientDid: config.clientDid || "did:conxian:unknown",
+      initialSlaStatus: report.overallSlaStatus,
+      remediationApplied,
+      remediatedGatewayUrl,
+      actions,
+      remediationLogs: logs,
       timestampIso,
     };
   }
