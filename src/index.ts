@@ -115,4 +115,8 @@ export type {
   ClientDeploymentManifest,
   AssetConnectivityProbeResult,
   UnifiedCliInstallerRunResult,
+  EnterpriseSlaDiagnosticsReport,
+  SlaDiagnosticItem,
+  SlaAutoRemediationReport,
+  SlaRemediationAction,
 } from "./core_types";

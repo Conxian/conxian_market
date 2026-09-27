@@ -607,3 +607,23 @@ export interface EnterpriseSlaDiagnosticsReport {
   allEndpointsSlaCompliant: boolean;
   timestampIso: string;
 }
+
+// ── Session 69: B2B Enterprise Client Onboarding SLA Auto-Remediation Types ──
+
+export interface SlaRemediationAction {
+  target: string;
+  originalEndpointUrl: string;
+  remediatedEndpointUrl: string;
+  actionTaken: "FAILOVER_REROUTE" | "FAILOVER_FALLBACK" | "NO_ACTION_REQUIRED";
+  reason: string;
+}
+
+export interface SlaAutoRemediationReport {
+  clientDid: string;
+  initialSlaStatus: "HEALTHY" | "DEGRADED" | "NON_COMPLIANT";
+  remediationApplied: boolean;
+  remediatedGatewayUrl: string;
+  actions: SlaRemediationAction[];
+  remediationLogs: string[];
+  timestampIso: string;
+}
