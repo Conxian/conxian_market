@@ -119,4 +119,7 @@ export type {
   SlaDiagnosticItem,
   SlaAutoRemediationReport,
   SlaRemediationAction,
+  RegionalGatewayHealthItem,
+  MultiRegionGatewayConfig,
+  MultiRegionFailoverReport,
 } from "./core_types";

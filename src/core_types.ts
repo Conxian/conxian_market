@@ -627,3 +627,38 @@ export interface SlaAutoRemediationReport {
   remediationLogs: string[];
   timestampIso: string;
 }
+
+// ── Session 70: B2B Enterprise Multi-Region Gateway Failover & Latency Balancer Types ──
+
+export interface RegionalGatewayHealthItem {
+  region: "us-east" | "eu-west" | "ap-southeast" | string;
+  gatewayUrl: string;
+  healthy: boolean;
+  latencyMs: number;
+  statusMessage: string;
+}
+
+export interface MultiRegionGatewayConfig {
+  clientDid: string;
+  primaryRegion: string;
+  regionalEndpoints: Array<{
+    region: string;
+    gatewayUrl: string;
+  }>;
+  byoLlmKeys?: {
+    deepseekApiKey?: string;
+    openaiApiKey?: string;
+    anthropicApiKey?: string;
+  };
+}
+
+export interface MultiRegionFailoverReport {
+  clientDid: string;
+  primaryRegion: string;
+  selectedRegion: string;
+  selectedGatewayUrl: string;
+  failoverTriggered: boolean;
+  healthProbes: RegionalGatewayHealthItem[];
+  routingLogs: string[];
+  timestampIso: string;
+}

@@ -107,3 +107,56 @@ describe("B2B Enterprise Client Onboarding SLA Auto-Remediation Engine", () => {
     expect(remediation.remediatedGatewayUrl).toBe("https://gateway-fallback.conxian.org");
   });
 });
+
+describe("B2B Enterprise Multi-Region Gateway Failover & Latency Balancer Engine", () => {
+  const multiRegionConfig: import("../src").MultiRegionGatewayConfig = {
+    clientDid: "did:conxian:enterprise:global_corp",
+    primaryRegion: "us-east",
+    regionalEndpoints: [
+      { region: "us-east", gatewayUrl: "https://gateway-us-east.conxian.org" },
+      { region: "eu-west", gatewayUrl: "https://gateway-eu-west.conxian.org" },
+      { region: "ap-southeast", gatewayUrl: "https://gateway-ap-southeast.conxian.org" },
+    ],
+  };
+
+  it("should keep primary region when primary endpoint is optimal and within latency threshold", () => {
+    const failover = ClientInstallerEngine.balanceAndFailoverMultiRegionGateways(multiRegionConfig, 100);
+
+    expect(failover.clientDid).toBe("did:conxian:enterprise:global_corp");
+    expect(failover.primaryRegion).toBe("us-east");
+    expect(failover.selectedRegion).toBe("us-east");
+    expect(failover.selectedGatewayUrl).toBe("https://gateway-us-east.conxian.org");
+    expect(failover.failoverTriggered).toBe(false);
+    expect(failover.healthProbes).toHaveLength(3);
+    expect(failover.healthProbes.every((p) => p.healthy)).toBe(true);
+  });
+
+  it("should trigger failover to lowest-latency healthy secondary region when primary is offline", () => {
+    const degradedConfig: import("../src").MultiRegionGatewayConfig = {
+      ...multiRegionConfig,
+      regionalEndpoints: [
+        { region: "us-east", gatewayUrl: "https://gateway-us-east-offline.conxian.org" },
+        { region: "eu-west", gatewayUrl: "https://gateway-eu-west.conxian.org" },
+        { region: "ap-southeast", gatewayUrl: "https://gateway-ap-southeast.conxian.org" },
+      ],
+    };
+
+    const failover = ClientInstallerEngine.balanceAndFailoverMultiRegionGateways(degradedConfig, 100);
+
+    expect(failover.failoverTriggered).toBe(true);
+    expect(failover.selectedRegion).toBe("eu-west");
+    expect(failover.selectedGatewayUrl).toBe("https://gateway-eu-west.conxian.org");
+
+    const primaryProbe = failover.healthProbes.find((p) => p.region === "us-east");
+    expect(primaryProbe?.healthy).toBe(false);
+  });
+
+  it("should wire balanceAndFailoverMultiRegionGateways into ConxianMarketSDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect({ baseUrl: "https://gateway.conxian.org" });
+    const failover = sdk.balanceAndFailoverMultiRegionGateways(multiRegionConfig, 100);
+
+    expect(failover.clientDid).toBe("did:conxian:enterprise:global_corp");
+    expect(failover.selectedRegion).toBe("us-east");
+    expect(failover.failoverTriggered).toBe(false);
+  });
+});
