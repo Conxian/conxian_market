@@ -663,4 +663,20 @@ export class ConxianMarketSDK {
       timestampIso
     );
   }
+
+  /**
+   * Evaluates multi-region gateway endpoints, probes health/latency, balances traffic,
+   * and executes automatic regional failover when primary region is degraded.
+   */
+  balanceAndFailoverMultiRegionGateways(
+    config: import("./core_types").MultiRegionGatewayConfig,
+    maxAllowedLatencyMs?: number,
+    timestampIso?: string
+  ): import("./core_types").MultiRegionFailoverReport {
+    return ClientInstallerEngine.balanceAndFailoverMultiRegionGateways(
+      config,
+      maxAllowedLatencyMs,
+      timestampIso
+    );
+  }
 }
