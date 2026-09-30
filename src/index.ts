@@ -102,6 +102,16 @@ export type {
   X402TrustProofArtifact,
   X402AttestationVerificationResult,
 } from "./x402_facade";
+export { AgentRegistry, agentCardDigest } from "./agent_registry";
+export type {
+  AgentCard,
+  AgentCapability,
+  AgentIdentityAnchor,
+  AgentReputationRecord,
+  AgentRegistryEntry,
+} from "./agent_registry";
+export { Mcp402Facade } from "./mcp_402";
+export type { McpToolCall, Mcp402PaymentGateResult } from "./mcp_402";
 export { ConxianMarketSDK } from "./sdk_bridge";
 
 export { ClientInstallerEngine } from "./client_onboarding";
