@@ -20,6 +20,8 @@ import type {
   SettlementResult,
   UsageMetrics,
 } from "./core_types";
+import { z } from "zod";
+import { M2MSettlementResponseSchema, SettlementResultSchema } from "./wire_contract";
 
 export interface GatewayConfig {
   baseUrl: string;
@@ -46,10 +48,23 @@ export class GatewayClient {
 
   // ── Helper ──
 
-  private async fetchJson<T>(path: string, options: RequestInit = {}): Promise<T> {
+  /** Correlation/idempotency token source (UUID v4 with a non-secure fallback). */
+  private newToken(): string {
+    const cryptoObj = globalThis.crypto as { randomUUID?: () => string } | undefined;
+    if (cryptoObj?.randomUUID) return cryptoObj.randomUUID();
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private async fetchJson<T>(
+    path: string,
+    options: RequestInit = {},
+    meta: { idempotencyKey?: string; correlationId?: string } = {},
+  ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
+      "X-Request-Id": meta.correlationId ?? this.newToken(),
+      ...(meta.idempotencyKey ? { "Idempotency-Key": meta.idempotencyKey } : {}),
       ...(this.apiToken ? { Authorization: `Bearer ${this.apiToken}` } : {}),
       ...((options.headers as Record<string, string>) ?? {}),
     };
@@ -67,6 +82,21 @@ export class GatewayClient {
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  /** Fetches and runtime-validates the response against a wire-contract schema. */
+  private async fetchJsonValidated<T>(
+    schema: z.ZodType<T, z.ZodTypeDef, unknown>,
+    path: string,
+    options: RequestInit = {},
+    meta: { idempotencyKey?: string; correlationId?: string } = {},
+  ): Promise<T> {
+    const raw = await this.fetchJson<unknown>(path, options, meta);
+    const parsed = schema.safeParse(raw);
+    if (!parsed.success) {
+      throw new Error(`Gateway response failed validation for ${path}: ${parsed.error.message}`);
+    }
+    return parsed.data as T;
   }
 
   // ── Attestation & Verification ──
@@ -92,18 +122,28 @@ export class GatewayClient {
 
   // ── Settlement & Job Cards ──
 
-  async settleJobCard(card: JobCard): Promise<SettlementResult> {
-    return this.fetchJson<SettlementResult>("/v1/settlement/job-card", {
-      method: "POST",
-      body: this.serializeBody(card),
-    });
+  async settleJobCard(
+    card: JobCard,
+    opts: { idempotencyKey?: string; correlationId?: string } = {},
+  ): Promise<SettlementResult> {
+    return this.fetchJsonValidated<SettlementResult>(
+      SettlementResultSchema,
+      "/v1/settlement/job-card",
+      { method: "POST", body: this.serializeBody(card) },
+      { idempotencyKey: opts.idempotencyKey ?? this.newToken(), correlationId: opts.correlationId },
+    );
   }
 
-  async settleM2M(settlement: M2MSettlement): Promise<{ txId: string }> {
-    return this.fetchJson<{ txId: string }>("/v1/settlement/m2m", {
-      method: "POST",
-      body: this.serializeBody(settlement),
-    });
+  async settleM2M(
+    settlement: M2MSettlement,
+    opts: { idempotencyKey?: string; correlationId?: string } = {},
+  ): Promise<{ txId: string }> {
+    return this.fetchJsonValidated<{ txId: string }>(
+      M2MSettlementResponseSchema,
+      "/v1/settlement/m2m",
+      { method: "POST", body: this.serializeBody(settlement) },
+      { idempotencyKey: opts.idempotencyKey ?? this.newToken(), correlationId: opts.correlationId },
+    );
   }
 
   async getExternalSettlements(params?: {
