@@ -23,6 +23,23 @@ export type {
   GapCardAutoResolutionResult,
 } from "./sla_engine";
 export { MonitoringWatcher, DEFAULT_TARGET_ALLOCATION } from "./monitoring_watcher";
+export {
+  generateMonthlyTreasuryReport,
+  renderTreasuryDashboard,
+  RUNWAY_THRESHOLDS,
+  DAILY_VOLUME_THRESHOLDS,
+  MONTHLY_REVENUE_THRESHOLDS,
+  STABLECOIN_PCT_THRESHOLDS,
+  FEE_DISTRIBUTION_TARGETS,
+} from "./treasury_report";
+export type {
+  TreasuryReport,
+  TreasuryReportInput,
+  HealthIndicator,
+  AllocationStatus,
+  FeeDistributionSummary,
+  ThresholdBand,
+} from "./treasury_report";
 export type {
   HealthStatus,
   SbtcHealthInput,
