@@ -607,3 +607,33 @@ export interface EnterpriseSlaDiagnosticsReport {
   allEndpointsSlaCompliant: boolean;
   timestampIso: string;
 }
+
+// ── Session 69: Enterprise Tiered SLA Policy & Exemption Types ──
+
+export type SlaExemptionReason =
+  | "FORCE_MAJEURE"
+  | "BITCOIN_L1_CONGESTION"
+  | "STACKS_NETWORK_HALT"
+  | "HARDWARE_TEE_VENDOR_DEPRECATION"
+  | "BYO_LLM_PROVIDER_OUTAGE";
+
+export interface EnterpriseSlaPolicyConfig {
+  isCommercialB2bContract: boolean;
+  slaTier: "NO_SLA_OPEN_SOURCE" | "BUSINESS_HOURS_NBD" | "ENTERPRISE_PREMIUM";
+  targetAckWindowHours: number;
+  targetPatchWindowDays: number;
+  openSourceDisclaimerEnforced: boolean;
+  activeExemptions: SlaExemptionReason[];
+}
+
+export interface SlaPolicyEvaluationResult {
+  clientDid: string;
+  isSlaCovered: boolean;
+  slaTier: "NO_SLA_OPEN_SOURCE" | "BUSINESS_HOURS_NBD" | "ENTERPRISE_PREMIUM";
+  openSourceDisclaimerActive: boolean;
+  ackWindowHours: number;
+  patchWindowDays: number;
+  exemptionsActive: SlaExemptionReason[];
+  policySummary: string;
+  timestampIso: string;
+}
