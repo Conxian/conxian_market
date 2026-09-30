@@ -579,6 +579,14 @@ export class ConxianMarketSDK {
     return ClientInstallerEngine.runEnterpriseSlaDiagnostics(config, latencyThresholdMs, timestampIso);
   }
 
+  evaluateSlaPolicyAndExemptions(
+    config: import("./core_types").ClientOnboardingConfig,
+    isCommercialB2bContract: boolean = false,
+    activeExemptions: import("./core_types").SlaExemptionReason[] = []
+  ): import("./core_types").SlaPolicyEvaluationResult {
+    return ClientInstallerEngine.evaluateSlaPolicyAndExemptions(config, isCommercialB2bContract, activeExemptions);
+  }
+
   getCapabilitySummary(): CapabilitySummary {
     const p0Gaps: string[] = [];
     if (!this.flags.attestationAvailable) {
@@ -645,38 +653,5 @@ export class ConxianMarketSDK {
   /** Get available rails for a tier (with P0 gap filtering) */
   getAvailableRails(tier: TrustTier): SettlementRail[] {
     return this.settlement.availableRails(tier);
-  }
-
-  /**
-   * Evaluates enterprise SLA diagnostics and automatically remediates breach conditions.
-   */
-  remediateEnterpriseSlaBreaches(
-    config: import("./core_types").ClientOnboardingConfig,
-    report: import("./core_types").EnterpriseSlaDiagnosticsReport,
-    fallbackGatewayUrl?: string,
-    timestampIso?: string
-  ): import("./core_types").SlaAutoRemediationReport {
-    return ClientInstallerEngine.remediateEnterpriseSlaBreaches(
-      config,
-      report,
-      fallbackGatewayUrl,
-      timestampIso
-    );
-  }
-
-  /**
-   * Evaluates multi-region gateway endpoints, probes health/latency, balances traffic,
-   * and executes automatic regional failover when primary region is degraded.
-   */
-  balanceAndFailoverMultiRegionGateways(
-    config: import("./core_types").MultiRegionGatewayConfig,
-    maxAllowedLatencyMs?: number,
-    timestampIso?: string
-  ): import("./core_types").MultiRegionFailoverReport {
-    return ClientInstallerEngine.balanceAndFailoverMultiRegionGateways(
-      config,
-      maxAllowedLatencyMs,
-      timestampIso
-    );
   }
 }

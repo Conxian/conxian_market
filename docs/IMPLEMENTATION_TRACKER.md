@@ -70,7 +70,6 @@ The current live execution chain is:
 | conxian_market | Client Entitlements & Deployment Engine (`client_onboarding.ts`) | **COMPLETED (S63)** | Scoring matrix candidate #1 from `CLIENT_ONBOARDING_AND_UNIFIED_INSTALLER_ARCHITECTURE.md`. |
 | conxian_market | Master Reconnaissance & Domain Firewall Engine (`client_onboarding.ts`) | **COMPLETED (S64)** | Master Reconnaissance & B2B Architecture Review (`MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md`). |
 | conxian_market | Enterprise SLA Diagnostics (`client_onboarding.ts`) | **COMPLETED (S68)** | Scoring matrix candidate #1 (CAN-68-A) from Session 68 research expansion. |
-| conxian_market | Enterprise SLA Auto-Remediation (`client_onboarding.ts`) | **COMPLETED (S69)** | Scoring matrix candidate #1 (CAN-69-A) from Session 69 research expansion. |
 | Conxian | Monorepo Smart Contracts | **DEPRECATED** | Recommended for archiving in favor of BYO DeFi adapters. |
 
 ---

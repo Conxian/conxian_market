@@ -608,57 +608,32 @@ export interface EnterpriseSlaDiagnosticsReport {
   timestampIso: string;
 }
 
-// ── Session 69: B2B Enterprise Client Onboarding SLA Auto-Remediation Types ──
+// ── Session 69: Enterprise Tiered SLA Policy & Exemption Types ──
 
-export interface SlaRemediationAction {
-  target: string;
-  originalEndpointUrl: string;
-  remediatedEndpointUrl: string;
-  actionTaken: "FAILOVER_REROUTE" | "FAILOVER_FALLBACK" | "NO_ACTION_REQUIRED";
-  reason: string;
+export type SlaExemptionReason =
+  | "FORCE_MAJEURE"
+  | "BITCOIN_L1_CONGESTION"
+  | "STACKS_NETWORK_HALT"
+  | "HARDWARE_TEE_VENDOR_DEPRECATION"
+  | "BYO_LLM_PROVIDER_OUTAGE";
+
+export interface EnterpriseSlaPolicyConfig {
+  isCommercialB2bContract: boolean;
+  slaTier: "NO_SLA_OPEN_SOURCE" | "BUSINESS_HOURS_NBD" | "ENTERPRISE_PREMIUM";
+  targetAckWindowHours: number;
+  targetPatchWindowDays: number;
+  openSourceDisclaimerEnforced: boolean;
+  activeExemptions: SlaExemptionReason[];
 }
 
-export interface SlaAutoRemediationReport {
+export interface SlaPolicyEvaluationResult {
   clientDid: string;
-  initialSlaStatus: "HEALTHY" | "DEGRADED" | "NON_COMPLIANT";
-  remediationApplied: boolean;
-  remediatedGatewayUrl: string;
-  actions: SlaRemediationAction[];
-  remediationLogs: string[];
-  timestampIso: string;
-}
-
-// ── Session 70: B2B Enterprise Multi-Region Gateway Failover & Latency Balancer Types ──
-
-export interface RegionalGatewayHealthItem {
-  region: "us-east" | "eu-west" | "ap-southeast" | string;
-  gatewayUrl: string;
-  healthy: boolean;
-  latencyMs: number;
-  statusMessage: string;
-}
-
-export interface MultiRegionGatewayConfig {
-  clientDid: string;
-  primaryRegion: string;
-  regionalEndpoints: Array<{
-    region: string;
-    gatewayUrl: string;
-  }>;
-  byoLlmKeys?: {
-    deepseekApiKey?: string;
-    openaiApiKey?: string;
-    anthropicApiKey?: string;
-  };
-}
-
-export interface MultiRegionFailoverReport {
-  clientDid: string;
-  primaryRegion: string;
-  selectedRegion: string;
-  selectedGatewayUrl: string;
-  failoverTriggered: boolean;
-  healthProbes: RegionalGatewayHealthItem[];
-  routingLogs: string[];
+  isSlaCovered: boolean;
+  slaTier: "NO_SLA_OPEN_SOURCE" | "BUSINESS_HOURS_NBD" | "ENTERPRISE_PREMIUM";
+  openSourceDisclaimerActive: boolean;
+  ackWindowHours: number;
+  patchWindowDays: number;
+  exemptionsActive: SlaExemptionReason[];
+  policySummary: string;
   timestampIso: string;
 }

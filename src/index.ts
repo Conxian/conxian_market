@@ -115,11 +115,11 @@ export type {
   ClientDeploymentManifest,
   AssetConnectivityProbeResult,
   UnifiedCliInstallerRunResult,
-  EnterpriseSlaDiagnosticsReport,
-  SlaDiagnosticItem,
-  SlaAutoRemediationReport,
-  SlaRemediationAction,
-  RegionalGatewayHealthItem,
-  MultiRegionGatewayConfig,
-  MultiRegionFailoverReport,
+} from "./core_types";
+
+// Session 69: Export SLA Policy and Statutory Exemption Types
+export type {
+  SlaExemptionReason,
+  EnterpriseSlaPolicyConfig,
+  SlaPolicyEvaluationResult,
 } from "./core_types";

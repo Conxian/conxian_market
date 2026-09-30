@@ -8,9 +8,6 @@
 
 import {
   ClientOnboardingConfig,
-  EnterpriseSlaDiagnosticsReport,
-  SlaAutoRemediationReport,
-  SlaRemediationAction,
   ClientProvisioningResult,
   SystemConnectivityReport,
   ZeroCustodySanityCheck,
@@ -22,9 +19,8 @@ import {
   AssetConnectivityProbeResult,
   UnifiedCliInstallerRunResult,
   DomainRoutingCheckResult,
-  RegionalGatewayHealthItem,
-  MultiRegionGatewayConfig,
-  MultiRegionFailoverReport,
+  SlaExemptionReason,
+  SlaPolicyEvaluationResult,
 } from "./core_types";
 
 export class ClientInstallerEngine {
@@ -579,151 +575,54 @@ export class ClientInstallerEngine {
       timestampIso,
     };
   }
-
   /**
-   * Evaluates enterprise SLA diagnostics and automatically remediates breach conditions.
+   * Session 69: Evaluates SLA Policy and Statutory Exemptions for B2B Client Onboarding.
+   * Enforces Open-Source No-SLA disclaimers for public/unpaid tiers, and bounds B2B SLAs
+   * strictly to signed commercial contracts with support windows and force majeure exemptions.
    */
-  static remediateEnterpriseSlaBreaches(
+  static evaluateSlaPolicyAndExemptions(
     config: ClientOnboardingConfig,
-    report: EnterpriseSlaDiagnosticsReport,
-    fallbackGatewayUrl = "https://gateway-fallback.conxian.org",
-    timestampIso = new Date().toISOString()
-  ): SlaAutoRemediationReport {
-    const actions: SlaRemediationAction[] = [];
-    const logs: string[] = [];
-    let remediatedGatewayUrl = config.gatewayUrl;
-    let remediationApplied = false;
+    isCommercialB2bContract: boolean = false,
+    activeExemptions: SlaExemptionReason[] = []
+  ): SlaPolicyEvaluationResult {
+    const timestampIso = new Date().toISOString();
+    const clientDid = config.clientDid || "did:conxian:unknown";
 
-    logs.push(`Initiating SLA auto-remediation for client DID ${config.clientDid}`);
-    logs.push(`Initial SLA status: ${report.overallSlaStatus}`);
-
-    for (const item of report.diagnostics) {
-      if (!item.slaCompliant) {
-        remediationApplied = true;
-        if (item.target === "gateway" || item.target.toLowerCase().includes("gateway")) {
-          remediatedGatewayUrl = fallbackGatewayUrl;
-          actions.push({
-            target: item.target,
-            originalEndpointUrl: item.endpointUrl,
-            remediatedEndpointUrl: fallbackGatewayUrl,
-            actionTaken: "FAILOVER_FALLBACK",
-            reason: `Gateway latency (${item.measuredLatencyMs}ms) exceeded SLA threshold (${item.expectedMaxLatencyMs}ms)`,
-          });
-          logs.push(`Gateway failed SLA check. Re-routed to fallback gateway: ${fallbackGatewayUrl}`);
-        } else {
-          actions.push({
-            target: item.target,
-            originalEndpointUrl: item.endpointUrl,
-            remediatedEndpointUrl: `${item.endpointUrl}-failover`,
-            actionTaken: "FAILOVER_REROUTE",
-            reason: `${item.target} endpoint latency (${item.measuredLatencyMs}ms) exceeded SLA threshold (${item.expectedMaxLatencyMs}ms)`,
-          });
-          logs.push(`${item.target} failed SLA check. Applied endpoint failover reroute.`);
-        }
-      } else {
-        actions.push({
-          target: item.target,
-          originalEndpointUrl: item.endpointUrl,
-          remediatedEndpointUrl: item.endpointUrl,
-          actionTaken: "NO_ACTION_REQUIRED",
-          reason: `${item.target} endpoint compliant (${item.measuredLatencyMs}ms <= ${item.expectedMaxLatencyMs}ms)`,
-        });
-      }
+    if (!isCommercialB2bContract) {
+      return {
+        clientDid,
+        isSlaCovered: false,
+        slaTier: "NO_SLA_OPEN_SOURCE",
+        openSourceDisclaimerActive: true,
+        ackWindowHours: 0,
+        patchWindowDays: 0,
+        exemptionsActive: activeExemptions,
+        policySummary: "Public/Open-Source tier: Provided strictly on a community-best-effort basis without legally binding SLA guarantees or financial uptime liabilities.",
+        timestampIso,
+      };
     }
 
-    if (!remediationApplied) {
-      logs.push("All diagnostic endpoints compliant. No remediation action required.");
+    const isEnterprisePremium = config.targetTrustTier === TrustTier.Strict || config.targetTrustTier === TrustTier.Managed;
+    const slaTier = isEnterprisePremium ? "ENTERPRISE_PREMIUM" : "BUSINESS_HOURS_NBD";
+    const ackWindowHours = isEnterprisePremium ? 2 : 24;
+    const patchWindowDays = isEnterprisePremium ? 3 : 14;
+
+    let summary = `B2B ${slaTier} SLA active for ${clientDid}. Target Acknowledgement Window: ${ackWindowHours}h, Patch Window: ${patchWindowDays}d.`;
+    if (activeExemptions.length > 0) {
+      summary += ` Statutory exemptions active: [${activeExemptions.join(", ")}]. Underlying L1/TEE network outages excluded from liability.`;
     }
 
     return {
-      clientDid: config.clientDid || "did:conxian:unknown",
-      initialSlaStatus: report.overallSlaStatus,
-      remediationApplied,
-      remediatedGatewayUrl,
-      actions,
-      remediationLogs: logs,
+      clientDid,
+      isSlaCovered: true,
+      slaTier,
+      openSourceDisclaimerActive: false,
+      ackWindowHours,
+      patchWindowDays,
+      exemptionsActive: activeExemptions,
+      policySummary: summary,
       timestampIso,
     };
   }
 
-  /**
-   * Evaluates multi-region gateway endpoints, probes health and latency across regions,
-   * balances traffic, and triggers automatic regional failover when the primary region is degraded.
-   */
-  static balanceAndFailoverMultiRegionGateways(
-    config: MultiRegionGatewayConfig,
-    maxAllowedLatencyMs = 100,
-    timestampIso = new Date().toISOString()
-  ): MultiRegionFailoverReport {
-    const healthProbes: RegionalGatewayHealthItem[] = [];
-    const logs: string[] = [];
-
-    logs.push(`Initiating multi-region gateway health probe & latency balancing for DID: ${config.clientDid}`);
-    logs.push(`Primary configured region: ${config.primaryRegion}`);
-
-    for (const ep of config.regionalEndpoints) {
-      const isValid = ep.gatewayUrl.startsWith("http");
-      let latency = 999;
-      if (isValid) {
-        if (ep.region === "us-east") latency = 18;
-        else if (ep.region === "eu-west") latency = 32;
-        else if (ep.region === "ap-southeast") latency = 68;
-        else latency = 45;
-      }
-
-      if (ep.gatewayUrl.includes("offline") || ep.gatewayUrl.includes("down") || !isValid) {
-        latency = 999;
-      }
-
-      const healthy = isValid && latency <= maxAllowedLatencyMs;
-      const statusMessage = healthy
-        ? `Region ${ep.region} operational (${latency}ms <= ${maxAllowedLatencyMs}ms threshold)`
-        : `Region ${ep.region} degraded or offline (latency ${latency}ms > ${maxAllowedLatencyMs}ms threshold)`;
-
-      healthProbes.push({
-        region: ep.region,
-        gatewayUrl: ep.gatewayUrl,
-        healthy,
-        latencyMs: latency,
-        statusMessage,
-      });
-
-      logs.push(`Probed [${ep.region}]: healthy=${healthy}, latency=${latency}ms (${ep.gatewayUrl})`);
-    }
-
-    const primaryProbe = healthProbes.find((p) => p.region === config.primaryRegion);
-    let selectedRegion = config.primaryRegion;
-    let selectedGatewayUrl = primaryProbe?.gatewayUrl || "";
-    let failoverTriggered = false;
-
-    if (!primaryProbe || !primaryProbe.healthy) {
-      failoverTriggered = true;
-      logs.push(`WARNING: Primary region ${config.primaryRegion} failed health check! Evaluating failover targets...`);
-
-      const healthyCandidates = healthProbes.filter((p) => p.healthy).sort((a, b) => a.latencyMs - b.latencyMs);
-
-      if (healthyCandidates.length > 0) {
-        selectedRegion = healthyCandidates[0].region;
-        selectedGatewayUrl = healthyCandidates[0].gatewayUrl;
-        logs.push(`SUCCESS: Failover executed! Selected region ${selectedRegion} with lowest latency (${healthyCandidates[0].latencyMs}ms).`);
-      } else {
-        logs.push(`CRITICAL: All regional gateway endpoints degraded! Falling back to primary endpoint.`);
-        selectedRegion = config.primaryRegion;
-        selectedGatewayUrl = primaryProbe?.gatewayUrl || "";
-      }
-    } else {
-      logs.push(`PRIMARY COMPLIANT: Primary region ${config.primaryRegion} optimal (${primaryProbe.latencyMs}ms). No failover needed.`);
-    }
-
-    return {
-      clientDid: config.clientDid || "did:conxian:unknown",
-      primaryRegion: config.primaryRegion,
-      selectedRegion,
-      selectedGatewayUrl,
-      failoverTriggered,
-      healthProbes,
-      routingLogs: logs,
-      timestampIso,
-    };
-  }
 }
