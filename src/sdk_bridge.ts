@@ -1,4 +1,6 @@
 import { ClientInstallerEngine } from "./client_onboarding";
+import { AgentRegistry, type AgentCard, type AgentRegistryEntry, type AgentReputationRecord } from "./agent_registry";
+import { Mcp402Facade, type McpToolCall, type Mcp402PaymentGateResult } from "./mcp_402";
 /**
  * Conxian Market SDK Bridge — Unified Client Interface for Marketplace Services.
  *
@@ -125,6 +127,8 @@ export class ConxianMarketSDK {
   readonly marketAgnosticRouter: typeof MarketAgnosticRouter;
   readonly jobCardEscrowEngine: JobCardEscrowEngine;
   readonly x402EscrowGateway: X402EscrowGateway;
+  readonly agentRegistry: AgentRegistry;
+  readonly mcp402Facade: Mcp402Facade;
   readonly flags: FeatureFlags;
 
   private constructor(
@@ -146,6 +150,8 @@ export class ConxianMarketSDK {
     this.marketAgnosticRouter = MarketAgnosticRouter;
     this.jobCardEscrowEngine = new JobCardEscrowEngine(this.slaEngine);
     this.x402EscrowGateway = new X402EscrowGateway(this.jobCardEscrowEngine);
+    this.agentRegistry = new AgentRegistry();
+    this.mcp402Facade = new Mcp402Facade();
   }
 
   /** Connect to gateway and instantiate full Market SDK Bridge */
@@ -568,6 +574,35 @@ export class ConxianMarketSDK {
     return ClientInstallerEngine.runUnifiedInstallerCli(config, timestampIso);
   }
 
+  // ── Capability 14: ERC-8004 Agent Identity Registry & MCP-402 Tool Payments ──
+
+  registerAgent(card: AgentCard): AgentRegistryEntry {
+    return this.agentRegistry.register(card);
+  }
+
+  getAgent(agentId: string): AgentRegistryEntry | undefined {
+    return this.agentRegistry.get(agentId);
+  }
+
+  isAgentAuthorized(agentId: string, requiredTier: TrustTier): boolean {
+    return this.agentRegistry.isAuthorized(agentId, requiredTier);
+  }
+
+  updateAgentReputation(record: AgentReputationRecord): void {
+    this.agentRegistry.updateReputation(record);
+  }
+
+  createMcp402Demand(call: McpToolCall): X402PaymentDemand {
+    return this.mcp402Facade.demand(call);
+  }
+
+  authorizeMcp402ToolCall(
+    call: McpToolCall,
+    receipt: X402PaymentReceipt
+  ): Mcp402PaymentGateResult {
+    return this.mcp402Facade.authorize(call, receipt);
+  }
+
   // ── Capability Summary (All Modules Wired) ──
 
 
@@ -598,9 +633,9 @@ export class ConxianMarketSDK {
     }
 
     return {
-      coreCapabilities: 13,
+      coreCapabilities: 15,
       enclaveCapabilities: 16,
-      totalCapabilities: 33,
+      totalCapabilities: 35,
       activeRails: this.settlement.availableRails(Tier.Strict),
       activeTiers: this.flags.attestationAvailable
         ? [Tier.ObserverOnly, Tier.Expedient, Tier.Managed, Tier.Strict]
@@ -647,6 +682,8 @@ export class ConxianMarketSDK {
       slaPenaltyEngineEnabled: true,
       treasuryGovernanceEnabled: true,
       clientInstallerEnabled: true,
+      agentRegistryEnabled: true,
+      mcp402FacadeEnabled: true,
     };
   }
 
