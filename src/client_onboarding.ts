@@ -19,6 +19,8 @@ import {
   AssetConnectivityProbeResult,
   UnifiedCliInstallerRunResult,
   DomainRoutingCheckResult,
+  SlaExemptionReason,
+  SlaPolicyEvaluationResult,
 } from "./core_types";
 
 export class ClientInstallerEngine {
@@ -573,4 +575,54 @@ export class ClientInstallerEngine {
       timestampIso,
     };
   }
+  /**
+   * Session 69: Evaluates SLA Policy and Statutory Exemptions for B2B Client Onboarding.
+   * Enforces Open-Source No-SLA disclaimers for public/unpaid tiers, and bounds B2B SLAs
+   * strictly to signed commercial contracts with support windows and force majeure exemptions.
+   */
+  static evaluateSlaPolicyAndExemptions(
+    config: ClientOnboardingConfig,
+    isCommercialB2bContract: boolean = false,
+    activeExemptions: SlaExemptionReason[] = []
+  ): SlaPolicyEvaluationResult {
+    const timestampIso = new Date().toISOString();
+    const clientDid = config.clientDid || "did:conxian:unknown";
+
+    if (!isCommercialB2bContract) {
+      return {
+        clientDid,
+        isSlaCovered: false,
+        slaTier: "NO_SLA_OPEN_SOURCE",
+        openSourceDisclaimerActive: true,
+        ackWindowHours: 0,
+        patchWindowDays: 0,
+        exemptionsActive: activeExemptions,
+        policySummary: "Public/Open-Source tier: Provided strictly on a community-best-effort basis without legally binding SLA guarantees or financial uptime liabilities.",
+        timestampIso,
+      };
+    }
+
+    const isEnterprisePremium = config.targetTrustTier === TrustTier.Strict || config.targetTrustTier === TrustTier.Managed;
+    const slaTier = isEnterprisePremium ? "ENTERPRISE_PREMIUM" : "BUSINESS_HOURS_NBD";
+    const ackWindowHours = isEnterprisePremium ? 2 : 24;
+    const patchWindowDays = isEnterprisePremium ? 3 : 14;
+
+    let summary = `B2B ${slaTier} SLA active for ${clientDid}. Target Acknowledgement Window: ${ackWindowHours}h, Patch Window: ${patchWindowDays}d.`;
+    if (activeExemptions.length > 0) {
+      summary += ` Statutory exemptions active: [${activeExemptions.join(", ")}]. Underlying L1/TEE network outages excluded from liability.`;
+    }
+
+    return {
+      clientDid,
+      isSlaCovered: true,
+      slaTier,
+      openSourceDisclaimerActive: false,
+      ackWindowHours,
+      patchWindowDays,
+      exemptionsActive: activeExemptions,
+      policySummary: summary,
+      timestampIso,
+    };
+  }
+
 }
