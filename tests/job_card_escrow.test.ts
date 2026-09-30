@@ -204,6 +204,6 @@ describe("JobCardEscrowEngine (Session 54 Candidate #6 & Session 65 Candidate #1
 
     const summary = sdk.getCapabilitySummary();
     expect(summary.jobCardEscrowEngineEnabled).toBe(true);
-    expect(summary.coreCapabilities).toBe(13);
+    expect(summary.coreCapabilities).toBe(15);
   });
 });

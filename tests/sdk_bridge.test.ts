@@ -23,13 +23,15 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(33);
-    expect(summary.coreCapabilities).toBe(13);
+    expect(summary.totalCapabilities).toBe(35);
+    expect(summary.coreCapabilities).toBe(15);
     expect(summary.trustTierMiddlewareEnabled).toBe(true);
     expect(summary.bosYieldSplitterEnabled).toBe(true);
     expect(summary.marketAgnosticRouterEnabled).toBe(true);
     expect(summary.jobCardEscrowEngineEnabled).toBe(true);
     expect(summary.treasuryGovernanceEnabled).toBe(true);
+    expect(summary.agentRegistryEnabled).toBe(true);
+    expect(summary.mcp402FacadeEnabled).toBe(true);
   });
 
   it("executes trust tier pipeline directly via SDK bridge", async () => {
@@ -73,7 +75,7 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Int
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(33);
+    expect(summary.totalCapabilities).toBe(35);
     expect(summary.marketAgnosticRouterEnabled).toBe(true);
     expect(summary.jobCardEscrowEngineEnabled).toBe(true);
   });
@@ -374,5 +376,74 @@ describe("ConxianMarketSDK Client Onboarding Integration", () => {
 
     const summary = sdk.getCapabilitySummary();
     expect(summary.clientInstallerEnabled).toBe(true);
+  });
+});
+
+describe("ConxianMarketSDK Agent Identity & MCP-402 Integration", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("registers agent cards, validates trust tier authorization, and tracks reputation via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const card = {
+      agentId: "did:conxian:agent:sdk-70",
+      name: "SDK Agent 70",
+      providerDid: "did:conxian:provider:70",
+      capabilities: [{ name: "inference", version: "1.0" }],
+      endpoints: ["https://agent70.conxian.io/mcp"],
+      minimumTier: TrustTier.Managed,
+      issuedAt: Date.now(),
+    };
+
+    const entry = sdk.registerAgent(card);
+    expect(entry.cardDigest).toBeDefined();
+
+    expect(sdk.getAgent("did:conxian:agent:sdk-70")?.card.name).toBe("SDK Agent 70");
+    expect(sdk.isAgentAuthorized("did:conxian:agent:sdk-70", TrustTier.Managed)).toBe(true);
+    expect(sdk.isAgentAuthorized("did:conxian:agent:sdk-70", TrustTier.Strict)).toBe(false);
+
+    sdk.updateAgentReputation({
+      agentId: "did:conxian:agent:sdk-70",
+      cardDigest: entry.cardDigest,
+      tasksCompleted: 25,
+      slaComplianceBps: 9980,
+      disputesLost: 0,
+      updatedAt: Date.now(),
+    });
+
+    expect(sdk.getAgent("did:conxian:agent:sdk-70")?.reputation?.tasksCompleted).toBe(25);
+  });
+
+  it("creates MCP-402 demands and authorizes tool execution receipts via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const call = {
+      tool: "execute_analysis",
+      arguments: { dataset: "market_depth" },
+      job: {
+        id: "mcp-job-70",
+        title: "Market Depth Analysis",
+        description: "Analyze sBTC orderbook depth",
+        bountySat: 5_000n,
+        deadline: Date.now() + 3600000,
+      },
+      payerDid: "did:conxian:payer:sdk70",
+    };
+
+    const demand = sdk.createMcp402Demand(call);
+    expect(demand.resourceId).toBe("mcp-job-70");
+    expect(demand.amount).toBe("5000");
+
+    const validReceipt = {
+      demandId: "mcp-job-70",
+      transactionId: "tx-mcp-70",
+      amountSat: "5000",
+      paidAt: Date.now(),
+      payerDid: "did:conxian:payer:sdk70",
+    };
+
+    const auth = sdk.authorizeMcp402ToolCall(call, validReceipt);
+    expect(auth.authorized).toBe(true);
+    expect(sdk.mcp402Facade.isSettled("mcp-job-70")).toBe(true);
   });
 });
