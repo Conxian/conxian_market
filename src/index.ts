@@ -8,6 +8,8 @@
 
 export * from "./core_types";
 export { GatewayClient } from "./gateway_client";
+export { SettlementResultSchema, ProtocolFeeRecordSchema, M2MSettlementResponseSchema } from "./wire_contract";
+export type { ValidatedSettlementResult } from "./wire_contract";
 export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification";
 export type { AttestationCapabilities } from "./verification";
 export { SettlementOrchestrator } from "./settlement";
