@@ -363,6 +363,8 @@ export interface CapabilitySummary {
   slaPenaltyEngineEnabled?: boolean;
   treasuryGovernanceEnabled?: boolean;
   clientInstallerEnabled?: boolean;
+  agentRegistryEnabled?: boolean;
+  mcp402FacadeEnabled?: boolean;
 }
 
 // ── SLA Penalty & Escrow Clawback Types (Session 59) ──
