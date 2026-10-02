@@ -33,7 +33,11 @@ import {
 import {
   detectTrustTier as detectTier,
   calculateRailFee,
+  calculateDynamicFee,
+  calculateVolumeDecayedBps,
+  getRailDefaultFlatFloor,
   projectRevenue,
+  projectDynamicRevenueScenario,
 } from "./fee_calculator";
 import {
   TrustTier,
@@ -45,8 +49,13 @@ import {
   type JobCard,
   type JobCardStatus,
   type ProtocolFeeRecord as FeeResult,
+  type FeeOptions,
+  type DynamicFeeResult,
+  type VolumeDecayTier,
   type RevenueProjection,
+  type DynamicRevenueProjection,
   type RevenueScenario,
+  type DynamicRevenueScenario,
   type SettlementRequest,
   type SettlementResult,
   type CapabilitySummary,
@@ -209,6 +218,22 @@ export class ConxianMarketSDK {
 
   projectRevenue(scenario: RevenueScenario): RevenueProjection {
     return projectRevenue(scenario);
+  }
+
+  calculateDynamicFee(options: FeeOptions): DynamicFeeResult {
+    return calculateDynamicFee(options);
+  }
+
+  getVolumeDecayedBps(tier: VolumeDecayTier): number {
+    return calculateVolumeDecayedBps(tier);
+  }
+
+  getRailDefaultFlatFloor(rail: SettlementRail): bigint {
+    return getRailDefaultFlatFloor(rail);
+  }
+
+  projectDynamicRevenue(scenario: DynamicRevenueScenario): DynamicRevenueProjection {
+    return projectDynamicRevenueScenario(scenario);
   }
 
   // ── Capability 5: Settlement Orchestration & Non-Custodial Proof Verification ──

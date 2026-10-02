@@ -312,6 +312,54 @@ export interface RevenueProjection {
   pctOfTarget: number;
 }
 
+// ── Dynamic Fee Model Types (ADR-004) ──
+
+export type VolumeDecayTier = "TIER_1" | "TIER_2" | "TIER_3" | "TIER_4";
+
+export interface FeeOptions {
+  tier: TrustTier;
+  rail: SettlementRail;
+  amountSat: bigint;
+  volumeDecayTier?: VolumeDecayTier;
+  systemLoadFactor?: number;
+  enterpriseSubscriptionCap?: boolean;
+}
+
+export interface DynamicFeeResult {
+  tier: TrustTier;
+  rail: SettlementRail;
+  amountSat: bigint;
+  percentageFeeSat: bigint;
+  flatFloorSat: bigint;
+  effectiveFeeSat: bigint;
+  effectiveBps: number;
+  systemLoadFactor: number;
+  volumeDecayTier: VolumeDecayTier;
+  distribution: {
+    operationsSat: bigint;
+    foundersSat: bigint;
+    ecosystemSat: bigint;
+  };
+}
+
+export interface DynamicRevenueScenario {
+  name: string;
+  monthlyVolumeUsd: number;
+  btcPriceUsd: number;
+  averageTxnSat: number;
+  rail: SettlementRail;
+  volumeDecayTier: VolumeDecayTier;
+  systemLoadFactor: number;
+}
+
+export interface DynamicRevenueProjection {
+  scenario: string;
+  monthlyTxns: number;
+  averageFeeSat: number;
+  totalMonthlyFeeSat: bigint;
+  totalMonthlyFeeUsd: number;
+}
+
 // ── Feature Flags (P0-gated capabilities) ──
 
 export interface FeatureFlags {
