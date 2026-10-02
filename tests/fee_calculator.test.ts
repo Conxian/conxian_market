@@ -278,6 +278,36 @@ describe("ADR-004 dynamic fee model", () => {
       expect(ecosystemSat).toBe(400n); // 20% of 2000
     });
 
+    it("reports floor-dominance for enterprise-capped settlements and excludes observers", () => {
+      const report = generateDynamicFeeReport(
+        [
+          {
+            settlementId: "ent-01",
+            tier: TrustTier.Strict,
+            rail: SettlementRail.EvmErc8183,
+            amountSat: 10_000_000n,
+            volumeDecayTier: "TIER_1",
+            enterpriseSubscriptionCap: true,
+            timestamp: 1000,
+            builderId: "builder-ent",
+          },
+          {
+            settlementId: "obs-01",
+            tier: TrustTier.ObserverOnly,
+            rail: SettlementRail.Lightning,
+            amountSat: 100n,
+            timestamp: 1001,
+            builderId: "builder-obs",
+          },
+        ],
+        1000,
+        2000
+      );
+      expect(report.totalSettlements).toBe(1);
+      expect(report.floorDominatedSettlements).toBe(1);
+      expect(report.percentageDominatedSettlements).toBe(0);
+    });
+
     it("rejects ObserverOnly tier", () => {
       expect(() =>
         calculateDynamicFee({

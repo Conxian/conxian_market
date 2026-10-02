@@ -67,6 +67,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Temporal files
 *.patch
 *.diff
