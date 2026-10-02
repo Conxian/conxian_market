@@ -549,6 +549,7 @@ export function generateDynamicFeeReport(
   let ecoSat = 0n;
   let floorDominatedSettlements = 0;
   let percentageDominatedSettlements = 0;
+  let settlementCount = 0;
 
   const byRailMap = new Map<
     SettlementRail,
@@ -563,6 +564,7 @@ export function generateDynamicFeeReport(
 
   for (const ev of events) {
     if (ev.tier === Tier.ObserverOnly) continue;
+    settlementCount += 1;
 
     const res = calculateDynamicFee({
       tier: ev.tier,
@@ -579,7 +581,9 @@ export function generateDynamicFeeReport(
     foundersSat += res.distribution.foundersSat;
     ecoSat += res.distribution.ecosystemSat;
 
-    const isFloor = res.flatFloorSat >= res.percentageFeeSat;
+    const isFloor = ev.enterpriseSubscriptionCap
+      ? true
+      : res.flatFloorSat >= res.percentageFeeSat;
     if (isFloor) {
       floorDominatedSettlements += 1;
     } else {
@@ -629,7 +633,7 @@ export function generateDynamicFeeReport(
   return {
     periodStart,
     periodEnd,
-    totalSettlements: events.length,
+    totalSettlements: settlementCount,
     totalVolumeSat,
     totalFeeSat,
     floorDominatedSettlements,

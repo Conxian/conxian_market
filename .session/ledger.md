@@ -8,8 +8,8 @@
 ## 0. Baseline State & SHA Record
 
 - **UTC Timestamp:** 2026-10-02T11:30:00Z
-- **Active Branch:** jules-9766355496646373793-579ddfee
-- **HEAD SHA:** `c015e2c8be84fbdbdcd2668928004cfb1de36052`
+- **Active Branch:** feat/adr004-dynamic-fee-reporting-9766355496646373793
+- **HEAD SHA:** `302ec2fc92b6a1555cc827bb9c38f8577f325e93`
 - **Submodule Policy & Disposition:**
   - Policy: Pin-to-parent across all submodules.
   - Submodules: No submodules configured in this repository scope. Zero drift confirmed.
