@@ -1,13 +1,13 @@
 # Global ownership rules for the Conxian Marketplace codebase
 
 # All files by default are owned by the Conxian Core Developers
-*       @Conxian/core-devs
+*       @Conxian/conxian-admin
 
 # Documentation is owned by the Technical Writers and Community Managers
-docs/   @Conxian/tech-writers @Conxian/community-leads
+docs/   @Conxian/conxian-admin @Conxian/conxian-admin
 
 # Licensing and governance documents
-LICENSE @Conxian/legal-ops @Conxian/core-devs
-SECURITY.md @Conxian/security-team @Conxian/core-devs
-CONTRIBUTING.md @Conxian/community-leads @Conxian/core-devs
-CODEOWNERS @Conxian/core-devs
+LICENSE @Conxian/conxian-admin @Conxian/conxian-admin
+SECURITY.md @Conxian/conxian-admin @Conxian/conxian-admin
+CONTRIBUTING.md @Conxian/conxian-admin @Conxian/conxian-admin
+CODEOWNERS @Conxian/conxian-admin
