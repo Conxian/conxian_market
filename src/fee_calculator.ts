@@ -403,6 +403,65 @@ export function calculateVolumeDecayedBps(tier: VolumeDecayTier): number {
   return Math.max(MIN_PERCENTAGE_FLOOR_BPS, VOLUME_DECAY_BPS[tier]);
 }
 
+/** 30-day settlement volume thresholds (sats) that gate entry into each decay tier. */
+export const VOLUME_TIER_THRESHOLDS_SAT: readonly bigint[] = [
+  0n,              // TIER_1 entry (always eligible)
+  100_000_000n,    // TIER_2 entry (~1 BTC-equivalent volume)
+  1_000_000_000n,  // TIER_3 entry (~10 BTC)
+  10_000_000_000n, // TIER_4 entry (~100 BTC)
+];
+
+/** Hysteresis band (±5%) applied to tier boundaries to damp oscillation. */
+export const TIER_HYSTERESIS_BPS = 500;
+
+/**
+ * Select a volume-decay tier from 30-day volume with hysteresis.
+ *
+ * A client oscillating near a tier boundary keeps its previous tier until the
+ * volume clears the boundary by the hysteresis band (moving up) or falls below
+ * the boundary by the band (moving down). Movement is also step-wise (at most
+ * one tier per re-evaluation) so rates cannot jump across multiple tiers.
+ */
+export function selectVolumeDecayTier(
+  volumeSat: bigint,
+  previousTier: VolumeDecayTier = "TIER_1"
+): VolumeDecayTier {
+  const order: readonly VolumeDecayTier[] = ["TIER_1", "TIER_2", "TIER_3", "TIER_4"];
+  const prevIndex = order.indexOf(previousTier);
+
+  let naturalIndex = 0;
+  for (let i = 0; i < order.length; i++) {
+    if (volumeSat >= VOLUME_TIER_THRESHOLDS_SAT[i]) naturalIndex = i;
+  }
+
+  if (naturalIndex === prevIndex) return previousTier;
+
+  const boundary = VOLUME_TIER_THRESHOLDS_SAT[Math.max(naturalIndex, prevIndex)];
+  const band = (boundary * BigInt(TIER_HYSTERESIS_BPS)) / 10000n;
+
+  // Moving up requires clearing the boundary plus the hysteresis band; moving
+  // down requires dropping below the boundary minus the band.
+  if (naturalIndex > prevIndex) {
+    if (volumeSat < boundary + band) return previousTier;
+  } else if (volumeSat > boundary - band) {
+    return previousTier;
+  }
+
+  // Step-wise movement: at most one tier per re-evaluation.
+  if (naturalIndex > prevIndex + 1) return order[prevIndex + 1];
+  if (naturalIndex < prevIndex - 1) return order[prevIndex - 1];
+  return order[naturalIndex];
+}
+
+/** Re-derive a rail flat floor from measured per-rail settlement cost (interchange-plus). */
+export function calibrateRailFloorFromMeasuredCost(
+  measuredCostSat: bigint,
+  marginBps: bigint
+): bigint {
+  return railFloorFromCost(measuredCostSat, marginBps);
+}
+
+
 /** Map a mempool fee percentile (0–100) to a system-load factor (1.0–3.0). */
 export function loadFactorFromMempoolPercentile(percentile: number): number {
   const p = Math.min(100, Math.max(0, percentile));
@@ -549,6 +608,7 @@ export function generateDynamicFeeReport(
   let ecoSat = 0n;
   let floorDominatedSettlements = 0;
   let percentageDominatedSettlements = 0;
+  let settlementCount = 0;
 
   const byRailMap = new Map<
     SettlementRail,
@@ -563,6 +623,7 @@ export function generateDynamicFeeReport(
 
   for (const ev of events) {
     if (ev.tier === Tier.ObserverOnly) continue;
+    settlementCount += 1;
 
     const res = calculateDynamicFee({
       tier: ev.tier,
@@ -579,7 +640,9 @@ export function generateDynamicFeeReport(
     foundersSat += res.distribution.foundersSat;
     ecoSat += res.distribution.ecosystemSat;
 
-    const isFloor = res.flatFloorSat >= res.percentageFeeSat;
+    const isFloor = ev.enterpriseSubscriptionCap
+      ? true
+      : res.flatFloorSat >= res.percentageFeeSat;
     if (isFloor) {
       floorDominatedSettlements += 1;
     } else {
@@ -629,7 +692,7 @@ export function generateDynamicFeeReport(
   return {
     periodStart,
     periodEnd,
-    totalSettlements: events.length,
+    totalSettlements: settlementCount,
     totalVolumeSat,
     totalFeeSat,
     floorDominatedSettlements,
