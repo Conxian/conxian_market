@@ -5,6 +5,18 @@ All notable changes to the Conxian Market SDK (`@conxian/market-sdk`) project wi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-10-02
+
+### Added
+- **Dynamic Hybrid Fee Floor & System Load Self-Adjustment Engine (ADR-004)**: Implemented `calculateDynamicFee`, `calculateVolumeDecayedBps`, `getRailDefaultFlatFloor`, and `projectDynamicRevenueScenario` in `src/fee_calculator.ts`.
+- **Zero-Value Trap Protection**: Enforced rail-specific flat satoshi floors (`Lightning`: 10 sats, `Statechain`/`Fedimint`: 25 sats, `RGB`: 20 sats, `sBTC`/`AlexStacks`/`Babylon`: 50 sats, `EVM`: 100 sats) to protect protocol nodes against micro-payment payload resource exhaustion.
+- **Logarithmic 30-Day Volume Decay Curve**: Automated base fee rate decay ($200\text{ bps} \to 150\text{ bps} \to 75\text{ bps} \to 25\text{ bps}$) for high-velocity M2M autonomous agent transactions while preserving a 10 bps minimum percentage floor.
+- **Dynamic System Load Scaling**: Integrated `systemLoadFactor` ($1.0\times - 3.0\times$) to dynamically adjust settlement fees under peak network congestion and mempool load.
+- **Enterprise Dedicated Pipe Subscription Capping**: Supported fee capping for enterprise subscription clients down to flat satoshi execution floors.
+- **SDK Bridge Integration**: Exposed dynamic fee calculator and revenue projection tools on `ConxianMarketSDK` (`src/sdk_bridge.ts`).
+- **Research & Architectural Specifications**: Created `docs/research/SESSION_71_RESEARCH_EXPANSION_AND_GAP_MATRIX.md` and `docs/adr/ADR_004_DYNAMIC_FEE_FLOOR_MODEL.md`.
+- **Unit Test Coverage**: Added comprehensive unit tests in `tests/fee_calculator.test.ts` and `tests/sdk_bridge.test.ts` verifying 164 passing tests across the repository.
+
 ## [0.2.2] - 2026-09-19
 
 ### Added
