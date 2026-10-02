@@ -359,17 +359,28 @@ export function projectRevenue(scenario: RevenueScenario): RevenueProjection {
 
 // ── ADR-004: Dynamic Hybrid Fee Floor & System Load Self-Adjustment ──
 
-/** Rail-specific flat satoshi floors protecting nodes against zero-value micro-payments. */
-export const RAIL_FLAT_FLOOR_SAT: Record<SettlementRail, bigint> = {
-  [Rail.Lightning]: 10n,
-  [Rail.Statechain]: 25n,
-  [Rail.Fedimint]: 25n,
-  [Rail.Rgb]: 20n,
-  [Rail.Sbtc]: 50n,
-  [Rail.AlexStacks]: 50n,
-  [Rail.Babylon]: 50n,
-  [Rail.EvmErc8183]: 100n,
+/** Margin over measured rail cost (bps) that sets the flat floor — interchange-plus. */
+export const RAIL_FLOOR_MARGIN_BPS = 2500; // +25%
+
+/**
+ * First-principles per-rail settlement cost estimate (sats) — v0 cost model.
+ * Replace with measured cost when per-rail telemetry lands (G8 calibration).
+ */
+export const RAIL_COST_ESTIMATE_SAT: Record<SettlementRail, bigint> = {
+  [Rail.Lightning]: 8n,
+  [Rail.Statechain]: 20n,
+  [Rail.Fedimint]: 20n,
+  [Rail.Rgb]: 16n,
+  [Rail.Sbtc]: 40n,
+  [Rail.AlexStacks]: 40n,
+  [Rail.Babylon]: 40n,
+  [Rail.EvmErc8183]: 80n,
 };
+
+/** Derive a flat floor from cost + margin: `cost × (1 + margin_bps / 10_000)`. */
+export function railFloorFromCost(costSat: bigint, marginBps: bigint): bigint {
+  return (costSat * (10000n + marginBps)) / 10000n;
+}
 
 /** Logarithmic 30-day volume decay tiers (basis points). */
 export const VOLUME_DECAY_BPS: Record<VolumeDecayTier, number> = {
@@ -382,14 +393,22 @@ export const VOLUME_DECAY_BPS: Record<VolumeDecayTier, number> = {
 /** Minimum percentage fee floor (basis points). */
 export const MIN_PERCENTAGE_FLOOR_BPS = 10;
 
-/** Default flat satoshi floor for a settlement rail. */
+/** Default flat satoshi floor for a settlement rail (cost + margin). */
 export function getRailDefaultFlatFloor(rail: SettlementRail): bigint {
-  return RAIL_FLAT_FLOOR_SAT[rail];
+  return railFloorFromCost(RAIL_COST_ESTIMATE_SAT[rail], BigInt(RAIL_FLOOR_MARGIN_BPS));
 }
 
 /** Decayed basis-point rate for a volume tier, never below the percentage floor. */
 export function calculateVolumeDecayedBps(tier: VolumeDecayTier): number {
   return Math.max(MIN_PERCENTAGE_FLOOR_BPS, VOLUME_DECAY_BPS[tier]);
+}
+
+/** Map a mempool fee percentile (0–100) to a system-load factor (1.0–3.0). */
+export function loadFactorFromMempoolPercentile(percentile: number): number {
+  const p = Math.min(100, Math.max(0, percentile));
+  if (p < 50) return 1.0;
+  if (p < 90) return 1.0 + (p - 50) / 40;
+  return 2.0 + (p - 90) / 10;
 }
 
 function clamp(value: number, min: number, max: number): number {
