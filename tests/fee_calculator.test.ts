@@ -4,6 +4,8 @@ import {
   calculateDynamicFee,
   calculateVolumeDecayedBps,
   getRailDefaultFlatFloor,
+  railFloorFromCost,
+  loadFactorFromMempoolPercentile,
   projectDynamicRevenueScenario,
   detectTrustTier,
   generateFeeReport,
@@ -161,6 +163,26 @@ describe("ADR-004 dynamic fee model", () => {
       expect(getRailDefaultFlatFloor(SettlementRail.AlexStacks)).toBe(50n);
       expect(getRailDefaultFlatFloor(SettlementRail.Babylon)).toBe(50n);
       expect(getRailDefaultFlatFloor(SettlementRail.EvmErc8183)).toBe(100n);
+    });
+  });
+
+  describe("railFloorFromCost & cost model", () => {
+    it("derives floors as cost + margin (interchange-plus)", () => {
+      expect(railFloorFromCost(8n, 2500n)).toBe(10n);
+      expect(railFloorFromCost(80n, 2500n)).toBe(100n);
+      expect(railFloorFromCost(8n, 0n)).toBe(8n);
+    });
+  });
+
+  describe("loadFactorFromMempoolPercentile", () => {
+    it("maps percentile to a 1.0-3.0 load factor", () => {
+      expect(loadFactorFromMempoolPercentile(0)).toBe(1.0);
+      expect(loadFactorFromMempoolPercentile(50)).toBe(1.0);
+      expect(loadFactorFromMempoolPercentile(70)).toBeCloseTo(1.5);
+      expect(loadFactorFromMempoolPercentile(90)).toBeCloseTo(2.0);
+      expect(loadFactorFromMempoolPercentile(100)).toBe(3.0);
+      expect(loadFactorFromMempoolPercentile(-5)).toBe(1.0);
+      expect(loadFactorFromMempoolPercentile(150)).toBe(3.0);
     });
   });
 
