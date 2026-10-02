@@ -170,4 +170,4 @@ The Conxian Market SDK serves as the value, settlement, SLA enforcement, and tru
 - [x] Implement `calculateDynamicFee`, `calculateVolumeDecayedBps`, `getRailDefaultFlatFloor`, and `projectDynamicRevenueScenario` in `src/fee_calculator.ts`.
 - [x] Add core types (`FeeOptions`, `VolumeDecayTier`, `DynamicFeeResult`, `DynamicRevenueScenario`, `DynamicRevenueProjection`) in `src/core_types.ts`.
 - [x] Wire `calculateDynamicFee`, `getVolumeDecayedBps`, `getRailDefaultFlatFloor`, and `projectDynamicRevenue` onto `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`).
-- [x] Expand unit test suite in `tests/fee_calculator.test.ts` and `tests/sdk_bridge.test.ts`, verifying 164 passing tests across 19 test files (`npm test`).
+- [x] Expand unit test suite in `tests/fee_calculator.test.ts` and `tests/sdk_bridge.test.ts`, verifying 166 passing tests across 19 test files (`npm test`).

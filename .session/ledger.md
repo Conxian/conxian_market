@@ -40,7 +40,7 @@
   - `docs/research/SESSION_71_RESEARCH_EXPANSION_AND_GAP_MATRIX.md` & `docs/adr/ADR_004_DYNAMIC_FEE_FLOOR_MODEL.md`: Documented research expansion, cross-industry benchmarks, and authoritative decision.
   - `tests/fee_calculator.test.ts` & `tests/sdk_bridge.test.ts`: Added unit tests verifying micro-payment dust protection, volume decay curves, load multipliers, enterprise subscription caps, and SDK bridge wiring.
 - **Verification Log:**
-  - `npm test`: 19 test files passed (164/164 tests passing)
+  - `npm test`: 19 test files passed (166/166 tests passing)
   - `npm run typecheck`: clean
   - `npm run build`: clean
 
@@ -48,4 +48,4 @@
 
 ## 3. Next Session's First Action
 
-Run `npm test` and `npm run typecheck` to confirm zero regression across all 164 test cases.
+Run `npm test` and `npm run typecheck` to confirm zero regression across all 166 test cases.

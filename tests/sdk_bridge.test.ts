@@ -447,3 +447,33 @@ describe("ConxianMarketSDK Agent Identity & MCP-402 Integration", () => {
     expect(sdk.mcp402Facade.isSettled("mcp-job-70")).toBe(true);
   });
 });
+
+describe("ConxianMarketSDK Bridge - ADR-004 dynamic fee wiring", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("exposes the dynamic fee calculator through the SDK", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    expect(sdk.getRailDefaultFlatFloor(SettlementRail.Lightning)).toBe(10n);
+    expect(sdk.getVolumeDecayedBps("TIER_4")).toBe(25);
+
+    const fee = sdk.calculateDynamicFee({
+      tier: TrustTier.Expedient,
+      rail: SettlementRail.Lightning,
+      amountSat: 50n,
+      volumeDecayTier: "TIER_1",
+    });
+    expect(fee.effectiveFeeSat).toBe(10n);
+
+    const projection = sdk.projectDynamicRevenue({
+      name: "wire",
+      monthlyVolumeUsd: 100_000,
+      btcPriceUsd: 100_000,
+      averageTxnSat: 1000,
+      rail: SettlementRail.Lightning,
+      volumeDecayTier: "TIER_1",
+      systemLoadFactor: 1.0,
+    });
+    expect(projection.totalMonthlyFeeUsd).toBe(2_000);
+  });
+});

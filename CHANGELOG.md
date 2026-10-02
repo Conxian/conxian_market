@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enterprise Dedicated Pipe Subscription Capping**: Supported fee capping for enterprise subscription clients down to flat satoshi execution floors.
 - **SDK Bridge Integration**: Exposed dynamic fee calculator and revenue projection tools on `ConxianMarketSDK` (`src/sdk_bridge.ts`).
 - **Research & Architectural Specifications**: Created `docs/research/SESSION_71_RESEARCH_EXPANSION_AND_GAP_MATRIX.md` and `docs/adr/ADR_004_DYNAMIC_FEE_FLOOR_MODEL.md`.
-- **Unit Test Coverage**: Added comprehensive unit tests in `tests/fee_calculator.test.ts` and `tests/sdk_bridge.test.ts` verifying 164 passing tests across the repository.
+- **Unit Test Coverage**: Added comprehensive unit tests in `tests/fee_calculator.test.ts` and `tests/sdk_bridge.test.ts` verifying 166 passing tests across the repository.
 
 ## [0.2.2] - 2026-09-19
 
