@@ -475,5 +475,28 @@ describe("ConxianMarketSDK Bridge - ADR-004 dynamic fee wiring", () => {
       systemLoadFactor: 1.0,
     });
     expect(projection.totalMonthlyFeeUsd).toBe(2_000);
+
+    const loadFactor = sdk.resolveSystemLoadFromMempool({
+      sample: { fastestFeeSatVb: 50, halfHourFeeSatVb: 30, hourFeeSatVb: 10, minimumFeeSatVb: 1, percentile: 75 }
+    });
+    expect(loadFactor).toBe(1.625);
+
+    const report = sdk.generateDynamicFeeReport(
+      [
+        {
+          settlementId: "sdk-set-01",
+          tier: TrustTier.Expedient,
+          rail: SettlementRail.Lightning,
+          amountSat: 50n,
+          timestamp: 1000,
+          builderId: "builder-1",
+        }
+      ],
+      1000,
+      2000
+    );
+    expect(report.totalSettlements).toBe(1);
+    expect(report.floorDominatedSettlements).toBe(1);
+    expect(report.totalFeeSat).toBe(10n);
   });
 });

@@ -687,3 +687,58 @@ export interface SlaPolicyEvaluationResult {
   policySummary: string;
   timestampIso: string;
 }
+
+// ── Session 72: ADR-004 Dynamic Fee Floor Reporting & Mempool Oracle Types ──
+
+export interface DynamicSettlementEvent {
+  settlementId: string;
+  tier: TrustTier;
+  rail: SettlementRail;
+  amountSat: bigint;
+  volumeDecayTier?: VolumeDecayTier;
+  systemLoadFactor?: number;
+  enterpriseSubscriptionCap?: boolean;
+  timestamp: number;
+  builderId: string;
+}
+
+export interface DynamicFeeBreakdownByRail {
+  rail: SettlementRail;
+  count: number;
+  totalAmountSat: bigint;
+  totalFeeSat: bigint;
+  floorDominatedCount: number;
+  percentageDominatedCount: number;
+  avgEffectiveBps: number;
+}
+
+export interface DynamicFeeReport {
+  periodStart: number;
+  periodEnd: number;
+  totalSettlements: number;
+  totalVolumeSat: bigint;
+  totalFeeSat: bigint;
+  floorDominatedSettlements: number;
+  percentageDominatedSettlements: number;
+  effectiveFeeBps: number;
+  distribution: {
+    operationsSat: bigint;
+    foundersSat: bigint;
+    ecosystemSat: bigint;
+  };
+  byRail: Record<string, DynamicFeeBreakdownByRail>;
+}
+
+export interface MempoolFeeSample {
+  fastestFeeSatVb: number;
+  halfHourFeeSatVb: number;
+  hourFeeSatVb: number;
+  minimumFeeSatVb: number;
+  percentile?: number;
+}
+
+export interface LoadOracleAdapterConfig {
+  sample: MempoolFeeSample;
+  baselineFastestFeeSatVb?: number;
+  maxFastestFeeSatVb?: number;
+}
