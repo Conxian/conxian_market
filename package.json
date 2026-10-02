@@ -1,6 +1,6 @@
 {
   "name": "@conxian/market-sdk",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "Conxian Market SDK — full integration bridge: fee calculator, gateway client, verification, settlement, and SDK capability wiring for all 27 enclave-sdk + lib-conxian-core modules.",
   "license": "UNLICENSED",
   "private": true,
