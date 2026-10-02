@@ -9,6 +9,8 @@ import {
   projectDynamicRevenueScenario,
   resolveSystemLoadFromMempool,
   generateDynamicFeeReport,
+  selectVolumeDecayTier,
+  calibrateRailFloorFromMeasuredCost,
   detectTrustTier,
   generateFeeReport,
   projectRevenue,
@@ -194,6 +196,37 @@ describe("ADR-004 dynamic fee model", () => {
       expect(calculateVolumeDecayedBps("TIER_2")).toBe(150);
       expect(calculateVolumeDecayedBps("TIER_3")).toBe(75);
       expect(calculateVolumeDecayedBps("TIER_4")).toBe(25);
+    });
+  });
+
+  describe("selectVolumeDecayTier (hysteresis)", () => {
+    it("selects the natural tier when far past a boundary", () => {
+      expect(selectVolumeDecayTier(50_000_000n, "TIER_1")).toBe("TIER_1");
+      expect(selectVolumeDecayTier(200_000_000n, "TIER_1")).toBe("TIER_2");
+      expect(selectVolumeDecayTier(11_000_000_000n, "TIER_1")).toBe("TIER_2");
+    });
+
+    it("damps oscillation just above a boundary (hysteresis band)", () => {
+      // 100_000_000 (TIER_2 entry) + 5% band = 105_000_000.
+      expect(selectVolumeDecayTier(102_000_000n, "TIER_1")).toBe("TIER_1");
+      expect(selectVolumeDecayTier(110_000_000n, "TIER_1")).toBe("TIER_2");
+    });
+
+    it("keeps the previous tier just below a boundary when moving down", () => {
+      // Below TIER_2 entry minus band: 100_000_000 - 5% = 95_000_000.
+      expect(selectVolumeDecayTier(97_000_000n, "TIER_2")).toBe("TIER_2");
+      expect(selectVolumeDecayTier(90_000_000n, "TIER_2")).toBe("TIER_1");
+    });
+
+    it("moves step-wise (at most one tier per re-evaluation)", () => {
+      expect(selectVolumeDecayTier(50_000_000_000n, "TIER_1")).toBe("TIER_2");
+    });
+  });
+
+  describe("calibrateRailFloorFromMeasuredCost", () => {
+    it("derives floor as measured cost + margin (interchange-plus)", () => {
+      expect(calibrateRailFloorFromMeasuredCost(40n, 250n)).toBe(41n);
+      expect(calibrateRailFloorFromMeasuredCost(80n, 250n)).toBe(82n);
     });
   });
 

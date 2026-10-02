@@ -153,13 +153,17 @@ export type {
   SlaPolicyEvaluationResult,
 } from "./core_types";
 
-// Session 72: Export ADR-004 Dynamic Fee Floor Report & Mempool Load Oracle Types & Functions
+// Session 72/73: Export ADR-004 Dynamic Fee Floor Report & Mempool Load Oracle Types & Functions
 export {
   generateDynamicFeeReport,
   resolveSystemLoadFromMempool,
   loadFactorFromMempoolPercentile,
   getRailDefaultFlatFloor,
   calculateVolumeDecayedBps,
+  selectVolumeDecayTier,
+  calibrateRailFloorFromMeasuredCost,
+  VOLUME_TIER_THRESHOLDS_SAT,
+  TIER_HYSTERESIS_BPS,
   calculateDynamicFee,
 } from "./fee_calculator";
 export type {
