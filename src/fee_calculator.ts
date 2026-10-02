@@ -19,6 +19,10 @@
 
 import type {
   AttestationCertificate,
+  DynamicFeeResult,
+  DynamicRevenueProjection,
+  DynamicRevenueScenario,
+  FeeOptions,
   FeatureFlags,
   ProtocolFeeRecord,
   ProtocolFeeReport,
@@ -28,6 +32,7 @@ import type {
   SettlementRail,
   TierFeeBreakdown,
   TrustTier,
+  VolumeDecayTier,
 } from "./core_types";
 import {
   DEFAULT_FEATURE_FLAGS,
@@ -349,5 +354,137 @@ export function projectRevenue(scenario: RevenueScenario): RevenueProjection {
     },
     totalMonthlyUsd,
     pctOfTarget,
+  };
+}
+
+// ── ADR-004: Dynamic Hybrid Fee Floor & System Load Self-Adjustment ──
+
+/** Rail-specific flat satoshi floors protecting nodes against zero-value micro-payments. */
+export const RAIL_FLAT_FLOOR_SAT: Record<SettlementRail, bigint> = {
+  [Rail.Lightning]: 10n,
+  [Rail.Statechain]: 25n,
+  [Rail.Fedimint]: 25n,
+  [Rail.Rgb]: 20n,
+  [Rail.Sbtc]: 50n,
+  [Rail.AlexStacks]: 50n,
+  [Rail.Babylon]: 50n,
+  [Rail.EvmErc8183]: 100n,
+};
+
+/** Logarithmic 30-day volume decay tiers (basis points). */
+export const VOLUME_DECAY_BPS: Record<VolumeDecayTier, number> = {
+  TIER_1: 200, // 2.00% — launch / low-volume
+  TIER_2: 150, // 1.50%
+  TIER_3: 75,  // 0.75%
+  TIER_4: 25,  // 0.25% — high-velocity M2M
+};
+
+/** Minimum percentage fee floor (basis points). */
+export const MIN_PERCENTAGE_FLOOR_BPS = 10;
+
+/** Default flat satoshi floor for a settlement rail. */
+export function getRailDefaultFlatFloor(rail: SettlementRail): bigint {
+  return RAIL_FLAT_FLOOR_SAT[rail];
+}
+
+/** Decayed basis-point rate for a volume tier, never below the percentage floor. */
+export function calculateVolumeDecayedBps(tier: VolumeDecayTier): number {
+  return Math.max(MIN_PERCENTAGE_FLOOR_BPS, VOLUME_DECAY_BPS[tier]);
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+/**
+ * Calculate a dynamic settlement fee.
+ *
+ * effective_fee_sat = max(percentage_fee_sat, flat_floor_sat) * system_load_factor
+ *
+ * where percentage_fee_sat = amount_sat * decayed_bps / 10_000. The enterprise
+ * subscription cap replaces the percentage component with the flat floor, so
+ * high-value enterprise settlements never exceed the rail floor.
+ */
+export function calculateDynamicFee(options: FeeOptions): DynamicFeeResult {
+  const {
+    tier,
+    rail,
+    amountSat,
+    volumeDecayTier = "TIER_1",
+    systemLoadFactor = 1.0,
+    enterpriseSubscriptionCap = false,
+  } = options;
+
+  if (tier === Tier.ObserverOnly) {
+    throw new Error("Settlement disabled for ObserverOnly tier. Upgrade attestation.");
+  }
+
+  const loadFactor = clamp(systemLoadFactor, 1.0, 3.0);
+  const decayBps = calculateVolumeDecayedBps(volumeDecayTier);
+  const flatFloorSat = getRailDefaultFlatFloor(rail);
+
+  const percentageFeeSat = (amountSat * BigInt(decayBps)) / 10000n;
+
+  const baseFeeSat = enterpriseSubscriptionCap
+    ? flatFloorSat
+    : percentageFeeSat > flatFloorSat
+      ? percentageFeeSat
+      : flatFloorSat;
+
+  const loadScaledSat = (baseFeeSat * BigInt(Math.round(loadFactor * 100))) / 100n;
+
+  const operationsSat = (loadScaledSat * 50n) / 100n;
+  const foundersSat = (loadScaledSat * 30n) / 100n;
+  const ecosystemSat = loadScaledSat - operationsSat - foundersSat;
+
+  const effectiveBps =
+    amountSat > 0n ? Number((loadScaledSat * 10000n) / amountSat) : decayBps;
+
+  return {
+    tier,
+    rail,
+    amountSat,
+    percentageFeeSat,
+    flatFloorSat,
+    effectiveFeeSat: loadScaledSat,
+    effectiveBps,
+    systemLoadFactor: loadFactor,
+    volumeDecayTier,
+    distribution: {
+      operationsSat,
+      foundersSat,
+      ecosystemSat,
+    },
+  };
+}
+
+/**
+ * Project dynamic-fee revenue for a monthly volume scenario.
+ */
+export function projectDynamicRevenueScenario(
+  scenario: DynamicRevenueScenario,
+): DynamicRevenueProjection {
+  const totalSats = (scenario.monthlyVolumeUsd * 1e8) / scenario.btcPriceUsd;
+  const monthlyTxns =
+    scenario.averageTxnSat > 0 ? Math.floor(totalSats / scenario.averageTxnSat) : 0;
+
+  const avgFee = calculateDynamicFee({
+    tier: Tier.Expedient,
+    rail: scenario.rail,
+    amountSat: BigInt(scenario.averageTxnSat),
+    volumeDecayTier: scenario.volumeDecayTier,
+    systemLoadFactor: scenario.systemLoadFactor,
+  });
+
+  const totalMonthlyFeeSat = BigInt(monthlyTxns) * avgFee.effectiveFeeSat;
+  const totalMonthlyFeeUsd =
+    Math.round(((Number(totalMonthlyFeeSat) * scenario.btcPriceUsd) / 1e8) * 100) / 100;
+
+  return {
+    scenario: scenario.name,
+    monthlyTxns,
+    averageFeeSat: Number(avgFee.effectiveFeeSat),
+    totalMonthlyFeeSat,
+    totalMonthlyFeeUsd,
   };
 }

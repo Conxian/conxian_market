@@ -1,6 +1,6 @@
 # Conxian Ecosystem & Market SDK Roadmap
 
-> **Current Session:** Session 69
+> **Current Session:** Session 71
 > **Strategic Directive:** M2M Trust Layer Research Expansion, Project Alignment & Implementation
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
 
@@ -155,9 +155,19 @@ The Conxian Market SDK serves as the value, settlement, SLA enforcement, and tru
 - [x] Add unit tests in `tests/client_onboarding_sla_policy.test.ts`, verifying 132 passing tests (`npm test`).
 - [x] Author research expansion document `docs/research/SESSION_69_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`.
 
-### Session 70 — ERC-8004 Agent Identity & MCP-402 Tool Payment SDK Integration (CURRENT)
+### Session 70 — ERC-8004 Agent Identity & MCP-402 Tool Payment SDK Integration
 - [x] Execute session initialization and SHA baseline check (`0962e90`, 138 test cases passing).
 - [x] System reconnaissance and gap analysis (`docs/research/SESSION_70_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
 - [x] Wire `AgentRegistry` and `Mcp402Facade` into `ConxianMarketSDK` in `src/sdk_bridge.ts` and update capability metrics in `src/core_types.ts`.
 - [x] Expose `registerAgent`, `getAgent`, `isAgentAuthorized`, `updateAgentReputation`, `createMcp402Demand`, and `authorizeMcp402ToolCall` on `ConxianMarketSDK`.
 - [x] Add unit tests in `tests/sdk_bridge.test.ts` verifying 140 passing tests across 17 test files (`npm test`).
+
+
+### Session 71 — Dynamic Hybrid Fee Floor & System Load Self-Adjustment Model (CURRENT)
+- [x] Execute session initialization and SHA baseline check (140 test cases passing).
+- [x] System reconnaissance, cross-industry fee research, and gap analysis (`docs/research/SESSION_71_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+- [x] Author ADR-004 (`docs/adr/ADR_004_DYNAMIC_FEE_FLOOR_MODEL.md`) establishing hybrid satoshi floors, 30-day volume decay curves, dynamic system load multipliers, and enterprise subscription caps.
+- [x] Implement `calculateDynamicFee`, `calculateVolumeDecayedBps`, `getRailDefaultFlatFloor`, and `projectDynamicRevenueScenario` in `src/fee_calculator.ts`.
+- [x] Add core types (`FeeOptions`, `VolumeDecayTier`, `DynamicFeeResult`, `DynamicRevenueScenario`, `DynamicRevenueProjection`) in `src/core_types.ts`.
+- [x] Wire `calculateDynamicFee`, `getVolumeDecayedBps`, `getRailDefaultFlatFloor`, and `projectDynamicRevenue` onto `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`).
+- [x] Expand unit test suite in `tests/fee_calculator.test.ts` and `tests/sdk_bridge.test.ts`, verifying 166 passing tests across 19 test files (`npm test`).
