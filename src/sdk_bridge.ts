@@ -38,6 +38,8 @@ import {
   getRailDefaultFlatFloor,
   projectRevenue,
   projectDynamicRevenueScenario,
+  generateDynamicFeeReport,
+  resolveSystemLoadFromMempool,
 } from "./fee_calculator";
 import {
   TrustTier,
@@ -234,6 +236,20 @@ export class ConxianMarketSDK {
 
   projectDynamicRevenue(scenario: DynamicRevenueScenario): DynamicRevenueProjection {
     return projectDynamicRevenueScenario(scenario);
+  }
+
+  generateDynamicFeeReport(
+    events: import("./core_types").DynamicSettlementEvent[],
+    periodStart: number,
+    periodEnd: number
+  ): import("./core_types").DynamicFeeReport {
+    return generateDynamicFeeReport(events, periodStart, periodEnd);
+  }
+
+  resolveSystemLoadFromMempool(
+    config: import("./core_types").LoadOracleAdapterConfig
+  ): number {
+    return resolveSystemLoadFromMempool(config);
   }
 
   // ── Capability 5: Settlement Orchestration & Non-Custodial Proof Verification ──

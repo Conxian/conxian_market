@@ -7,6 +7,8 @@ import {
   railFloorFromCost,
   loadFactorFromMempoolPercentile,
   projectDynamicRevenueScenario,
+  resolveSystemLoadFromMempool,
+  generateDynamicFeeReport,
   detectTrustTier,
   generateFeeReport,
   projectRevenue,
@@ -308,3 +310,60 @@ describe("ADR-004 dynamic fee model", () => {
     });
   });
 });
+
+  describe("resolveSystemLoadFromMempool & generateDynamicFeeReport", () => {
+    it("resolves system load factor from mempool fee samples and percentiles", () => {
+      // Direct percentile
+      expect(
+        resolveSystemLoadFromMempool({ sample: { fastestFeeSatVb: 15, halfHourFeeSatVb: 10, hourFeeSatVb: 5, minimumFeeSatVb: 1, percentile: 20 } })
+      ).toBe(1.0);
+      expect(
+        resolveSystemLoadFromMempool({ sample: { fastestFeeSatVb: 100, halfHourFeeSatVb: 80, hourFeeSatVb: 50, minimumFeeSatVb: 1, percentile: 95 } })
+      ).toBe(2.5);
+
+      // Interpolated from fastestFeeSatVb (baseline 10, ceiling 100)
+      expect(
+        resolveSystemLoadFromMempool({ sample: { fastestFeeSatVb: 10, halfHourFeeSatVb: 8, hourFeeSatVb: 5, minimumFeeSatVb: 1 }, baselineFastestFeeSatVb: 10, maxFastestFeeSatVb: 100 })
+      ).toBe(1.0);
+      expect(
+        resolveSystemLoadFromMempool({ sample: { fastestFeeSatVb: 55, halfHourFeeSatVb: 40, hourFeeSatVb: 20, minimumFeeSatVb: 1 }, baselineFastestFeeSatVb: 10, maxFastestFeeSatVb: 100 })
+      ).toBe(2.0);
+      expect(
+        resolveSystemLoadFromMempool({ sample: { fastestFeeSatVb: 120, halfHourFeeSatVb: 100, hourFeeSatVb: 80, minimumFeeSatVb: 1 }, baselineFastestFeeSatVb: 10, maxFastestFeeSatVb: 100 })
+      ).toBe(3.0);
+    });
+
+    it("aggregates dynamic settlement events into ADR-004 fee report", () => {
+      const events: import("../src/core_types").DynamicSettlementEvent[] = [
+        {
+          settlementId: "set-001",
+          tier: TrustTier.Expedient,
+          rail: SettlementRail.Lightning,
+          amountSat: 50n, // Floor-dominated (10 sats floor > 1 sat percentage)
+          timestamp: 1000,
+          builderId: "builder-a",
+        },
+        {
+          settlementId: "set-002",
+          tier: TrustTier.Expedient,
+          rail: SettlementRail.Lightning,
+          amountSat: 100_000n, // Percentage-dominated (2000 sats percentage > 10 sats floor)
+          timestamp: 1100,
+          builderId: "builder-b",
+        },
+      ];
+
+      const report = generateDynamicFeeReport(events, 1000, 2000);
+
+      expect(report.totalSettlements).toBe(2);
+      expect(report.totalVolumeSat).toBe(100_050n);
+      expect(report.floorDominatedSettlements).toBe(1);
+      expect(report.percentageDominatedSettlements).toBe(1);
+      expect(report.totalFeeSat).toBe(2010n); // 10 sats + 2000 sats
+      expect(report.distribution.operationsSat).toBe(1005n); // 50%
+      expect(report.distribution.foundersSat).toBe(603n); // 30%
+      expect(report.distribution.ecosystemSat).toBe(402n); // 20%
+      expect(report.byRail[SettlementRail.Lightning].floorDominatedCount).toBe(1);
+      expect(report.byRail[SettlementRail.Lightning].percentageDominatedCount).toBe(1);
+    });
+  });

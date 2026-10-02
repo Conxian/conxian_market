@@ -507,3 +507,139 @@ export function projectDynamicRevenueScenario(
     totalMonthlyFeeUsd,
   };
 }
+
+/**
+ * Resolve system load factor (1.0–3.0) from a mempool fee sample or adapter config.
+ * Uses percentile mapping if provided; otherwise computes load factor from fastest fee.
+ */
+export function resolveSystemLoadFromMempool(
+  config: import("./core_types").LoadOracleAdapterConfig
+): number {
+  const { sample, baselineFastestFeeSatVb = 10, maxFastestFeeSatVb = 100 } = config;
+
+  if (typeof sample.percentile === "number") {
+    return loadFactorFromMempoolPercentile(sample.percentile);
+  }
+
+  const baseline = Math.max(1, baselineFastestFeeSatVb);
+  const ceiling = Math.max(baseline + 1, maxFastestFeeSatVb);
+  const current = Math.max(0, sample.fastestFeeSatVb);
+
+  if (current <= baseline) return 1.0;
+  if (current >= ceiling) return 3.0;
+
+  const ratio = (current - baseline) / (ceiling - baseline);
+  return Math.min(3.0, Math.max(1.0, Math.round((1.0 + ratio * 2.0) * 100) / 100));
+}
+
+/**
+ * Aggregate dynamic settlement events into an ADR-004 Dynamic Fee Report,
+ * detailing total volume, total fees, 50/30/20 distribution, rail breakdowns,
+ * and floor-dominated vs percentage-dominated settlement counts.
+ */
+export function generateDynamicFeeReport(
+  events: import("./core_types").DynamicSettlementEvent[],
+  periodStart: number,
+  periodEnd: number
+): import("./core_types").DynamicFeeReport {
+  let totalVolumeSat = 0n;
+  let totalFeeSat = 0n;
+  let opsSat = 0n;
+  let foundersSat = 0n;
+  let ecoSat = 0n;
+  let floorDominatedSettlements = 0;
+  let percentageDominatedSettlements = 0;
+
+  const byRailMap = new Map<
+    SettlementRail,
+    {
+      count: number;
+      totalAmountSat: bigint;
+      totalFeeSat: bigint;
+      floorDominatedCount: number;
+      percentageDominatedCount: number;
+    }
+  >();
+
+  for (const ev of events) {
+    if (ev.tier === Tier.ObserverOnly) continue;
+
+    const res = calculateDynamicFee({
+      tier: ev.tier,
+      rail: ev.rail,
+      amountSat: ev.amountSat,
+      volumeDecayTier: ev.volumeDecayTier ?? "TIER_1",
+      systemLoadFactor: ev.systemLoadFactor ?? 1.0,
+      enterpriseSubscriptionCap: ev.enterpriseSubscriptionCap ?? false,
+    });
+
+    totalVolumeSat += ev.amountSat;
+    totalFeeSat += res.effectiveFeeSat;
+    opsSat += res.distribution.operationsSat;
+    foundersSat += res.distribution.foundersSat;
+    ecoSat += res.distribution.ecosystemSat;
+
+    const isFloor = res.flatFloorSat >= res.percentageFeeSat;
+    if (isFloor) {
+      floorDominatedSettlements += 1;
+    } else {
+      percentageDominatedSettlements += 1;
+    }
+
+    const railEntry = byRailMap.get(ev.rail) ?? {
+      count: 0,
+      totalAmountSat: 0n,
+      totalFeeSat: 0n,
+      floorDominatedCount: 0,
+      percentageDominatedCount: 0,
+    };
+
+    railEntry.count += 1;
+    railEntry.totalAmountSat += ev.amountSat;
+    railEntry.totalFeeSat += res.effectiveFeeSat;
+    if (isFloor) {
+      railEntry.floorDominatedCount += 1;
+    } else {
+      railEntry.percentageDominatedCount += 1;
+    }
+    byRailMap.set(ev.rail, railEntry);
+  }
+
+  const byRail: Record<string, import("./core_types").DynamicFeeBreakdownByRail> = {};
+  for (const [rail, data] of byRailMap.entries()) {
+    const avgEffectiveBps =
+      data.totalAmountSat > 0n
+        ? Number((data.totalFeeSat * 10000n) / data.totalAmountSat)
+        : 0;
+
+    byRail[rail] = {
+      rail,
+      count: data.count,
+      totalAmountSat: data.totalAmountSat,
+      totalFeeSat: data.totalFeeSat,
+      floorDominatedCount: data.floorDominatedCount,
+      percentageDominatedCount: data.percentageDominatedCount,
+      avgEffectiveBps,
+    };
+  }
+
+  const effectiveFeeBps =
+    totalVolumeSat > 0n ? Number((totalFeeSat * 10000n) / totalVolumeSat) : 0;
+
+  return {
+    periodStart,
+    periodEnd,
+    totalSettlements: events.length,
+    totalVolumeSat,
+    totalFeeSat,
+    floorDominatedSettlements,
+    percentageDominatedSettlements,
+    effectiveFeeBps,
+    distribution: {
+      operationsSat: opsSat,
+      foundersSat,
+      ecosystemSat: ecoSat,
+    },
+    byRail,
+  };
+}
