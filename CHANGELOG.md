@@ -5,6 +5,12 @@ All notable changes to the Conxian Market SDK (`@conxian/market-sdk`) project wi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-10-03
+
+### Fixed
+- **Broken Node ESM build**: `0.2.3` shipped a `dist/` whose relative imports lacked the `.js` extension (e.g. `export * from "./core_types"`), because `tsconfig.json` used `moduleResolution: "bundler"` with `"type": "module"`. Every Node ESM consumer (Vitest, `node`, tooling) failed with `Cannot find module '.../dist/core_types'`. Switched to `module: "NodeNext"` + `moduleResolution: "NodeNext"` and added `.js` extensions to all relative imports.
+- Added a `verify:dist` regression guard (`scripts/verify-dist.mjs`) that imports the built `dist/index.js` under Node ESM and fails fast on extensionless imports.
+
 ## [0.2.3] - 2026-10-02
 
 ### Added

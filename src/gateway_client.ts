@@ -19,9 +19,9 @@ import type {
   SettlementRail,
   SettlementResult,
   UsageMetrics,
-} from "./core_types";
+} from "./core_types.js";
 import { z } from "zod";
-import { M2MSettlementResponseSchema, SettlementResultSchema } from "./wire_contract";
+import { M2MSettlementResponseSchema, SettlementResultSchema } from "./wire_contract.js";
 
 export interface GatewayConfig {
   baseUrl: string;
