@@ -17,7 +17,7 @@ import type {
   FounderEscrowSchedule,
   TimelockTransactionRequest,
   TimelockValidationResult,
-} from "./core_types";
+} from "./core_types.js";
 
 export interface YieldSplit {
   grossAmountSat: bigint;

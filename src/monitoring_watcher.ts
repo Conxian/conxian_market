@@ -13,7 +13,7 @@
  *   - Unified Health Snapshot & Alert Generation
  */
 
-import { TrustTier } from "./core_types";
+import { TrustTier } from "./core_types.js";
 
 // ── Health Severity Status ──
 

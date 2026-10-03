@@ -23,11 +23,11 @@ import type {
   VtxoTransfer,
   YieldOpportunity,
   AttestationCertificate,
-} from "./core_types";
-import { SettlementRail as Rail, TrustTier as Tier } from "./core_types";
-import { DEFAULT_FEATURE_FLAGS } from "./core_types";
-import type { GatewayClient } from "./gateway_client";
-import type { Verifier } from "./verification";
+} from "./core_types.js";
+import { SettlementRail as Rail, TrustTier as Tier } from "./core_types.js";
+import { DEFAULT_FEATURE_FLAGS } from "./core_types.js";
+import type { GatewayClient } from "./gateway_client.js";
+import type { Verifier } from "./verification.js";
 
 export interface SettlementProofVerificationResult {
   settlementId: string;
