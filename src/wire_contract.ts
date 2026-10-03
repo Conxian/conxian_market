@@ -8,7 +8,7 @@
  */
 
 import { z } from "zod";
-import { SettlementRail, TrustTier } from "./core_types";
+import { SettlementRail, TrustTier } from "./core_types.js";
 
 /** Unsigned monetary amount encoded as a decimal string on the wire. */
 const decimalBigint = z

@@ -21,7 +21,7 @@ import {
   DomainRoutingCheckResult,
   SlaExemptionReason,
   SlaPolicyEvaluationResult,
-} from "./core_types";
+} from "./core_types.js";
 
 export class ClientInstallerEngine {
   /**
@@ -491,8 +491,8 @@ export class ClientInstallerEngine {
     config: ClientOnboardingConfig,
     latencyThresholdMs = 50,
     timestampIso = new Date().toISOString()
-  ): import("./core_types").EnterpriseSlaDiagnosticsReport {
-    const diagnostics: import("./core_types").SlaDiagnosticItem[] = [];
+  ): import("./core_types.js").EnterpriseSlaDiagnosticsReport {
+    const diagnostics: import("./core_types.js").SlaDiagnosticItem[] = [];
 
     // 1. Gateway SLA Diagnostic
     const gatewayValid = config.gatewayUrl?.startsWith("http") ?? false;

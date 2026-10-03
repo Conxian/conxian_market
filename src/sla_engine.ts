@@ -12,8 +12,8 @@
  *   - Autonomous SLA Gap Card Auto-Resolution & Reputation Recovery
  */
 
-import type { JobCard, TrustTier, SLAPenaltySettlementRequest, SLAPenaltySettlementResult, SLAPenaltyClawbackRecord } from "./core_types";
-import { TrustTier as Tier } from "./core_types";
+import type { JobCard, TrustTier, SLAPenaltySettlementRequest, SLAPenaltySettlementResult, SLAPenaltyClawbackRecord } from "./core_types.js";
+import { TrustTier as Tier } from "./core_types.js";
 
 // ── Types ──
 

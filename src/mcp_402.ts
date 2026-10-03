@@ -6,13 +6,13 @@
  * invocations settle through the same non-custodial escrow + SLA substrate as
  * direct x402 commerce.
  */
-import type { JobCard } from "./core_types";
+import type { JobCard } from "./core_types.js";
 import {
   jobCardToDemand,
   verifyPaymentReceipt,
   type X402PaymentDemand,
   type X402PaymentReceipt,
-} from "./x402_facade";
+} from "./x402_facade.js";
 
 export interface McpToolCall {
   tool: string;
