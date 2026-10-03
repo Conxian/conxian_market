@@ -1,6 +1,6 @@
-import { ClientInstallerEngine } from "./client_onboarding";
-import { AgentRegistry, type AgentCard, type AgentRegistryEntry, type AgentReputationRecord } from "./agent_registry";
-import { Mcp402Facade, type McpToolCall, type Mcp402PaymentGateResult } from "./mcp_402";
+import { ClientInstallerEngine } from "./client_onboarding.js";
+import { AgentRegistry, type AgentCard, type AgentRegistryEntry, type AgentReputationRecord } from "./agent_registry.js";
+import { Mcp402Facade, type McpToolCall, type Mcp402PaymentGateResult } from "./mcp_402.js";
 /**
  * Conxian Market SDK Bridge — Unified Client Interface for Marketplace Services.
  *
@@ -19,9 +19,9 @@ import { Mcp402Facade, type McpToolCall, type Mcp402PaymentGateResult } from "./
  *   - Client Installer Engine (Client onboarding, system setup, domain routing firewall, and unified CLI installer)
  */
 
-import { GatewayClient, type GatewayConfig } from "./gateway_client";
-import { GatewayVerifier, degradeTierForP0Gaps } from "./verification";
-import { SettlementOrchestrator, type SettlementProofVerificationResult } from "./settlement";
+import { GatewayClient, type GatewayConfig } from "./gateway_client.js";
+import { GatewayVerifier, degradeTierForP0Gaps } from "./verification.js";
+import { SettlementOrchestrator, type SettlementProofVerificationResult } from "./settlement.js";
 import {
   SlaEngine,
   type BuilderReputationRecord,
@@ -29,7 +29,7 @@ import {
   type GapCard,
   type GapCardAutoResolutionInput,
   type GapCardAutoResolutionResult,
-} from "./sla_engine";
+} from "./sla_engine.js";
 import {
   detectTrustTier as detectTier,
   calculateRailFee,
@@ -40,7 +40,7 @@ import {
   projectDynamicRevenueScenario,
   generateDynamicFeeReport,
   resolveSystemLoadFromMempool,
-} from "./fee_calculator";
+} from "./fee_calculator.js";
 import {
   TrustTier,
   SettlementRail,
@@ -68,14 +68,14 @@ import {
   type TimelockValidationResult,
   type FounderEscrowSchedule,
   type FounderEscrowPayoutResult,
-} from "./core_types";
-import { MonitoringWatcher, type UnifiedHealthSnapshot } from "./monitoring_watcher";
+} from "./core_types.js";
+import { MonitoringWatcher, type UnifiedHealthSnapshot } from "./monitoring_watcher.js";
 import type {
   BabylonStakingInput,
   FedimintMintInput,
   SbtcHealthInput,
   TreasuryRunwayInput,
-} from "./monitoring_watcher";
+} from "./monitoring_watcher.js";
 import {
   TrustTierMiddleware,
   TrustTierLifecycleEngine,
@@ -85,7 +85,7 @@ import {
   type TierUpgradeResult,
   type TierDowngradeRequest,
   type TierDowngradeResult,
-} from "./trust_tier_middleware";
+} from "./trust_tier_middleware.js";
 import {
   BosYieldSplitter,
   type FounderVestingInput,
@@ -94,7 +94,7 @@ import {
   type InferencePolicyResult,
   type ProtocolFeeDistribution,
   type YieldSplit,
-} from "./bos_yield_splitter";
+} from "./bos_yield_splitter.js";
 import {
   MarketAgnosticRouter,
   type DeprecationAdvisory,
@@ -106,7 +106,7 @@ import {
   type NonCustodialSettlementRequest,
   type RouterOptions,
   type ZeroCustodyValidationResult,
-} from "./market_agnostic_router";
+} from "./market_agnostic_router.js";
 import {
   JobCardEscrowEngine,
   type EscrowCreationParams,
@@ -115,7 +115,7 @@ import {
   type EscrowReleaseResult,
   type EscrowReconciliationResult,
   type JobOutputSubmission,
-} from "./job_card_escrow";
+} from "./job_card_escrow.js";
 import {
   jobCardToDemand,
   jobCardToMultiRailDemands,
@@ -125,7 +125,7 @@ import {
   type X402PaymentReceipt,
   type X402TrustProofArtifact,
   type X402AttestationVerificationResult,
-} from "./x402_facade";
+} from "./x402_facade.js";
 
 export class ConxianMarketSDK {
   readonly gateway: GatewayClient;
@@ -239,15 +239,15 @@ export class ConxianMarketSDK {
   }
 
   generateDynamicFeeReport(
-    events: import("./core_types").DynamicSettlementEvent[],
+    events: import("./core_types.js").DynamicSettlementEvent[],
     periodStart: number,
     periodEnd: number
-  ): import("./core_types").DynamicFeeReport {
+  ): import("./core_types.js").DynamicFeeReport {
     return generateDynamicFeeReport(events, periodStart, periodEnd);
   }
 
   resolveSystemLoadFromMempool(
-    config: import("./core_types").LoadOracleAdapterConfig
+    config: import("./core_types.js").LoadOracleAdapterConfig
   ): number {
     return resolveSystemLoadFromMempool(config);
   }
@@ -553,7 +553,7 @@ export class ConxianMarketSDK {
 
   // ── Capability 13: Client Onboarding & System Installation Engine ──
 
-  validateClientConfig(config: import("./core_types").ClientOnboardingConfig): {
+  validateClientConfig(config: import("./core_types.js").ClientOnboardingConfig): {
     valid: boolean;
     errors: string[];
   } {
@@ -561,57 +561,57 @@ export class ConxianMarketSDK {
   }
 
   testSystemConnectivity(
-    config: import("./core_types").ClientOnboardingConfig,
+    config: import("./core_types.js").ClientOnboardingConfig,
     timestampIso?: string
-  ): import("./core_types").SystemConnectivityReport {
+  ): import("./core_types.js").SystemConnectivityReport {
     return ClientInstallerEngine.testSystemConnectivity(config, timestampIso);
   }
 
   auditZeroCustody(
-    config: import("./core_types").ClientOnboardingConfig
-  ): import("./core_types").ZeroCustodySanityCheck {
+    config: import("./core_types.js").ClientOnboardingConfig
+  ): import("./core_types.js").ZeroCustodySanityCheck {
     return ClientInstallerEngine.auditZeroCustody(config);
   }
 
   provisionClientEnvironment(
-    config: import("./core_types").ClientOnboardingConfig,
+    config: import("./core_types.js").ClientOnboardingConfig,
     timestampIso?: string
-  ): import("./core_types").ClientProvisioningResult {
+  ): import("./core_types.js").ClientProvisioningResult {
     return ClientInstallerEngine.provisionClientEnvironment(config, timestampIso);
   }
 
   verifyClientEntitlements(
-    config: import("./core_types").ClientOnboardingConfig,
-    licenseOverride?: Partial<import("./core_types").ClientEntitlementLicense>
-  ): import("./core_types").ClientEntitlementLicense {
+    config: import("./core_types.js").ClientOnboardingConfig,
+    licenseOverride?: Partial<import("./core_types.js").ClientEntitlementLicense>
+  ): import("./core_types.js").ClientEntitlementLicense {
     return ClientInstallerEngine.verifyClientEntitlements(config, licenseOverride);
   }
 
   alignClientDeployment(
-    config: import("./core_types").ClientOnboardingConfig,
+    config: import("./core_types.js").ClientOnboardingConfig,
     timestampIso?: string
-  ): import("./core_types").ClientDeploymentManifest {
+  ): import("./core_types.js").ClientDeploymentManifest {
     return ClientInstallerEngine.alignClientDeployment(config, timestampIso);
   }
 
   probeAssetConnectivity(
-    config: import("./core_types").ClientOnboardingConfig,
+    config: import("./core_types.js").ClientOnboardingConfig,
     timestampIso?: string
-  ): import("./core_types").AssetConnectivityProbeResult {
+  ): import("./core_types.js").AssetConnectivityProbeResult {
     return ClientInstallerEngine.probeAssetConnectivity(config, timestampIso);
   }
 
   verifyDomainRoutingFirewall(
-    config: import("./core_types").ClientOnboardingConfig,
+    config: import("./core_types.js").ClientOnboardingConfig,
     timestampIso?: string
-  ): import("./core_types").DomainRoutingCheckResult {
+  ): import("./core_types.js").DomainRoutingCheckResult {
     return ClientInstallerEngine.verifyDomainRoutingFirewall(config, timestampIso);
   }
 
   runUnifiedInstallerCli(
-    config: import("./core_types").ClientOnboardingConfig,
+    config: import("./core_types.js").ClientOnboardingConfig,
     timestampIso?: string
-  ): import("./core_types").UnifiedCliInstallerRunResult {
+  ): import("./core_types.js").UnifiedCliInstallerRunResult {
     return ClientInstallerEngine.runUnifiedInstallerCli(config, timestampIso);
   }
 
@@ -648,18 +648,18 @@ export class ConxianMarketSDK {
 
 
   runEnterpriseSlaDiagnostics(
-    config: import("./core_types").ClientOnboardingConfig,
+    config: import("./core_types.js").ClientOnboardingConfig,
     latencyThresholdMs?: number,
     timestampIso?: string
-  ): import("./core_types").EnterpriseSlaDiagnosticsReport {
+  ): import("./core_types.js").EnterpriseSlaDiagnosticsReport {
     return ClientInstallerEngine.runEnterpriseSlaDiagnostics(config, latencyThresholdMs, timestampIso);
   }
 
   evaluateSlaPolicyAndExemptions(
-    config: import("./core_types").ClientOnboardingConfig,
+    config: import("./core_types.js").ClientOnboardingConfig,
     isCommercialB2bContract: boolean = false,
-    activeExemptions: import("./core_types").SlaExemptionReason[] = []
-  ): import("./core_types").SlaPolicyEvaluationResult {
+    activeExemptions: import("./core_types.js").SlaExemptionReason[] = []
+  ): import("./core_types.js").SlaPolicyEvaluationResult {
     return ClientInstallerEngine.evaluateSlaPolicyAndExemptions(config, isCommercialB2bContract, activeExemptions);
   }
 

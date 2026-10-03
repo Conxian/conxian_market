@@ -9,7 +9,7 @@
  * authorization gate bound to a SHA-256 card digest.
  */
 import { createHash } from "node:crypto";
-import { TrustTier } from "./core_types";
+import { TrustTier } from "./core_types.js";
 
 export interface AgentCapability {
   name: string;

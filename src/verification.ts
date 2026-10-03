@@ -11,10 +11,10 @@
  *   - ObserverOnly: No proof (read-only)
  */
 
-import type { AttestationCertificate, FeatureFlags, TrustTier } from "./core_types";
-import { TrustTier as Tier } from "./core_types";
-import { DEFAULT_FEATURE_FLAGS } from "./core_types";
-import type { GatewayClient } from "./gateway_client";
+import type { AttestationCertificate, FeatureFlags, TrustTier } from "./core_types.js";
+import { TrustTier as Tier } from "./core_types.js";
+import { DEFAULT_FEATURE_FLAGS } from "./core_types.js";
+import type { GatewayClient } from "./gateway_client.js";
 
 export interface AttestationCapabilities {
   attestationAvailable: boolean;

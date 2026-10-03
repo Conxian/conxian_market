@@ -33,12 +33,12 @@ import type {
   TierFeeBreakdown,
   TrustTier,
   VolumeDecayTier,
-} from "./core_types";
+} from "./core_types.js";
 import {
   DEFAULT_FEATURE_FLAGS,
   SettlementRail as Rail,
   TrustTier as Tier,
-} from "./core_types";
+} from "./core_types.js";
 
 // Re-export enums for consumers
 export { Rail as SettlementRail, Tier as TrustTier };
@@ -572,7 +572,7 @@ export function projectDynamicRevenueScenario(
  * Uses percentile mapping if provided; otherwise computes load factor from fastest fee.
  */
 export function resolveSystemLoadFromMempool(
-  config: import("./core_types").LoadOracleAdapterConfig
+  config: import("./core_types.js").LoadOracleAdapterConfig
 ): number {
   const { sample, baselineFastestFeeSatVb = 10, maxFastestFeeSatVb = 100 } = config;
 
@@ -597,10 +597,10 @@ export function resolveSystemLoadFromMempool(
  * and floor-dominated vs percentage-dominated settlement counts.
  */
 export function generateDynamicFeeReport(
-  events: import("./core_types").DynamicSettlementEvent[],
+  events: import("./core_types.js").DynamicSettlementEvent[],
   periodStart: number,
   periodEnd: number
-): import("./core_types").DynamicFeeReport {
+): import("./core_types.js").DynamicFeeReport {
   let totalVolumeSat = 0n;
   let totalFeeSat = 0n;
   let opsSat = 0n;
@@ -668,7 +668,7 @@ export function generateDynamicFeeReport(
     byRailMap.set(ev.rail, railEntry);
   }
 
-  const byRail: Record<string, import("./core_types").DynamicFeeBreakdownByRail> = {};
+  const byRail: Record<string, import("./core_types.js").DynamicFeeBreakdownByRail> = {};
   for (const [rail, data] of byRailMap.entries()) {
     const avgEffectiveBps =
       data.totalAmountSat > 0n

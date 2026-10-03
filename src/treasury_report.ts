@@ -10,7 +10,7 @@ import {
   DEFAULT_TARGET_ALLOCATION,
   type AssetAllocation,
   type HealthStatus,
-} from "./monitoring_watcher";
+} from "./monitoring_watcher.js";
 
 export interface ThresholdBand {
   /** value >= green → GREEN */
