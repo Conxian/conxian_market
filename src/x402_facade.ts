@@ -10,12 +10,12 @@
  * Now expanded with Attestation-Backed x402 Verification & Trust Layer Proofs.
  */
 
-import type { AttestationCertificate, JobCard, SettlementRail, TrustTier } from "./core_types";
-import { TrustTier as Tier } from "./core_types";
-import type { EscrowCreationParams, EscrowRecord } from "./job_card_escrow";
-import { JobCardEscrowEngine } from "./job_card_escrow";
-import { BosYieldSplitter } from "./bos_yield_splitter";
-import { GatewayVerifier, detectTrustTierStatic } from "./verification";
+import type { AttestationCertificate, JobCard, SettlementRail, TrustTier } from "./core_types.js";
+import { TrustTier as Tier } from "./core_types.js";
+import type { EscrowCreationParams, EscrowRecord } from "./job_card_escrow.js";
+import { JobCardEscrowEngine } from "./job_card_escrow.js";
+import { BosYieldSplitter } from "./bos_yield_splitter.js";
+import { GatewayVerifier, detectTrustTierStatic } from "./verification.js";
 
 export const X402_SCHEME = "x402" as const;
 export const X402_CURRENCY = "sats" as const;

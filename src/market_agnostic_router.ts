@@ -10,8 +10,8 @@
  * 5. Deprecation Warning Isolation: Cleanly emits runtime deprecation notices for direct contract calls while re-routing execution through BYO DeFi adapters.
  */
 
-import type { SettlementRail } from "./core_types";
-import { SettlementRail as Rail } from "./core_types";
+import type { SettlementRail } from "./core_types.js";
+import { SettlementRail as Rail } from "./core_types.js";
 
 export interface NonCustodialSettlementRequest {
   id: string;

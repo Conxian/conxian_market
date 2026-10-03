@@ -9,10 +9,10 @@
  * 5. Lifecycle Engine: Evaluates tier upgrade thresholds (Reputation >= 40, 70, 90) and downgrade triggers.
  */
 
-import type { FeatureFlags, SettlementRail, TrustTier } from "./core_types";
-import { DEFAULT_FEATURE_FLAGS, TrustTier as Tier, SettlementRail as Rail } from "./core_types";
-import { calculateRailFee, FeeResult, selectRail, RailPreference } from "./fee_calculator";
-import { degradeTierForP0Gaps, detectTrustTierStatic } from "./verification";
+import type { FeatureFlags, SettlementRail, TrustTier } from "./core_types.js";
+import { DEFAULT_FEATURE_FLAGS, TrustTier as Tier, SettlementRail as Rail } from "./core_types.js";
+import { calculateRailFee, FeeResult, selectRail, RailPreference } from "./fee_calculator.js";
+import { degradeTierForP0Gaps, detectTrustTierStatic } from "./verification.js";
 
 // ── Pipeline Interfaces ──
 
