@@ -73,6 +73,8 @@ The current live execution chain is:
 | conxian_market | Enterprise Tiered SLA Policy Engine (`client_onboarding.ts`) | **COMPLETED (S69)** | Scoring matrix candidate #1 (CAN-69-A) from Session 69 research expansion. |
 | conxian_market | ERC-8004 & MCP-402 SDK Bridge Integration (`sdk_bridge.ts`) | **COMPLETED (S70)** | Scoring matrix candidate #1 (CAN-70-A) from Session 70 research expansion. |
 | conxian_market | Dynamic Hybrid Fee Floor Engine (`fee_calculator.ts`) | **COMPLETED (S71)** | Dynamic hybrid satoshi floors, 30-day volume decay, load multiplier, ADR-004. |
+| conxian_market | Dynamic Fee Report & Mempool Load Adapter (`fee_calculator.ts`) | **COMPLETED (S72)** | Dynamic fee report aggregator and mempool fee rate load factor adapter (ADR-004). |
+| conxian_market | CXIP-1317 Org-Wide Upgrade Research Expansion (`docs/research/`) | **COMPLETED (S74)** | Comprehensive analysis of CXIP-1317, turnkey asset matrix, and research expansion. |
 | Conxian | Monorepo Smart Contracts | **DEPRECATED** | Recommended for archiving in favor of BYO DeFi adapters. |
 
 ---
