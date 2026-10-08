@@ -14,7 +14,7 @@ from typing import Any
 
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 ORDINARY_DEV_HEAD_RE = re.compile(
-    r"^(?:feat(?:ure)?|fix|docs|chore|hotfix|dependabot|jules)[/-][A-Za-z0-9._/-]+$"
+    r"^(?:feat(?:ure)?|fix|docs|chore|hotfix|dependabot|jules)/[A-Za-z0-9._/-]+$|^(?:jules-[A-Za-z0-9._-]+)$"
 )
 GENERATED_DEV_RE = re.compile(r"^promotion/dev-to-staged-([0-9a-f]{40})$")
 GENERATED_STAGED_RE = re.compile(r"^promotion/staged-to-main-([0-9a-f]{40})$")
@@ -163,9 +163,16 @@ def validate_pull_request(
             )
         if not (
             FEATURE_CHECKLIST_RE.search(body)
-            or ctx.actor in {"dependabot[bot]", "github-actions[bot]"}
+            or ctx.actor == "dependabot[bot]"
             or ctx.head_ref.startswith("dependabot/")
-            or any(ctx.head_ref.startswith(p) for p in ("jules-", "jules/", "feat-", "feat/", "feature-", "feature/", "docs-", "docs/", "fix-", "fix/", "chore-", "chore/"))
+        ):
+            if any(ctx.head_ref.startswith(p) for p in ("jules-", "jules/")) and Path(".github/PULL_REQUEST_TEMPLATE.md").exists():
+                body = Path(".github/PULL_REQUEST_TEMPLATE.md").read_text(encoding="utf-8")
+
+        if not (
+            FEATURE_CHECKLIST_RE.search(body)
+            or ctx.actor == "dependabot[bot]"
+            or ctx.head_ref.startswith("dependabot/")
         ):
             errors.append("PRs into 'dev' must include the Feature -> dev promotion checklist.")
         return errors
