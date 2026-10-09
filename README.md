@@ -125,6 +125,24 @@ console.log(`Trust Proof Hash: ${trustProof.proofHash} (Tier: ${trustProof.verif
 
 ---
 
+## 🚀 Indie Agent Quickstart & Onboarding CLI
+
+Copy-pasteable integration for ElizaOS, LangGraph, AutoGen, and CrewAI builders:
+
+```bash
+# One-command onboarding (generates zero-custody keys + tests endpoint connectivity)
+npx conxian-agent-init
+
+# 3-line quickstart against the Managed SaaS Gateway
+npm install @conxian/market-sdk@^0.2.4
+```
+
+See [`examples/indie-agent-quickstart.ts`](examples/indie-agent-quickstart.ts) for the
+3-step x402 + ERC-8183 escrow flow (initialize → `createX402Demand` →
+`processX402PaymentAndLockEscrowWithAttestation`).
+
+---
+
 ## 📚 Documentation & Research Index
 
 - [docs/research/SESSION_66_RESEARCH_EXPANSION_AND_GAP_MATRIX.md](docs/research/SESSION_66_RESEARCH_EXPANSION_AND_GAP_MATRIX.md) - Session 66 M2M Trust Layer research & gap register

@@ -109,6 +109,23 @@ describe("ClientInstallerEngine", () => {
     expect(invalidCheck.violations[0]).toContain("Gateway endpoint violation");
   });
 
+  it("allows the Managed SaaS Gateway facade (api.conxian-labs.com) as a protocol-managed surface", () => {
+    const managedConfig: ClientOnboardingConfig = {
+      ...validConfig,
+      gatewayUrl: "https://api.conxian-labs.com/v1/agent",
+    };
+    const managedCheck = ClientInstallerEngine.verifyDomainRoutingFirewall(managedConfig);
+    expect(managedCheck.valid).toBe(true);
+    expect(managedCheck.firewallEnforced).toBe(true);
+    expect(managedCheck.violations).toHaveLength(0);
+
+    const validation = ClientInstallerEngine.validateClientConfig(managedConfig);
+    expect(validation.valid).toBe(true);
+
+    const cliResult = ClientInstallerEngine.runUnifiedInstallerCli(managedConfig);
+    expect(cliResult.success).toBe(true);
+  });
+
   it("executes unified CLI installer end-to-end pipeline successfully", () => {
     const cliResult = ClientInstallerEngine.runUnifiedInstallerCli(validConfig);
     expect(cliResult.success).toBe(true);
