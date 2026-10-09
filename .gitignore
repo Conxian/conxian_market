@@ -75,3 +75,11 @@ __pycache__/
 *.patch
 *.diff
 test.txt
+
+# Onboarding CLI entrypoint (bin/ is a real source dir, not build output)
+!/bin/
+!/bin/**
+
+# Example sub-package artifacts (source-only examples)
+examples/package-lock.json
+examples/node_modules/

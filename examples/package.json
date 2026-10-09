@@ -1,0 +1,22 @@
+{
+  "name": "conxian-indie-agent-examples",
+  "version": "0.2.4",
+  "private": true,
+  "type": "module",
+  "description": "Copy-pasteable quickstart snippets for indie AI agent builders (ElizaOS, LangGraph, AutoGen, CrewAI).",
+  "scripts": {
+    "quickstart": "node --experimental-strip-types indie-agent-quickstart.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@conxian/market-sdk": "file:.."
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
