@@ -40,6 +40,24 @@ export class ClientInstallerEngine {
   }
 
   /**
+   * The Managed SaaS Gateway facade (`api.conxian-labs.com`) is the corporate
+   * managed-subscriber endpoint for the paid tier. It is a distinct,
+   * protocol-managed surface — not the corporate marketing surface — so the
+   * domain routing firewall must allow it while continuing to reject the
+   * marketing/documentation surfaces (`conxian-labs.com`, `www.conxian-labs.com`,
+   * `gateway.conxian-labs.com`).
+   */
+  private static isManagedApiUrl(urlStr?: string): boolean {
+    if (!urlStr) return false;
+    try {
+      const parsed = new URL(urlStr);
+      return parsed.hostname.toLowerCase() === "api.conxian-labs.com";
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Verify domain routing firewall between Protocol surface (conxian.org)
    * and Corporate surface (conxian-labs.com).
    */
@@ -49,7 +67,7 @@ export class ClientInstallerEngine {
   ): DomainRoutingCheckResult {
     const violations: string[] = [];
 
-    if (this.isCorporateUrl(config.gatewayUrl)) {
+    if (this.isCorporateUrl(config.gatewayUrl) && !this.isManagedApiUrl(config.gatewayUrl)) {
       violations.push(
         "Gateway endpoint violation: gateway must route to conxian.org surface (gateway.conxian.org), not corporate conxian-labs.com"
       );
@@ -61,7 +79,7 @@ export class ClientInstallerEngine {
     }
 
     const protocolEndpointsVerified =
-      !this.isCorporateUrl(config.gatewayUrl) &&
+      (!this.isCorporateUrl(config.gatewayUrl) || this.isManagedApiUrl(config.gatewayUrl)) &&
       !this.isCorporateUrl(config.nexusUrl);
     const corporateEndpointsVerified = true;
     const firewallEnforced = violations.length === 0;

@@ -12,8 +12,12 @@
       "import": "./dist/index.js"
     }
   },
+  "bin": {
+    "conxian-agent-init": "./bin/conxian-agent-init.mjs"
+  },
   "files": [
-    "dist/"
+    "dist/",
+    "bin/"
   ],
   "sideEffects": false,
   "scripts": {
