@@ -35,7 +35,10 @@ export class GatewayClient {
   private readonly timeoutMs: number;
 
   constructor(config: GatewayConfig) {
-    this.baseUrl = config.baseUrl.replace(/\/+$/, "");
+    // Strip trailing slashes without a quantifier regex (avoids polynomial ReDoS on hostile URLs).
+    let baseUrl = config.baseUrl;
+    while (baseUrl.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
+    this.baseUrl = baseUrl;
     this.apiToken = config.apiToken;
     this.timeoutMs = config.timeoutMs ?? 10_000;
   }
