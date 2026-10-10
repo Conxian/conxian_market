@@ -44,7 +44,7 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     });
 
     expect(pipelineResult.effectiveTier).toBe(TrustTier.Expedient);
-    expect(pipelineResult.fee.feeSat).toBe(8_750n); // 175 bps for Lightning
+    expect(pipelineResult.fee.feeSat).toBe(2_500n); // 50 bps for Lightning
     expect(pipelineResult.selectedRail).toBe(SettlementRail.Lightning);
     expect(pipelineResult.wireHeaders["x-conxian-tier"]).toBe("EXPEDIENT");
   });
@@ -138,7 +138,7 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Int
 
     const release = sdk.evaluateAndReleaseJobCardEscrow("bridge-job-1", new Date().toISOString());
     expect(release.grossBudgetSat).toBe(2_000_000n);
-    expect(release.yieldSplit.builderSat).toBe(1_574_400n); // 80% of net payout (1,968,000 Sat)
+    expect(release.yieldSplit.builderSat).toBe(1_592_000n); // 80% of net payout (1,990,000 Sat)
   });
 
   it("exposes gap card auto-resolution and reputation recovery via SDK bridge", async () => {
@@ -455,7 +455,7 @@ describe("ConxianMarketSDK Bridge - ADR-004 dynamic fee wiring", () => {
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
 
     expect(sdk.getRailDefaultFlatFloor(SettlementRail.Lightning)).toBe(10n);
-    expect(sdk.getVolumeDecayedBps("TIER_4")).toBe(25);
+    expect(sdk.getVolumeDecayedBps("TIER_4")).toBe(10);
 
     const fee = sdk.calculateDynamicFee({
       tier: TrustTier.Expedient,
@@ -474,7 +474,7 @@ describe("ConxianMarketSDK Bridge - ADR-004 dynamic fee wiring", () => {
       volumeDecayTier: "TIER_1",
       systemLoadFactor: 1.0,
     });
-    expect(projection.totalMonthlyFeeUsd).toBe(2_000);
+    expect(projection.totalMonthlyFeeUsd).toBe(1_000);
 
     const loadFactor = sdk.resolveSystemLoadFromMempool({
       sample: { fastestFeeSatVb: 50, halfHourFeeSatVb: 30, hourFeeSatVb: 10, minimumFeeSatVb: 1, percentile: 75 }

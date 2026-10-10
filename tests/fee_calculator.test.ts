@@ -18,8 +18,6 @@ import {
   toWireHeaders,
   SettlementRail,
   TrustTier,
-  TIER_FEE_BPS,
-  RAIL_FEE_OFFSET_BPS,
 } from "../src/fee_calculator";
 
 describe("fee_calculator", () => {
@@ -59,25 +57,27 @@ describe("fee_calculator", () => {
       ).toThrow("Settlement disabled for ObserverOnly tier");
     });
 
-    it("calculates correct fee for Expedient tier on sBTC (200 bps base + 0 offset = 200 bps)", () => {
+    it("calculates the TIER_1 volume-decay rate (0.50%) above the sBTC flat floor", () => {
       const result = calculateRailFee(100_000n, TrustTier.Expedient, SettlementRail.Sbtc);
-      expect(result.feeBps).toBe(200);
-      expect(result.feeSat).toBe(2000n);
-      expect(result.distribution.operationsSat).toBe(1000n); // 50%
-      expect(result.distribution.foundersSat).toBe(600n);    // 30%
-      expect(result.distribution.ecosystemSat).toBe(400n);   // 20%
+      // 100k sats @ 50bps = 500 sats > 375 sat sBTC floor
+      expect(result.feeBps).toBe(50);
+      expect(result.feeSat).toBe(500n);
+      expect(result.distribution.operationsSat).toBe(250n); // 50%
+      expect(result.distribution.foundersSat).toBe(150n);    // 30%
+      expect(result.distribution.ecosystemSat).toBe(100n);   // 20%
     });
 
-    it("calculates correct fee with discount offset (Expedient tier on Lightning: 200 - 25 = 175 bps)", () => {
+    it("applies a single rate across networks (no per-rail offset)", () => {
       const result = calculateRailFee(100_000n, TrustTier.Expedient, SettlementRail.Lightning);
-      expect(result.feeBps).toBe(175);
-      expect(result.feeSat).toBe(1750n);
+      expect(result.feeBps).toBe(50);
+      expect(result.feeSat).toBe(500n);
     });
 
-    it("enforces minimum floor of 10 bps", () => {
-      const result = calculateRailFee(100_000n, TrustTier.Strict, SettlementRail.Rgb);
-      // Strict base = 100 bps, RGB offset = -20 bps → 80 bps > 10 bps floor
-      expect(result.feeBps).toBe(80);
+    it("applies the rail flat floor to micro-settlements (cost recovery)", () => {
+      const result = calculateRailFee(5n, TrustTier.Expedient, SettlementRail.Lightning);
+      // 5 sats @ 50bps = 0 sats → Lightning flat floor = 10 sats
+      expect(result.feeSat).toBe(10n);
+      expect(result.feeBps).toBe(20000);
     });
   });
 
@@ -133,8 +133,8 @@ describe("fee_calculator", () => {
     it("formats wire headers correctly", () => {
       const fee = calculateRailFee(100_000n, TrustTier.Expedient, SettlementRail.Sbtc);
       const headers = toWireHeaders(fee);
-      expect(headers["x-conxian-fee-bps"]).toBe("200");
-      expect(headers["x-conxian-fee-sat"]).toBe("2000");
+      expect(headers["x-conxian-fee-bps"]).toBe("50");
+      expect(headers["x-conxian-fee-sat"]).toBe("500");
       expect(headers["x-conxian-tier"]).toBe(TrustTier.Expedient);
       expect(headers["x-conxian-rail"]).toBe(SettlementRail.Sbtc);
     });
@@ -160,20 +160,20 @@ describe("ADR-004 dynamic fee model", () => {
   describe("getRailDefaultFlatFloor", () => {
     it("returns the documented rail-specific flat floors", () => {
       expect(getRailDefaultFlatFloor(SettlementRail.Lightning)).toBe(10n);
-      expect(getRailDefaultFlatFloor(SettlementRail.Statechain)).toBe(25n);
+      expect(getRailDefaultFlatFloor(SettlementRail.Statechain)).toBe(125n);
       expect(getRailDefaultFlatFloor(SettlementRail.Fedimint)).toBe(25n);
-      expect(getRailDefaultFlatFloor(SettlementRail.Rgb)).toBe(20n);
-      expect(getRailDefaultFlatFloor(SettlementRail.Sbtc)).toBe(50n);
+      expect(getRailDefaultFlatFloor(SettlementRail.Rgb)).toBe(312n);
+      expect(getRailDefaultFlatFloor(SettlementRail.Sbtc)).toBe(375n);
       expect(getRailDefaultFlatFloor(SettlementRail.AlexStacks)).toBe(50n);
       expect(getRailDefaultFlatFloor(SettlementRail.Babylon)).toBe(50n);
-      expect(getRailDefaultFlatFloor(SettlementRail.EvmErc8183)).toBe(100n);
+      expect(getRailDefaultFlatFloor(SettlementRail.EvmErc8183)).toBe(75n);
     });
   });
 
   describe("railFloorFromCost & cost model", () => {
     it("derives floors as cost + margin (interchange-plus)", () => {
       expect(railFloorFromCost(8n, 2500n)).toBe(10n);
-      expect(railFloorFromCost(80n, 2500n)).toBe(100n);
+      expect(railFloorFromCost(60n, 2500n)).toBe(75n);
       expect(railFloorFromCost(8n, 0n)).toBe(8n);
     });
   });
@@ -191,11 +191,11 @@ describe("ADR-004 dynamic fee model", () => {
   });
 
   describe("calculateVolumeDecayedBps", () => {
-    it("decays 200 -> 150 -> 75 -> 25 across tiers", () => {
-      expect(calculateVolumeDecayedBps("TIER_1")).toBe(200);
-      expect(calculateVolumeDecayedBps("TIER_2")).toBe(150);
-      expect(calculateVolumeDecayedBps("TIER_3")).toBe(75);
-      expect(calculateVolumeDecayedBps("TIER_4")).toBe(25);
+    it("decays 50 -> 25 -> 15 -> 10 across tiers", () => {
+      expect(calculateVolumeDecayedBps("TIER_1")).toBe(50);
+      expect(calculateVolumeDecayedBps("TIER_2")).toBe(25);
+      expect(calculateVolumeDecayedBps("TIER_3")).toBe(15);
+      expect(calculateVolumeDecayedBps("TIER_4")).toBe(10);
     });
   });
 
@@ -238,7 +238,7 @@ describe("ADR-004 dynamic fee model", () => {
         amountSat: 50n,
         volumeDecayTier: "TIER_1",
       });
-      // 50 sats @ 200bps = 1 sat, but flat floor = 10 sats
+      // 50 sats @ 50bps = 0 sats, but flat floor = 10 sats
       expect(fee.effectiveFeeSat).toBe(10n);
       expect(fee.flatFloorSat).toBe(10n);
     });
@@ -250,8 +250,8 @@ describe("ADR-004 dynamic fee model", () => {
         amountSat: 100_000n,
         volumeDecayTier: "TIER_1",
       });
-      // 100k sats @ 200bps = 2000 sats > 50 sat floor
-      expect(fee.effectiveFeeSat).toBe(2000n);
+      // 100k sats @ 50bps = 500 sats > 375 sat sBTC floor
+      expect(fee.effectiveFeeSat).toBe(500n);
     });
 
     it("applies the system load factor (1.0x - 3.0x)", () => {
@@ -262,8 +262,8 @@ describe("ADR-004 dynamic fee model", () => {
         volumeDecayTier: "TIER_1",
         systemLoadFactor: 2.5,
       });
-      // 100k @ 200bps = 2000 sats * 2.5 = 5000
-      expect(fee.effectiveFeeSat).toBe(5000n);
+      // 100k @ 50bps = 500 sats * 2.5 = 1250
+      expect(fee.effectiveFeeSat).toBe(1250n);
       expect(fee.systemLoadFactor).toBe(2.5);
     });
 
@@ -293,8 +293,8 @@ describe("ADR-004 dynamic fee model", () => {
         volumeDecayTier: "TIER_1",
         enterpriseSubscriptionCap: true,
       });
-      // capped at EVM flat floor (100 sats) regardless of percentage fee
-      expect(fee.effectiveFeeSat).toBe(100n);
+      // capped at EVM flat floor (75 sats) regardless of percentage fee
+      expect(fee.effectiveFeeSat).toBe(75n);
     });
 
     it("distributes 50/30/20 and preserves the full amount", () => {
@@ -306,9 +306,9 @@ describe("ADR-004 dynamic fee model", () => {
       });
       const { operationsSat, foundersSat, ecosystemSat } = fee.distribution;
       expect(operationsSat + foundersSat + ecosystemSat).toBe(fee.effectiveFeeSat);
-      expect(operationsSat).toBe(1000n); // 50% of 2000
-      expect(foundersSat).toBe(600n); // 30% of 2000
-      expect(ecosystemSat).toBe(400n); // 20% of 2000
+      expect(operationsSat).toBe(250n); // 50% of 500
+      expect(foundersSat).toBe(150n); // 30% of 500
+      expect(ecosystemSat).toBe(100n); // 20% of 500
     });
 
     it("reports floor-dominance for enterprise-capped settlements and excludes observers", () => {
@@ -365,11 +365,11 @@ describe("ADR-004 dynamic fee model", () => {
       });
       // 100k USD / 100k USD/BTC = 1 BTC = 1e8 sats; /1000 sats = 1e5 txns
       expect(projection.monthlyTxns).toBe(100_000);
-      // 1000 sats @ 200bps = 20 sats (above 10 sat Lightning floor)
-      expect(projection.averageFeeSat).toBe(20);
-      expect(projection.totalMonthlyFeeSat).toBe(2_000_000n);
-      // 2e6 sats * 100k USD/BTC / 1e8 = 2000 USD
-      expect(projection.totalMonthlyFeeUsd).toBe(2_000);
+      // 1000 sats @ 50bps = 5 sats, below the 10 sat Lightning floor → floor dominates
+      expect(projection.averageFeeSat).toBe(10);
+      expect(projection.totalMonthlyFeeSat).toBe(1_000_000n);
+      // 1e6 sats * 100k USD/BTC / 1e8 = 1000 USD
+      expect(projection.totalMonthlyFeeUsd).toBe(1_000);
     });
   });
 });
@@ -402,7 +402,7 @@ describe("ADR-004 dynamic fee model", () => {
           settlementId: "set-001",
           tier: TrustTier.Expedient,
           rail: SettlementRail.Lightning,
-          amountSat: 50n, // Floor-dominated (10 sats floor > 1 sat percentage)
+          amountSat: 50n, // Floor-dominated (10 sats floor > 0 sats percentage)
           timestamp: 1000,
           builderId: "builder-a",
         },
@@ -410,7 +410,7 @@ describe("ADR-004 dynamic fee model", () => {
           settlementId: "set-002",
           tier: TrustTier.Expedient,
           rail: SettlementRail.Lightning,
-          amountSat: 100_000n, // Percentage-dominated (2000 sats percentage > 10 sats floor)
+          amountSat: 100_000n, // Percentage-dominated (500 sats percentage > 10 sats floor)
           timestamp: 1100,
           builderId: "builder-b",
         },
@@ -422,10 +422,10 @@ describe("ADR-004 dynamic fee model", () => {
       expect(report.totalVolumeSat).toBe(100_050n);
       expect(report.floorDominatedSettlements).toBe(1);
       expect(report.percentageDominatedSettlements).toBe(1);
-      expect(report.totalFeeSat).toBe(2010n); // 10 sats + 2000 sats
-      expect(report.distribution.operationsSat).toBe(1005n); // 50%
-      expect(report.distribution.foundersSat).toBe(603n); // 30%
-      expect(report.distribution.ecosystemSat).toBe(402n); // 20%
+      expect(report.totalFeeSat).toBe(510n); // 10 sats + 500 sats
+      expect(report.distribution.operationsSat).toBe(255n); // 50%
+      expect(report.distribution.foundersSat).toBe(153n); // 30%
+      expect(report.distribution.ecosystemSat).toBe(102n); // 20%
       expect(report.byRail[SettlementRail.Lightning].floorDominatedCount).toBe(1);
       expect(report.byRail[SettlementRail.Lightning].percentageDominatedCount).toBe(1);
     });

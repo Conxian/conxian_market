@@ -46,6 +46,9 @@ both volume and load.**
 
 Each settlement rail carries a minimum fee (dust protection):
 
+> ⚠️ **Superseded by ADR-005 (2026-10-10):** these v0 floors were recalibrated
+> from researched per-rail costs — see ADR-005 §3.2.
+
 | Rail | Flat Floor |
 | :--- | ---: |
 | `Lightning` | 10 sats |
