@@ -114,12 +114,12 @@ describe("JobCardEscrowEngine (Session 54 Candidate #6 & Session 65 Candidate #1
     expect(release.status).toBe(EscrowState.Released);
     expect(release.grossBudgetSat).toBe(10_000_000n);
 
-    expect(release.feeSat).toBe(160_000n);
-    expect(release.netPayoutSat).toBe(9_840_000n);
+    expect(release.feeSat).toBe(50_000n);
+    expect(release.netPayoutSat).toBe(9_950_000n);
 
-    expect(release.yieldSplit.builderSat).toBe(7_872_000n);
-    expect(release.yieldSplit.platformTreasurySat).toBe(984_000n);
-    expect(release.yieldSplit.ecosystemStakeholdersSat).toBe(984_000n);
+    expect(release.yieldSplit.builderSat).toBe(7_960_000n);
+    expect(release.yieldSplit.platformTreasurySat).toBe(995_000n);
+    expect(release.yieldSplit.ecosystemStakeholdersSat).toBe(995_000n);
 
     expect(release.m2mRoute.isNonCustodial).toBe(true);
     expect(release.m2mRoute.rail).toBe(SettlementRail.EvmErc8183);
