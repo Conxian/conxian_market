@@ -32,9 +32,9 @@ describe("TrustTierMiddleware", () => {
     expect(result.effectiveTier).toBe(TrustTier.Expedient);
     expect(result.isDegradedForP0).toBe(false);
 
-    // Protocol fee = 175 bps for Lightning rail (200 bps base - 25 bps discount) = 17,500 sats
-    expect(result.fee.feeSat).toBe(17_500n);
-    expect(result.fee.feeBps).toBe(175);
+    // Protocol fee = 50 bps (TIER_1 volume decay) on Lightning = 5,000 sats
+    expect(result.fee.feeSat).toBe(5_000n);
+    expect(result.fee.feeBps).toBe(50);
 
     // SLA Template guarantees
     expect(result.slaTemplate.guarantees.uptime).toBe("99%");
@@ -115,8 +115,8 @@ describe("TrustTierMiddleware", () => {
 
     const wire = TrustTierMiddleware.formatWireHeaders(result);
     expect(wire["x-conxian-tier"]).toBe("EXPEDIENT");
-    expect(wire["x-conxian-fee-bps"]).toBe("175");
-    expect(wire["x-conxian-fee-sat"]).toBe("1750");
+    expect(wire["x-conxian-fee-bps"]).toBe("50");
+    expect(wire["x-conxian-fee-sat"]).toBe("500");
     expect(wire["x-conxian-sla-tier"]).toBe("EXPEDIENT");
     expect(wire["x-conxian-p0-degraded"]).toBe("false");
   });

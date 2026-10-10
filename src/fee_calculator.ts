@@ -1,13 +1,11 @@
 /**
  * Conxian Protocol Fee Calculator (CON-1427).
  *
- * Implements the 4-tier TrustTier fee structure and 8-rail routing matrix.
- *
- * Fee structure (per GOVERNANCE.md & trust_tier_pricing.md):
- *   - ObserverOnly: N/A (read-only monitoring, settlement disabled)
- *   - Expedient:    2.0% (200 bps) launch base rate
- *   - Managed:      1.5% (150 bps) enclave attestation verified
- *   - Strict:       1.0% (100 bps) TEE + ZK proof verified
+ * Implements the dynamic hybrid fee model (ADR-004) with competitive,
+ * cost-recovering rates (ADR-005). The percentage is a single volume-decay
+ * schedule (`VOLUME_DECAY_BPS`); the flat rail floor (`RAIL_COST_ESTIMATE_SAT`
+ * × 1.25) guarantees the fee never falls below settlement cost + margin.
+ * The static per-tier/per-rail percentage matrices of ADR-001 are retired.
  *
  * Revenue distribution (50/30/20):
  *   - 50% Operations Treasury
@@ -74,27 +72,12 @@ export function detectTrustTier(headers: AttestationHeaders): TrustTier {
   return Tier.ObserverOnly;
 }
 
-// ── Fee Basis Points Matrix ──
-
-/** Base fee in basis points per tier */
-export const TIER_FEE_BPS: Record<TrustTier, number> = {
-  [Tier.ObserverOnly]: 0,     // Settlement not permitted
-  [Tier.Expedient]: 200,      // 2.00%
-  [Tier.Managed]: 150,        // 1.50%
-  [Tier.Strict]: 100,         // 1.00%
-};
-
-/** Per-rail fee adjustment in basis points (multiplier offset) */
-export const RAIL_FEE_OFFSET_BPS: Record<SettlementRail, number> = {
-  [Rail.Statechain]: -10,   // -0.10% (incentivize off-chain VTXO)
-  [Rail.Sbtc]: 0,           // Base rate
-  [Rail.Rgb]: -20,          // -0.20% (privacy incentive)
-  [Rail.Babylon]: 0,        // Base rate
-  [Rail.Fedimint]: -15,     // -0.15% (community pool discount)
-  [Rail.Lightning]: -25,    // -0.25% (micro-settlement discount)
-  [Rail.AlexStacks]: 0,     // Base rate
-  [Rail.EvmErc8183]: +10,   // +0.10% (cross-chain EVM overhead)
-};
+// ── Fee Basis Points ──
+//
+// ADR-005 retires the static per-tier (`TIER_FEE_BPS`) and per-rail
+// (`RAIL_FEE_OFFSET_BPS`) percentage matrices. The percentage component is now a
+// single volume-decay schedule (`VOLUME_DECAY_BPS`, below); per-rail differences
+// are captured only in the flat floor (`RAIL_COST_ESTIMATE_SAT`).
 
 export interface FeeResult {
   tier: TrustTier;
@@ -110,11 +93,13 @@ export interface FeeResult {
 }
 
 /**
- * Calculate protocol fee for a settlement.
+ * Calculate a protocol fee for a settlement.
  *
- * Formula:
- *   effective_bps = max(10, TIER_FEE_BPS[tier] + RAIL_FEE_OFFSET_BPS[rail])
- *   fee_sat = (amount_sat * effective_bps) / 10000
+ * Deprecated in favour of `calculateDynamicFee` (ADR-005): delegates to the
+ * dynamic model at the base `TIER_1` volume tier, so every settlement path
+ * carries the rail flat floor (cost + margin) and never under-recovers. Kept
+ * for backwards compatibility with `job_card_escrow`, `trust_tier_middleware`,
+ * and `sdk_bridge`.
  */
 export function calculateRailFee(
   amountSat: bigint,
@@ -125,29 +110,15 @@ export function calculateRailFee(
     throw new Error("Settlement disabled for ObserverOnly tier. Upgrade attestation.");
   }
 
-  const baseBps = TIER_FEE_BPS[tier];
-  const offsetBps = RAIL_FEE_OFFSET_BPS[rail];
-  // Minimum fee floor: 10 bps (0.10%)
-  const effectiveBps = Math.max(10, baseBps + offsetBps);
-
-  const feeSat = (amountSat * BigInt(effectiveBps)) / 10000n;
-
-  // 50/30/20 distribution
-  const operationsSat = (feeSat * 50n) / 100n;
-  const foundersSat = (feeSat * 30n) / 100n;
-  const ecosystemSat = feeSat - operationsSat - foundersSat; // Remainder to avoid rounding loss
+  const dynamic = calculateDynamicFee({ tier, rail, amountSat });
 
   return {
     tier,
     rail,
     amountSat,
-    feeSat,
-    feeBps: effectiveBps,
-    distribution: {
-      operationsSat,
-      foundersSat,
-      ecosystemSat,
-    },
+    feeSat: dynamic.effectiveFeeSat,
+    feeBps: dynamic.effectiveBps,
+    distribution: dynamic.distribution,
   };
 }
 
@@ -179,7 +150,7 @@ export function selectRail(
     return Rail.Lightning;
   }
 
-  // High cost sensitivity → Lightning (-25bps) > RGB (-20bps) > Fedimint (-15bps)
+  // High cost sensitivity → Lightning (cheapest floor) > RGB > Fedimint
   if (pref.costSensitivity === "high") {
     return Rail.Lightning;
   }
@@ -367,14 +338,14 @@ export const RAIL_FLOOR_MARGIN_BPS = 2500; // +25%
  * Replace with measured cost when per-rail telemetry lands (G8 calibration).
  */
 export const RAIL_COST_ESTIMATE_SAT: Record<SettlementRail, bigint> = {
-  [Rail.Lightning]: 8n,
-  [Rail.Statechain]: 20n,
-  [Rail.Fedimint]: 20n,
-  [Rail.Rgb]: 16n,
-  [Rail.Sbtc]: 40n,
-  [Rail.AlexStacks]: 40n,
-  [Rail.Babylon]: 40n,
-  [Rail.EvmErc8183]: 80n,
+  [Rail.Lightning]: 8n,    // ~1–2 sat median routing
+  [Rail.Statechain]: 100n, // flat 100 sat VTXO transfer
+  [Rail.Fedimint]: 20n,    // e-cash, near-zero transfer
+  [Rail.Rgb]: 250n,        // Bitcoin OP_RETURN anchor
+  [Rail.Sbtc]: 300n,       // Bitcoin L1 peg + Stacks tx
+  [Rail.AlexStacks]: 40n,  // Stacks tx ~sub-cent
+  [Rail.Babylon]: 40n,     // Cosmos tx ~sub-cent
+  [Rail.EvmErc8183]: 60n,  // L2 gas + L1 data (Base/Arb/Opt)
 };
 
 /** Derive a flat floor from cost + margin: `cost × (1 + margin_bps / 10_000)`. */
@@ -384,10 +355,10 @@ export function railFloorFromCost(costSat: bigint, marginBps: bigint): bigint {
 
 /** Logarithmic 30-day volume decay tiers (basis points). */
 export const VOLUME_DECAY_BPS: Record<VolumeDecayTier, number> = {
-  TIER_1: 200, // 2.00% — launch / low-volume
-  TIER_2: 150, // 1.50%
-  TIER_3: 75,  // 0.75%
-  TIER_4: 25,  // 0.25% — high-velocity M2M
+  TIER_1: 50, // 0.50% — launch / low-volume
+  TIER_2: 25, // 0.25%
+  TIER_3: 15, // 0.15%
+  TIER_4: 10, // 0.10% — high-velocity M2M
 };
 
 /** Minimum percentage fee floor (basis points). */
