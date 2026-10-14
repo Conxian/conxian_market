@@ -173,3 +173,12 @@ export type {
   MempoolFeeSample,
   LoadOracleAdapterConfig,
 } from "./core_types.js";
+
+// Roundhouse AI Discovery Index & x402 Event Reporter Exports
+export { RoundhouseClient } from "./roundhouse_client.js";
+export type {
+  RoundhouseEndpoint,
+  RoundhouseSettlementEvent,
+  VerifiedByConxianCertificate,
+  RoundhouseClientConfig,
+} from "./roundhouse_client.js";

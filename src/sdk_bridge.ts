@@ -733,3 +733,9 @@ export class ConxianMarketSDK {
     return this.settlement.availableRails(tier);
   }
 }
+
+import { RoundhouseClient, RoundhouseClientConfig } from './roundhouse_client.js';
+
+export function createRoundhouseClient(config?: RoundhouseClientConfig): RoundhouseClient {
+  return new RoundhouseClient(config);
+}
