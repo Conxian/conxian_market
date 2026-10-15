@@ -59,7 +59,7 @@ export class GatewayVerifier implements Verifier {
     if (!this.flags.attestationAvailable) return false; // P0-1..P0-3 gate
     try {
       const result = await this.gateway.verifyAttestation({ teeProof, zkProof });
-      return result.valid && result.tier === Tier.Strict;
+      return result.valid === true && result.tier === Tier.Strict;
     } catch {
       return false;
     }
@@ -69,7 +69,7 @@ export class GatewayVerifier implements Verifier {
     if (!this.flags.attestationAvailable) return false; // P0-1..P0-3 gate
     try {
       const result = await this.gateway.verifyAttestation({ enclaveAttestation: proof });
-      return result.valid && result.tier === Tier.Managed;
+      return result.valid === true && result.tier === Tier.Managed;
     } catch {
       return false;
     }
@@ -79,7 +79,7 @@ export class GatewayVerifier implements Verifier {
     // Light client verification is always available (SPV/MMR)
     try {
       const result = await this.gateway.verifyAttestation({ lightProof: proof });
-      return result.valid && result.tier === Tier.Expedient;
+      return result.valid === true && result.tier === Tier.Expedient;
     } catch {
       return false;
     }

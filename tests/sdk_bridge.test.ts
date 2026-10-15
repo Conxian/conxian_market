@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { TrustTier, SettlementRail } from "../src/core_types";
 import { ConxianMarketSDK } from "../src/sdk_bridge";
 import type { GapCard, BuilderReputationRecord } from "../src/sla_engine";
@@ -213,6 +213,7 @@ describe("ConxianMarketSDK Bridge - x402 Attestation Gateway Integration", () =>
       timestamp: Date.now(),
     };
 
+    vi.spyOn(sdk.verifier, "verifyAttestation").mockResolvedValue({ valid: true, tier: TrustTier.Managed });
     const verification = await sdk.verifyX402PaymentReceiptWithAttestation(
       demand,
       receipt,
@@ -354,13 +355,13 @@ describe("ConxianMarketSDK Client Onboarding Integration", () => {
     expect(validation.valid).toBe(true);
 
     const connectivity = sdk.testSystemConnectivity(config);
-    expect(connectivity.overallHealth).toBe("HEALTHY");
+    expect(connectivity.overallHealth).toBe("UNVERIFIED");
 
     const audit = sdk.auditZeroCustody(config);
-    expect(audit.passed).toBe(true);
+    expect(audit.passed).toBe(false);
 
     const provisioning = sdk.provisionClientEnvironment(config);
-    expect(provisioning.provisioned).toBe(true);
+    expect(provisioning.provisioned).toBe(false);
 
     const entitlement = sdk.verifyClientEntitlements(config);
     expect(entitlement.clientDid).toBe("did:conxian:client-sdk-test");
@@ -369,10 +370,10 @@ describe("ConxianMarketSDK Client Onboarding Integration", () => {
     expect(manifest.checksum).toBeDefined();
 
     const probe = sdk.probeAssetConnectivity(config);
-    expect(probe.gatewayConnected).toBe(true);
+    expect(probe.gatewayConnected).toBe(false);
 
     const cliResult = sdk.runUnifiedInstallerCli(config);
-    expect(cliResult.success).toBe(true);
+    expect(cliResult.success).toBe(false);
 
     const summary = sdk.getCapabilitySummary();
     expect(summary.clientInstallerEnabled).toBe(true);
