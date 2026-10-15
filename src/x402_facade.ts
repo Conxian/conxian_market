@@ -10,12 +10,13 @@
  * Now expanded with Attestation-Backed x402 Verification & Trust Layer Proofs.
  */
 
+import { createHash } from "node:crypto";
 import type { AttestationCertificate, JobCard, SettlementRail, TrustTier } from "./core_types.js";
 import { TrustTier as Tier } from "./core_types.js";
 import type { EscrowCreationParams, EscrowRecord } from "./job_card_escrow.js";
 import { JobCardEscrowEngine } from "./job_card_escrow.js";
 import { BosYieldSplitter } from "./bos_yield_splitter.js";
-import { GatewayVerifier, detectTrustTierStatic } from "./verification.js";
+import { GatewayVerifier } from "./verification.js";
 
 export const X402_SCHEME = "x402" as const;
 export const X402_CURRENCY = "sats" as const;
@@ -36,7 +37,7 @@ export interface X402PaymentDemand {
   rail?: SettlementRail;
 }
 
-/** x402 payment receipt - proof of payment against a prior demand. */
+/** Caller-supplied receipt fields; not independently verified payment evidence. */
 export interface X402PaymentReceipt {
   demandId: string;
   transactionId: string;
@@ -45,8 +46,10 @@ export interface X402PaymentReceipt {
   payerDid: string;
 }
 
-/** "Verified by Conxian" immutable trust proof artifact for an x402 agent transaction. */
+/** Unsigned local correlation record, not a payment/finality or issuer signature proof. */
 export interface X402TrustProofArtifact {
+  artifactKind: "local-correlation-record/v1";
+  paymentVerified: false;
   proofId: string;
   jobId: string;
   demandId: string;
@@ -101,7 +104,7 @@ export function jobCardToMultiRailDemands(
   return rails.map((rail) => jobCardToDemand(job, rail));
 }
 
-/** Validate an x402 payment receipt against its demand (id + amount + expiry). */
+/** Check receipt field consistency only. This does not verify network payment/finality. */
 export function verifyPaymentReceipt(
   demand: X402PaymentDemand,
   receipt: X402PaymentReceipt
@@ -119,7 +122,8 @@ export function verifyPaymentReceipt(
 
 /**
  * Verify x402 payment receipt accompanied by a hardware/enclave attestation certificate.
- * Generates an immutable "Verified by Conxian" trust proof artifact.
+ * Requires a validating backend; returns an unsigned local correlation record.
+ * Certificate verification does not establish receipt payment or transaction binding.
  */
 export async function verifyPaymentReceiptWithAttestation(
   demand: X402PaymentDemand,
@@ -155,30 +159,18 @@ export async function verifyPaymentReceiptWithAttestation(
   if (verifier) {
     try {
       const res = await verifier.verifyAttestation(cert);
-      verifiedTier = res.tier;
-      attestationValid = res.valid;
+      if (res.valid === true && [Tier.Expedient, Tier.Managed, Tier.Strict].includes(res.tier)) {
+        verifiedTier = res.tier;
+        attestationValid = true;
+      }
     } catch {
-      // Fall through to static inspection
-    }
-  }
-
-  if (!attestationValid || verifiedTier === Tier.ObserverOnly) {
-    // Static fallback inspection
-    const staticTier = detectTrustTierStatic({
-      "x-conxian-tee-proof": cert.tee_proof,
-      "x-conxian-zk-proof": cert.zk_proof,
-      "x-conxian-enclave-attestation": cert.enclave_attestation,
-      "x-conxian-light-proof": cert.light_proof,
-    });
-    if (staticTier !== Tier.ObserverOnly) {
-      verifiedTier = staticTier;
-      attestationValid = true;
+      // Missing/rejected/unavailable verifier cannot fall back to proof strings.
     }
   }
 
   const summary = attestationValid
     ? `Attestation verified at TrustTier: ${verifiedTier}`
-    : "Attestation unverified or fallback to ObserverOnly";
+    : "Attestation unverified; no validating backend evidence";
 
   const trustProof = createTrustProofArtifact(
     demand,
@@ -199,7 +191,7 @@ export async function verifyPaymentReceiptWithAttestation(
   };
 }
 
-/** Helper to construct immutable trust proof artifact */
+/** Hash a local record. Caller fields and this checksum are not signed authority. */
 export function createTrustProofArtifact(
   demand: X402PaymentDemand,
   receipt: X402PaymentReceipt,
@@ -210,17 +202,15 @@ export function createTrustProofArtifact(
 ): X402TrustProofArtifact {
   const verifiedAt = Date.now();
   const proofId = `proof-x402-${demand.resourceId}-${verifiedAt}`;
-  const rawData = `${proofId}:${demand.resourceId}:${receipt.transactionId}:${receipt.payerDid}:${agentProviderDid}:${verifiedTier}:${attestationVerified}`;
-
-  // Simple deterministic string hash for proof artifact
-  let hashVal = 0;
-  for (let i = 0; i < rawData.length; i++) {
-    hashVal = (hashVal << 5) - hashVal + rawData.charCodeAt(i);
-    hashVal |= 0;
-  }
-  const proofHash = `0x${Math.abs(hashVal).toString(16).padStart(16, "0")}`;
+  const rawData = JSON.stringify([
+    "CONXIAN-X402-CORRELATION/v1", proofId, demand, receipt,
+    agentProviderDid, verifiedTier, attestationVerified, summary, verifiedAt,
+  ]);
+  const proofHash = `0x${createHash("sha256").update(rawData).digest("hex")}`;
 
   return {
+    artifactKind: "local-correlation-record/v1",
+    paymentVerified: false,
     proofId,
     jobId: demand.resourceId,
     demandId: demand.resourceId,
@@ -258,7 +248,7 @@ export function toEscrowParams(
   };
 }
 
-/** Gateway processor connecting x402 payment receipts to ERC-8183 escrow locks. */
+/** In-memory escrow bookkeeping; these methods do not submit or verify on-chain locks. */
 export class X402EscrowGateway {
   constructor(private readonly escrowEngine: JobCardEscrowEngine) {}
 
