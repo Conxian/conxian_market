@@ -173,3 +173,5 @@ export type {
   MempoolFeeSample,
   LoadOracleAdapterConfig,
 } from "./core_types.js";
+export { RoundhouseClient, RoundhouseUnsupportedError } from './roundhouse_client.js';
+export type { RoundhouseEndpoint, RoundhouseSettlementEvent, VerifiedByConxianCertificate, RoundhouseClientConfig } from './roundhouse_client.js';

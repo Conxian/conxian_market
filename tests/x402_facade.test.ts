@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   jobCardToDemand,
   jobCardToMultiRailDemands,
@@ -10,6 +10,8 @@ import {
 } from "../src/x402_facade";
 import { SettlementRail, TrustTier } from "../src/core_types";
 import { JobCardEscrowEngine, EscrowState } from "../src/job_card_escrow";
+import { GatewayVerifier } from "../src/verification";
+import { GatewayClient } from "../src/gateway_client";
 import { SlaEngine } from "../src/sla_engine";
 
 describe("x402 facade & gateway", () => {
@@ -126,7 +128,7 @@ describe("x402 facade & gateway", () => {
     expect(yieldSplit.ecosystemStakeholdersSat).toBe(100_000n);
   });
 
-  it("verifies payment receipt with TEE/ZK attestation and constructs trust proof artifact", async () => {
+  it("builds a local correlation record using an explicitly successful verifier fixture", async () => {
     const demand = jobCardToDemand(job, SettlementRail.Sbtc);
     const receipt = {
       demandId: "job-1",
@@ -141,11 +143,14 @@ describe("x402 facade & gateway", () => {
       timestamp: 1_700_000_000_000,
     };
 
+    const verifier = new GatewayVerifier(new GatewayClient({ baseUrl: "https://gateway.invalid" }));
+    vi.spyOn(verifier, "verifyAttestation").mockResolvedValue({ valid: true, tier: TrustTier.Strict });
     const verificationResult = await verifyPaymentReceiptWithAttestation(
       demand,
       receipt,
       cert,
-      "did:conxian:agent:provider"
+      "did:conxian:agent:provider",
+      verifier
     );
 
     expect(verificationResult.valid).toBe(true);
@@ -156,7 +161,7 @@ describe("x402 facade & gateway", () => {
     expect(verificationResult.trustProof.verifiedTier).toBe(TrustTier.Strict);
   });
 
-  it("locks escrow with attestation proof through X402EscrowGateway", async () => {
+  it("records local escrow with a successful verifier fixture", async () => {
     const slaEngine = new SlaEngine();
     const escrowEngine = new JobCardEscrowEngine(slaEngine);
     const gateway = new X402EscrowGateway(escrowEngine);
@@ -174,12 +179,15 @@ describe("x402 facade & gateway", () => {
       timestamp: 1_700_000_000_000,
     };
 
+    const verifier = new GatewayVerifier(new GatewayClient({ baseUrl: "https://gateway.invalid" }));
+    vi.spyOn(verifier, "verifyAttestation").mockResolvedValue({ valid: true, tier: TrustTier.Managed });
     const { escrowRecord, trustProof } = await gateway.processPaymentAndLockEscrowWithAttestation(
       demand,
       receipt,
       "did:conxian:agent:provider",
       SettlementRail.Sbtc,
-      cert
+      cert,
+      verifier
     );
 
     expect(escrowRecord.jobId).toBe("job-1");
