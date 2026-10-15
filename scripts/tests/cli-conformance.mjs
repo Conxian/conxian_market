@@ -11,10 +11,10 @@ function context(fn) {
   const dir = mkdtempSync(join(tmpdir(), "conxian-cli-test-"));
   try { fn(dir); } finally { rmSync(dir, { recursive: true, force: true }); }
 }
-function run(dir, args, extra = []) {
+function run(dir, args, extra = [], env = {}) {
   return spawnSync(process.execPath, [...extra, binary, ...args], {
     cwd: dir, encoding: "utf8", input: "", timeout: 10000,
-    env: { ...process.env, NO_COLOR: "1" },
+    env: { ...process.env, NO_COLOR: "1", ...env },
   });
 }
 for (const args of [["--help"], ["-h"], ["--schema"], ["--version"], ["--help", "--json"]]) {
@@ -110,4 +110,60 @@ test("graph is internally consistent source metadata, not runtime evidence", () 
     assert.ok(edge.evidence);
   }
   assert.deepEqual(readdirSync(dir), []);
+}));
+
+for (const args of [
+  ["--diagnose", "other"], ["--diagnose", "gateway"], ["--endpoint", "https://example.invalid"],
+  ["--diagnose", "gateway", "--dry-run"], ["--diagnose", "nexus", "--graph"],
+  ["--diagnose", "gateway", "--endpoint", "https://example.invalid", "--timeout-ms", "10001"],
+  ["--diagnose", "gateway", "--endpoint", "https://example.invalid", "--token-env", "unsafe=value"],
+]) {
+  test(`invalid diagnostic arguments remain offline: ${JSON.stringify(args)}`, () => context((dir) => {
+    const result = run(dir, [...args, "--json"]);
+    assert.equal(result.status, 2, result.stderr);
+    assert.equal(result.stdout, "");
+    assert.equal(JSON.parse(result.stderr).status, "error");
+    assert.deepEqual(readdirSync(dir), []);
+  }));
+}
+
+test("diagnostic credential is required without exposing endpoint credentials", () => context((dir) => {
+  const result = run(dir, ["--diagnose", "gateway", "--endpoint", "https://example.invalid", "--json"], [], { CONXIAN_DIAGNOSTIC_TOKEN: "" });
+  assert.equal(result.status, 2);
+  assert.equal(JSON.parse(result.stderr).code, "credential_unavailable");
+  assert.deepEqual(readdirSync(dir), []);
+}));
+
+test("diagnostic process makes only the authenticated read and never writes an identity", () => context((dir) => {
+  const stub = join(dir, "provider.mjs");
+  writeFileSync(stub, `import assert from "node:assert/strict";
+globalThis.fetch = async (url, init) => {
+  assert.equal(String(url), "https://example.invalid/api/v1/capabilities");
+  assert.equal(init.method, "GET"); assert.equal(init.redirect, "error");
+  assert.equal(init.headers.Authorization, "Bearer test-only-secret");
+  return new Response(JSON.stringify({schema_version:1, manifest_kind:"adapter_registration",
+    repository:"Conxian/conxian-gateway", version:"0.1.5", source:"runtime-adapter-map", trust_root:"bitcoin-l1",
+    scope:"universal-chain", native_conxian_token:false, adapters:[]}), {headers:{"content-type":"application/json"}});
+};`);
+  const result = run(dir, ["--diagnose", "gateway", "--endpoint", "https://example.invalid", "--json"], ["--import", stub], { CONXIAN_DIAGNOSTIC_TOKEN: "test-only-secret" });
+  assert.equal(result.status, 0, result.stderr);
+  const data = JSON.parse(result.stdout);
+  assert.equal(data.command, "diagnose");
+  assert.equal(data.status, "ok");
+  assert.equal(data.execution_enabled, false);
+  assert.equal(data.diagnostic.qualifiedOperationCount, 0);
+  assert.equal(data.diagnostic.productionQualified, false);
+  assert.equal(result.stderr, "");
+  assert.ok(!result.stdout.includes("test-only-secret"));
+  assert.deepEqual(readdirSync(dir), ["provider.mjs"]);
+}));
+
+test("diagnostic rejection has stable exit and redacts provider text", () => context((dir) => {
+  const stub = join(dir, "provider.mjs");
+  writeFileSync(stub, 'globalThis.fetch = async () => new Response("test-only-secret", {status: 401});');
+  const result = run(dir, ["--diagnose", "nexus", "--endpoint", "https://example.invalid", "--json"], ["--import", stub], { CONXIAN_DIAGNOSTIC_TOKEN: "test-only-secret" });
+  assert.equal(result.status, 1);
+  assert.equal(JSON.parse(result.stdout).diagnostic.code, "http_rejected");
+  assert.ok(!`${result.stdout}${result.stderr}`.includes("test-only-secret"));
+  assert.deepEqual(readdirSync(dir), ["provider.mjs"]);
 }));

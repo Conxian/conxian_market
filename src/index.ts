@@ -7,6 +7,14 @@
  */
 
 export * from "./core_types.js";
+export { readRegistrationDiagnostic, validateRegistrationManifest, REGISTRATION_MAX_BYTES } from "./provider_discovery.js";
+export type { RegistrationOwner, RegistrationDiagnostic } from "./provider_discovery.js";
+export {
+  X402_V2_WIRE_PROFILE, X402_V2_MAX_BYTES, X402_V2_HEADERS,
+  X402V2RequirementsSchema, X402V2RequiredSchema, X402V2PayloadSchema, X402V2SettlementSchema,
+  parseX402V2, encodeX402V2Header, decodeX402V2Header, x402V2McpRequired, x402V2McpPayment,
+} from "./x402_v2_wire.js";
+export type { X402V2Required, X402V2Payload, X402V2Settlement } from "./x402_v2_wire.js";
 export { GatewayClient } from "./gateway_client.js";
 export { SettlementResultSchema, ProtocolFeeRecordSchema, M2MSettlementResponseSchema } from "./wire_contract.js";
 export type { ValidatedSettlementResult } from "./wire_contract.js";

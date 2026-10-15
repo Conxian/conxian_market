@@ -13,6 +13,10 @@ const OPTIONS = {
   tier: { type: "string", default: "MANAGED" },
   output: { type: "string", default: ".conxian-agent.env" },
   "dry-run": { type: "boolean", default: false },
+  diagnose: { type: "string" },
+  endpoint: { type: "string" },
+  "token-env": { type: "string", default: "CONXIAN_DIAGNOSTIC_TOKEN" },
+  "timeout-ms": { type: "string", default: "5000" },
   json: { type: "boolean", default: false },
   schema: { type: "boolean", default: false },
   graph: { type: "boolean", default: false },
@@ -51,7 +55,7 @@ function schema() {
         status: { enum: ["ok", "planned", "incomplete", "error"] },
       },
     },
-    effects: { graph: "none", schema: "none", help: "none", preview: "none", onboarding: "exclusive local identity file creation" },
+    effects: { graph: "none", schema: "none", help: "none", preview: "none", diagnose: "one authenticated read-only HTTPS registration request; no writes", onboarding: "exclusive local identity file creation" },
     exit_codes: { "0": "requested local operation completed", "1": "onboarding incomplete or local operation failed", "2": "invalid arguments or configuration" },
     authority: { runtime_verified: false, custody_verified: false, production_qualified: false },
   });
@@ -69,6 +73,13 @@ function readArgs(argv) {
     if (token.kind !== "option") continue;
     if (seen.has(token.name)) throw new CliError("duplicate_option", "Supply each option once.");
     seen.add(token.name);
+  }
+  const values = parsed.values;
+  if (values.diagnose !== undefined && (values["dry-run"] || values.graph || values.schema || values.version)) {
+    throw new CliError("conflicting_commands", "Select diagnostics separately from offline discovery or onboarding.");
+  }
+  if (values.diagnose === undefined && ["endpoint", "token-env", "timeout-ms"].some((name) => seen.has(name))) {
+    throw new CliError("invalid_arguments", "Diagnostic options require --diagnose.");
   }
   return parsed.values;
 }
@@ -143,10 +154,36 @@ async function main() {
       "  --json           Versioned JSON on stdout; structured errors on stderr",
       "  --schema         Machine-readable options, output shape, effects and exits",
       "  --graph          Offline architecture reference; no live service claims",
+      "  --diagnose <gateway|nexus>  Read registration metadata; no operations authorized",
+      "  --endpoint <url> HTTPS origin/API root required by --diagnose",
+      "  --token-env <name> Credential variable (default: CONXIAN_DIAGNOSTIC_TOKEN)",
+      "  --timeout-ms <ms> Diagnostic deadline, 1–10000 (default: 5000)",
       "  --version        Package version",
       "  -h, --help       Show help; --help --json returns the command schema",
       "", "A local plan does not prove purchased entitlement, runtime health or hardware custody.",
     ].join("\n"));
+    return;
+  }
+  if (args.diagnose !== undefined) {
+    if (!["gateway", "nexus"].includes(args.diagnose) || !args.endpoint ||
+        !/^[A-Z_][A-Z0-9_]{0,127}$/u.test(args["token-env"]) ||
+        !/^\d{1,5}$/u.test(args["timeout-ms"]) ||
+        Number(args["timeout-ms"]) < 1 || Number(args["timeout-ms"]) > 10000) {
+      throw new CliError("invalid_configuration", "Diagnostics require an owner, HTTPS endpoint, credential variable name and bounded deadline.");
+    }
+    const token = process.env[args["token-env"]];
+    if (!token) throw new CliError("credential_unavailable", "The diagnostic credential variable is unavailable.");
+    let sdk;
+    try { sdk = await import("../dist/index.js"); }
+    catch { throw new CliError("sdk_unavailable", "Build the SDK distribution before diagnostics.", 1); }
+    const diagnostic = await sdk.readRegistrationDiagnostic({ owner: args.diagnose,
+      baseUrl: args.endpoint, apiToken: token, timeoutMs: Number(args["timeout-ms"]) });
+    const result = envelope("diagnose", diagnostic.state === "registered" ? "ok" : "incomplete", {
+      diagnostic, execution_enabled: false, custody_verified: false, production_qualified: false,
+    });
+    if (args.json) console.log(JSON.stringify(result));
+    else console.log(`${args.diagnose}: ${diagnostic.state} (${diagnostic.code}); ${diagnostic.adapterIds.length} registrations; 0 qualified operations.`);
+    process.exitCode = diagnostic.state === "registered" ? 0 : diagnostic.code === "invalid_configuration" ? 2 : 1;
     return;
   }
   const gatewayUrl = endpoint(args.gateway, "Gateway");
@@ -212,7 +249,8 @@ async function main() {
 
 main().catch((error) => {
   const known = error instanceof CliError;
-  const result = envelope("onboard", "error", {
+  const command = process.argv.some((arg) => arg === "--diagnose" || arg.startsWith("--diagnose=")) ? "diagnose" : "onboard";
+  const result = envelope(command, "error", {
     code: known ? error.code : "local_operation_failed",
     message: known ? error.message : "The local operation failed; no successful onboarding is established.",
   });

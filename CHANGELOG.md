@@ -5,6 +5,15 @@ All notable changes to the Conxian Market SDK (`@conxian/market-sdk`) project wi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Bounded authenticated Gateway/Nexus registration diagnostics for SDK callers and the noninteractive CLI, with strict wire contracts, redacted errors, whole-response deadlines and no operation grants.
+- An explicit x402 v2 HTTP/MCP wire profile with schemas, types, bounded UTF-8/base64 codecs and conformance tests. Payment, signature, registry and settlement verification remain separate integrations.
+
+### Fixed
+- CLI/source guidance and the historical GAP-02 test runner now distinguish local conformance from provider, payment, escrow and release evidence.
+
 ## [0.2.4] - 2026-10-03
 
 ### Fixed
