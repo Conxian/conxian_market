@@ -78,14 +78,3 @@ The current live execution chain is:
 | Conxian | Monorepo Smart Contracts | **DEPRECATED** | Recommended for archiving in favor of BYO DeFi adapters. |
 
 ---
-
----
-
-## Session 75 Update — Roundhouse AI & x402 Integration
-
-- **Candidate #20 (`Roundhouse AI Discovery Index Ingestion & Bi-Directional x402 Settlement Reporter`)**:
-  - Implemented `RoundhouseClient` in `src/roundhouse_client.ts` to ingest Roundhouse's `/v0/endpoints` directory and publish "Verified by Conxian" settlement events.
-  - Authored ITIL 5 Capability Audit (`docs/research/ROUNDHOUSE_AI_X402_INTEGRATION_AND_ITIL5_CAPABILITY_AUDIT.md`).
-  - Authored ADR-006 (`docs/adr/ADR_006_ROUNDHOUSE_AI_X402_INTEGRATION_AND_TRUST_ENGINE.md`).
-  - Authored ATS Gap Matrix (`docs/research/SESSION_75_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
-  - Added unit test suite in `tests/roundhouse_client.test.ts` (all 22 test files passing, 189/189 tests).

@@ -1,9 +1,4 @@
-/**
- * @file roundhouse_client.ts
- * @description Roundhouse AI Discovery Index Ingestion & Bi-Directional x402 Settlement Event Reporter Client.
- * Enables @conxian/market-sdk to query Roundhouse's open /v0/endpoints directory and publish "Verified by Conxian" settlement events.
- */
-
+/** Local discovery diagnostics. External Roundhouse contracts remain unverified. */
 import { TrustTier } from './core_types.js';
 
 export interface RoundhouseEndpoint {
@@ -17,7 +12,9 @@ export interface RoundhouseEndpoint {
   attestation_verified: boolean;
   trust_tier: TrustTier;
   settlement_rails: string[];
-  last_probed_at: string;
+  last_probed_at: string | null;
+  source?: 'local-registration';
+  verification?: 'not-evidenced';
 }
 
 export interface RoundhouseSettlementEvent {
@@ -32,6 +29,7 @@ export interface RoundhouseSettlementEvent {
   attestation_quote_hash?: string;
 }
 
+/** Compatibility vocabulary; no implementation in this client can issue it. */
 export interface VerifiedByConxianCertificate {
   certificate_id: string;
   endpoint_url: string;
@@ -49,137 +47,100 @@ export interface RoundhouseClientConfig {
   fetchFn?: typeof fetch;
 }
 
+export class RoundhouseUnsupportedError extends Error {
+  readonly code = 'ROUNDHOUSE_CAPABILITY_UNAVAILABLE';
+  constructor(readonly operation: 'remote-discovery' | 'attestation-certificate' | 'settlement-publication') {
+    super(`Roundhouse ${operation} requires a verified implementation and acceptance contract`);
+    this.name = 'RoundhouseUnsupportedError';
+  }
+}
+
+const MAX_LOCAL_ENDPOINTS = 256;
+function text(value: unknown, max: number): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= max &&
+    !Array.from(value).some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127);
+}
+
+function publicUrl(value: unknown): string {
+  if (!text(value, 2048)) throw new Error('Invalid endpoint URL');
+  const url = new URL(value);
+  if (url.protocol !== 'https:' || url.username || url.password || url.hash || url.search) {
+    throw new Error('Endpoint URL must be HTTPS without credentials, query or fragment');
+  }
+  return url.href;
+}
+
+function price(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
+
+function copy(endpoint: RoundhouseEndpoint): RoundhouseEndpoint {
+  return { ...endpoint, settlement_rails: [...endpoint.settlement_rails] };
+}
+
 export class RoundhouseClient {
-  private readonly baseUrl: string;
-  private readonly apiKey?: string;
-  private readonly timeoutMs: number;
-  private readonly customFetch?: typeof fetch;
-  private endpointCache: Map<string, RoundhouseEndpoint> = new Map();
+  private readonly remoteRequested: boolean;
+  private readonly endpointCache = new Map<string, RoundhouseEndpoint>();
 
   constructor(config: RoundhouseClientConfig = {}) {
-    this.baseUrl = (config.baseUrl || 'https://api.roundhouse.ai').replace(/\/$/, '');
-    this.apiKey = config.apiKey;
-    this.timeoutMs = config.timeoutMs || 5000;
-    this.customFetch = config.fetchFn;
+    if (config.baseUrl !== undefined) publicUrl(config.baseUrl);
+    if (config.timeoutMs !== undefined &&
+        (!Number.isSafeInteger(config.timeoutMs) || config.timeoutMs < 1 || config.timeoutMs > 30_000)) {
+      throw new Error('Invalid discovery timeout');
+    }
+    this.remoteRequested = config.baseUrl !== undefined || config.fetchFn !== undefined;
+    // No default destination, retained credential, fetch or publication side effect.
   }
 
-  /**
-   * Fetches the /v0/endpoints discovery directory from Roundhouse AI.
-   */
-  async fetchEndpoints(options: {
-    attestationOnly?: boolean;
-    rail?: string;
-    trustTier?: TrustTier;
-  } = {}): Promise<RoundhouseEndpoint[]> {
-    let endpoints: RoundhouseEndpoint[] = [];
+  getCapabilities() {
+    return { localRegistration: true, remoteDiscovery: false, attestationCertification: false,
+      settlementPublication: false, productionQualified: false } as const;
+  }
 
-    try {
-      if (this.customFetch) {
-        const res = await this.customFetch(`${this.baseUrl}/v0/endpoints`, {
-          headers: this.buildHeaders(),
-        });
-        if (res.ok) {
-          endpoints = (await res.json()) as RoundhouseEndpoint[];
-        }
-      }
-    } catch {
-      // Fall back to cached or empty array
+  /** Local registrations are discovery metadata, never proof or operational health. */
+  registerLocalEndpoint(endpoint: RoundhouseEndpoint): void {
+    if (!endpoint || typeof endpoint !== 'object' ||
+        !text(endpoint.id, 128) || !text(endpoint.name, 256) ||
+        !['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'].includes(endpoint.method) ||
+        !price(endpoint.price_sats) ||
+        (endpoint.price_usdc_cents !== undefined && !price(endpoint.price_usdc_cents)) ||
+        typeof endpoint.x402_supported !== 'boolean' || typeof endpoint.attestation_verified !== 'boolean' ||
+        !Object.values(TrustTier).includes(endpoint.trust_tier) ||
+        !Array.isArray(endpoint.settlement_rails) || endpoint.settlement_rails.length > 32 ||
+        endpoint.settlement_rails.some((rail) => !text(rail, 64))) {
+      throw new Error('Invalid local endpoint metadata');
     }
-
-    // Fallback if network or custom fetch not provided or failed
-    if (endpoints.length === 0 && this.endpointCache.size > 0) {
-      const uniqueSet = new Set<RoundhouseEndpoint>(this.endpointCache.values());
-      endpoints = Array.from(uniqueSet);
+    const url = publicUrl(endpoint.url);
+    if (!this.endpointCache.has(endpoint.id) && this.endpointCache.size >= MAX_LOCAL_ENDPOINTS) {
+      throw new Error('Local endpoint inventory is full');
     }
-
-    // Filter results
-    return endpoints.filter((ep) => {
-      if (options.attestationOnly && !ep.attestation_verified) {
-        return false;
-      }
-      if (options.rail && !ep.settlement_rails.includes(options.rail)) {
-        return false;
-      }
-      if (options.trustTier && ep.trust_tier !== options.trustTier) {
-        return false;
-      }
-      return true;
+    this.endpointCache.set(endpoint.id, {
+      id: endpoint.id, url, name: endpoint.name, method: endpoint.method,
+      price_sats: endpoint.price_sats, price_usdc_cents: endpoint.price_usdc_cents,
+      settlement_rails: [...endpoint.settlement_rails],
+      x402_supported: false, attestation_verified: false, trust_tier: TrustTier.ObserverOnly,
+      last_probed_at: null, source: 'local-registration', verification: 'not-evidenced',
     });
   }
 
-  /**
-   * Caches an endpoint locally for discovery lookup.
-   */
-  registerLocalEndpoint(endpoint: RoundhouseEndpoint): void {
-    this.endpointCache.set(endpoint.id, endpoint);
-    if (endpoint.url) {
-      this.endpointCache.set(endpoint.url, endpoint);
-    }
+  /** Never silently substitutes local data for an unavailable remote lookup. */
+  async fetchEndpoints(options: { attestationOnly?: boolean; rail?: string; trustTier?: TrustTier } = {}): Promise<RoundhouseEndpoint[]> {
+    if (this.remoteRequested) throw new RoundhouseUnsupportedError('remote-discovery');
+    return Array.from(this.endpointCache.values()).filter((endpoint) =>
+      !options.attestationOnly && (!options.rail || endpoint.settlement_rails.includes(options.rail)) &&
+      (!options.trustTier || endpoint.trust_tier === options.trustTier)).map(copy);
   }
 
-  /**
-   * Generates a "Verified by Conxian" TEE attestation certificate for a Roundhouse endpoint.
-   */
-  generateAttestationCertificate(
-    endpointUrl: string,
-    enclaveQuote: string,
-    enclaveType: 'AWS_NITRO' | 'ANDROID_STRONGBOX' | 'SIMULATED' = 'AWS_NITRO'
-  ): VerifiedByConxianCertificate {
-    const issuedAt = new Date().toISOString();
-    const certificateId = `cert_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    const attestationHash = `0x${Buffer.from(enclaveQuote || 'default_quote').toString('hex').substring(0, 32)}`;
-    const signature = `cx_sig_${Buffer.from(`${certificateId}:${endpointUrl}:${attestationHash}`).toString('base64')}`;
-
-    return {
-      certificate_id: certificateId,
-      endpoint_url: endpointUrl,
-      enclave_type: enclaveType,
-      attestation_hash: attestationHash,
-      issued_at: issuedAt,
-      issuer: 'conxian.org/trust-layer',
-      signature,
-    };
+  /** Base64 text, a quote string and provider names cannot issue a certificate. */
+  generateAttestationCertificate(_endpointUrl: string, _enclaveQuote: string,
+    _enclaveType: 'AWS_NITRO' | 'ANDROID_STRONGBOX' | 'SIMULATED' = 'AWS_NITRO'): VerifiedByConxianCertificate {
+    throw new RoundhouseUnsupportedError('attestation-certificate');
   }
 
-  /**
-   * Publishes a verified settlement event back to Roundhouse's indexing engine.
-   */
+  /** A supplied transaction/proof hash cannot establish verification or publication. */
   async publishSettlementEvent(
-    eventData: Omit<RoundhouseSettlementEvent, 'event_id' | 'timestamp' | 'verified_by_conxian'>
+    _event: Omit<RoundhouseSettlementEvent, 'event_id' | 'timestamp' | 'verified_by_conxian'>,
   ): Promise<RoundhouseSettlementEvent> {
-    const timestamp = new Date().toISOString();
-    const eventId = `ev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-    const event: RoundhouseSettlementEvent = {
-      ...eventData,
-      event_id: eventId,
-      timestamp,
-      verified_by_conxian: true,
-    };
-
-    if (this.customFetch) {
-      try {
-        await this.customFetch(`${this.baseUrl}/v0/events`, {
-          method: 'POST',
-          headers: this.buildHeaders(),
-          body: JSON.stringify(event),
-        });
-      } catch {
-        // Log or handle silent telemetry push
-      }
-    }
-
-    return event;
-  }
-
-  private buildHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Conxian-Market-SDK/0.2.5',
-    };
-    if (this.apiKey) {
-      headers['Authorization'] = `Bearer ${this.apiKey}`;
-    }
-    return headers;
+    throw new RoundhouseUnsupportedError('settlement-publication');
   }
 }

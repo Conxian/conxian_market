@@ -3,13 +3,13 @@
  * conxian-agent-init — automated client onboarding CLI.
  *
  * Single-command provisioning for indie AI agent developers (ElizaOS, LangGraph,
- * AutoGen, CrewAI). Generates zero-custody client keys, configures domain routing,
- * and tests endpoint connectivity in under 60 seconds.
+ * AutoGen, CrewAI). Generates a local identity and an installation plan. Runtime connectivity,
+ * purchased entitlement and provider custody remain unverified until integrated.
  *
  * Usage:
  *   node bin/conxian-agent-init.mjs [--gateway <url>] [--nexus <url>] [--rail <rail>] [--tier <tier>]
  */
-import { generateKeyPairSync, randomBytes, createHash } from "node:crypto";
+import { generateKeyPairSync, createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -69,8 +69,7 @@ function generateClientKeys() {
   const privPem = privateKey.export({ type: "pkcs8", format: "pem" });
   const pubDigest = createHash("sha256").update(pubPem).digest("hex").slice(0, 32);
   const clientDid = `did:conxian:agent:${pubDigest}`;
-  const apiKey = `cxn_agent_${randomBytes(16).toString("hex")}`;
-  return { clientDid, apiKey, pubPem, privPem };
+  return { clientDid, pubPem, privPem };
 }
 
 async function main() {
@@ -82,7 +81,6 @@ async function main() {
 
   const keys = generateClientKeys();
   console.log(`  Client DID  : ${keys.clientDid}`);
-  console.log(`  Managed key : ${keys.apiKey}`);
 
   const config = {
     clientDid: keys.clientDid,
@@ -92,7 +90,7 @@ async function main() {
     targetTrustTier: tier,
   };
 
-  const sdk = await ConxianMarketSDK.connect({ baseUrl: args.gateway, apiToken: keys.apiKey });
+  const sdk = await ConxianMarketSDK.connect({ baseUrl: args.gateway });
 
   const t0 = Date.now();
   const result = sdk.runUnifiedInstallerCli(config);
@@ -115,23 +113,22 @@ async function main() {
     envFile,
     [
       `CONXIAN_CLIENT_DID=${keys.clientDid}`,
-      `CONXIAN_AGENT_API_KEY=${keys.apiKey}`,
       `CONXIAN_GATEWAY_URL=${args.gateway}`,
       `CONXIAN_NEXUS_URL=${args.nexus}`,
       `CONXIAN_PUBLIC_KEY=${Buffer.from(keys.pubPem).toString("base64")}`,
       `CONXIAN_PRIVATE_KEY=${Buffer.from(keys.privPem).toString("base64")}`,
       "",
     ].join("\n"),
-    { mode: 0o600 }
+    { mode: 0o600, flag: "wx" }
   );
-  console.log(`\n  Wrote zero-custody credentials → ${envFile} (mode 0600)`);
+  console.log(`\n  Wrote local identity → ${envFile} (mode 0600)`);
 
   if (!result.provisioning.provisioned) {
-    console.error("\nOnboarding incomplete — review connectivity details above.");
+    console.error("\nOnboarding incomplete — entitlement, runtime, custody and provisioning evidence remain unverified.");
     process.exit(1);
   }
 
-  console.log("\nOnboarding complete. Your agent is ready to accept x402 payment demands.");
+  console.log("\nOnboarding evidence checks completed.");
 }
 
 main().catch((err) => {

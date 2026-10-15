@@ -519,12 +519,12 @@ export interface ConnectivityDiagnosticItem {
   target: "gateway" | "nexus" | "llm_provider" | "settlement_rail";
   endpoint: string;
   connected: boolean;
-  latencyMs: number;
+  latencyMs: number | null;
   statusMessage: string;
 }
 
 export interface SystemConnectivityReport {
-  overallHealth: "HEALTHY" | "DEGRADED" | "UNREACHABLE";
+  overallHealth: "HEALTHY" | "DEGRADED" | "UNREACHABLE" | "UNVERIFIED";
   timestampIso: string;
   diagnostics: ConnectivityDiagnosticItem[];
 }
@@ -555,6 +555,7 @@ export interface ClientProvisioningResult {
 // ── Session 63: End-to-End Client Purchase & Unified Installer Types ──
 
 export interface ClientEntitlementLicense {
+  verificationStatus?: "UNVERIFIED" | "VERIFIED";
   licenseId: string;
   clientDid: string;
   tier: TrustTier;
@@ -643,15 +644,15 @@ export interface SlaDiagnosticItem {
   target: string;
   endpointUrl: string;
   expectedMaxLatencyMs: number;
-  measuredLatencyMs: number;
+  measuredLatencyMs: number | null;
   slaCompliant: boolean;
-  status: "OPTIMAL" | "DEGRADED" | "CRITICAL";
+  status: "OPTIMAL" | "DEGRADED" | "CRITICAL" | "UNVERIFIED";
   detail: string;
 }
 
 export interface EnterpriseSlaDiagnosticsReport {
   clientDid: string;
-  overallSlaStatus: "HEALTHY" | "DEGRADED" | "NON_COMPLIANT";
+  overallSlaStatus: "HEALTHY" | "DEGRADED" | "NON_COMPLIANT" | "UNVERIFIED";
   latencyThresholdMs: number;
   diagnostics: SlaDiagnosticItem[];
   allEndpointsSlaCompliant: boolean;
