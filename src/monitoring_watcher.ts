@@ -539,6 +539,65 @@ export class MonitoringWatcher {
   }
 
   /** Create a Unified Health Snapshot across all telemetry streams */
+
+  /** Aggregate Multi-Cloud Scorecard Telemetry across Supabase BOS, Neon Postgres, and Render surfaces */
+  aggregateMultiCloudTelemetry(input: MultiCloudTelemetryInput): MultiCloudTelemetryScorecard {
+    const alerts: string[] = [];
+    let overallStatus: HealthStatus = "GREEN";
+
+    // Supabase BOS checks
+    if (!input.supabase.cnxBosSchemaHealthy) {
+      overallStatus = escalateStatus(overallStatus, "RED");
+      alerts.push("CRITICAL: Supabase BOS cnx_bos schema unhealthy or missing");
+    }
+    if (input.supabase.queryLatencyMs > 500) {
+      overallStatus = escalateStatus(overallStatus, "YELLOW");
+      alerts.push(`WARNING: Supabase BOS query latency high (${input.supabase.queryLatencyMs}ms > 500ms)`);
+    }
+
+    // Neon Postgres checks
+    if (input.neon.lfcHitRatePct < 85.0) {
+      overallStatus = escalateStatus(overallStatus, "YELLOW");
+      alerts.push(`WARNING: Neon LFC hit rate degraded (${input.neon.lfcHitRatePct.toFixed(1)}% < 85%)`);
+    }
+    if (input.neon.computeState === "SUSPENDED") {
+      overallStatus = escalateStatus(overallStatus, "RED");
+      alerts.push("CRITICAL: Neon compute endpoint is suspended");
+    }
+
+    // Render deployment surface checks
+    if (input.render.serviceUptimePct < 99.0) {
+      overallStatus = escalateStatus(overallStatus, "RED");
+      alerts.push(`CRITICAL: Render web service uptime below SLA (${input.render.serviceUptimePct.toFixed(2)}% < 99%)`);
+    }
+    if (input.render.cpuUsagePct > 85.0) {
+      overallStatus = escalateStatus(overallStatus, "YELLOW");
+      alerts.push(`WARNING: Render service CPU usage high (${input.render.cpuUsagePct.toFixed(1)}% > 85%)`);
+    }
+
+    return {
+      overallStatus,
+      supabase: {
+        status: input.supabase.status,
+        queryLatencyMs: input.supabase.queryLatencyMs,
+        schemaHealthy: input.supabase.cnxBosSchemaHealthy,
+      },
+      neon: {
+        status: input.neon.status,
+        lfcHitRatePct: input.neon.lfcHitRatePct,
+        computeState: input.neon.computeState,
+      },
+      render: {
+        status: input.render.status,
+        serviceUptimePct: input.render.serviceUptimePct,
+        cpuUsagePct: input.render.cpuUsagePct,
+        instanceCount: input.render.instanceCount,
+      },
+      alerts,
+      aggregatedAtIso: input.timestampIso ?? new Date().toISOString(),
+    };
+  }
+
   createSnapshot(params: {
     sbtc: SbtcHealthInput;
     fedimints: FedimintMintInput[];
@@ -590,4 +649,58 @@ export class MonitoringWatcher {
       warningAlertCount,
     };
   }
+}
+
+// ── Multi-Cloud Telemetry Scorecard Types (CON-1329 / CON-1600) ──
+
+export interface SupabaseBosTelemetry {
+  status: HealthStatus;
+  cnxBosSchemaHealthy: boolean;
+  queryLatencyMs: number;
+  activeConnections: number;
+}
+
+export interface NeonPostgresTelemetry {
+  status: HealthStatus;
+  lfcHitRatePct: number;
+  workingSetSizeBytes: number;
+  computeState: "ACTIVE" | "IDLE" | "SUSPENDED";
+  activeConnections: number;
+}
+
+export interface RenderDeploymentTelemetry {
+  status: HealthStatus;
+  serviceUptimePct: number;
+  cpuUsagePct: number;
+  memoryUsagePct: number;
+  instanceCount: number;
+}
+
+export interface MultiCloudTelemetryInput {
+  supabase: SupabaseBosTelemetry;
+  neon: NeonPostgresTelemetry;
+  render: RenderDeploymentTelemetry;
+  timestampIso?: string;
+}
+
+export interface MultiCloudTelemetryScorecard {
+  overallStatus: HealthStatus;
+  supabase: {
+    status: HealthStatus;
+    queryLatencyMs: number;
+    schemaHealthy: boolean;
+  };
+  neon: {
+    status: HealthStatus;
+    lfcHitRatePct: number;
+    computeState: string;
+  };
+  render: {
+    status: HealthStatus;
+    serviceUptimePct: number;
+    cpuUsagePct: number;
+    instanceCount: number;
+  };
+  alerts: string[];
+  aggregatedAtIso: string;
 }

@@ -1,3 +1,4 @@
+import type { HealthStatus, MultiCloudTelemetryScorecard } from "./monitoring_watcher.js";
 /**
  * Conxian Market: Business Operating System (BOS) Yield Splitter & Thin Orchestrator Guard.
  *
@@ -80,7 +81,46 @@ export interface InferencePolicyResult {
   violations: string[];
 }
 
+
+export interface RealtimeYieldSplitValidation {
+  grossAmountSat: bigint;
+  builderYieldSat: bigint;
+  platformTreasuryYieldSat: bigint;
+  ecosystemYieldSat: bigint;
+  multiCloudStatus: HealthStatus;
+  isYieldSplitValid: boolean;
+  alerts: string[];
+  validatedAtIso: string;
+}
+
 export class BosYieldSplitter {
+  /**
+   * Validate 80/10/10 yield splitting calculations in real time using multi-cloud telemetry.
+   */
+  static validateYieldSplitRealtime(input: {
+    grossAmountSat: bigint;
+    telemetry: MultiCloudTelemetryScorecard;
+  }): RealtimeYieldSplitValidation {
+    const calculatedSplit = BosYieldSplitter.calculateYieldSplit(input.grossAmountSat);
+    const alerts = [...input.telemetry.alerts];
+
+    const isYieldSplitValid = input.telemetry.overallStatus !== "RED";
+    if (!isYieldSplitValid) {
+      alerts.push("CRITICAL: 80/10/10 yield distribution held due to multi-cloud deployment surface outage");
+    }
+
+    return {
+      grossAmountSat: input.grossAmountSat,
+      builderYieldSat: calculatedSplit.builderSat,
+      platformTreasuryYieldSat: calculatedSplit.platformTreasurySat,
+      ecosystemYieldSat: calculatedSplit.ecosystemStakeholdersSat,
+      multiCloudStatus: input.telemetry.overallStatus,
+      isYieldSplitValid,
+      alerts,
+      validatedAtIso: new Date().toISOString(),
+    };
+  }
+
   /**
    * Calculate 80/10/10 yield split for AI labor transactions per KB specs.
    */

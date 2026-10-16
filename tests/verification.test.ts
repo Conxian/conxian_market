@@ -115,3 +115,46 @@ describe("verification", () => {
       expect(caps.p0Gaps.length).toBe(0);
     });
   });
+
+  describe("BitVM3 Garbled Circuit Proofs & Universal Verification Adapter (CXIP-1317)", () => {
+    it("verifies valid BitVM3 garbled circuit proof with sub-$50 challenge cost on Nexus v0.4.23", async () => {
+      const { UniversalVerificationAdapter } = await import("../src/verification.js");
+      const mockGateway = {} as GatewayClient;
+      const verifier = new GatewayVerifier(mockGateway);
+      const adapter = new UniversalVerificationAdapter(verifier);
+
+      const res = await adapter.verifyUniversalProof({
+        bitvm3_proof: {
+          circuitDigest: "0xabcdef1234567890",
+          garbledTableHash: "0x9876543210fedcba",
+          wireCommitments: ["0xwire1", "0xwire2"],
+          challengeResponse: "0xchallengeresponse",
+          estimatedChallengeCostUsd: 42.50, // sub-$50
+          nexusEngineVersion: "v0.4.23-bitvm3",
+        },
+      });
+
+      expect(res.valid).toBe(true);
+      expect(res.tier).toBe(TrustTier.Strict);
+      expect(res.methodUsed).toBe("BITVM3_GARBLED_CIRCUIT");
+      expect(res.details).toContain("Nexus v0.4.23-bitvm3");
+      expect(res.details).toContain("Cost: $42.5");
+    });
+
+    it("rejects BitVM3 proof if challenge cost exceeds $50 target", async () => {
+      const mockGateway = {} as GatewayClient;
+      const verifier = new GatewayVerifier(mockGateway);
+
+      const res = await verifier.verifyBitVM3Proof({
+        circuitDigest: "0xabcdef",
+        garbledTableHash: "0x987654",
+        wireCommitments: ["0xwire1"],
+        challengeResponse: "0xresponse",
+        estimatedChallengeCostUsd: 150.00, // Exceeds $50
+        nexusEngineVersion: "v0.4.23",
+      });
+
+      expect(res.valid).toBe(false);
+      expect(res.error).toContain("exceeds CXIP-1317 $50 compression limit");
+    });
+  });

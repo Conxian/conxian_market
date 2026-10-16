@@ -1,3 +1,9 @@
+
+import { MultiDimensionalScoringEngine, type AgentPerformanceMetrics, type MultiDimensionalScoreResult, type NetworkValuationEvaluation } from "./multi_dimensional_scoring.js";
+import { UniversalVerificationAdapter } from "./verification.js";
+import type { MultiCloudTelemetryInput, MultiCloudTelemetryScorecard, SlaHealthResult } from "./monitoring_watcher.js";
+import type { RealtimeYieldSplitValidation } from "./bos_yield_splitter.js";
+import type { BitVM3GarbledCircuitProof } from "./core_types.js";
 import { ClientInstallerEngine } from "./client_onboarding.js";
 import { AgentRegistry, type AgentCard, type AgentRegistryEntry, type AgentReputationRecord } from "./agent_registry.js";
 import { Mcp402Facade, type McpToolCall, type Mcp402PaymentGateResult } from "./mcp_402.js";
@@ -140,6 +146,8 @@ export class ConxianMarketSDK {
   readonly x402EscrowGateway: X402EscrowGateway;
   readonly agentRegistry: AgentRegistry;
   readonly mcp402Facade: Mcp402Facade;
+  readonly multiDimensionalScoring: MultiDimensionalScoringEngine;
+  readonly universalVerificationAdapter: UniversalVerificationAdapter;
   readonly flags: FeatureFlags;
 
   private constructor(
@@ -163,6 +171,8 @@ export class ConxianMarketSDK {
     this.x402EscrowGateway = new X402EscrowGateway(this.jobCardEscrowEngine);
     this.agentRegistry = new AgentRegistry();
     this.mcp402Facade = new Mcp402Facade();
+    this.multiDimensionalScoring = new MultiDimensionalScoringEngine();
+    this.universalVerificationAdapter = new UniversalVerificationAdapter(this.verifier);
   }
 
   /** Connect to gateway and instantiate full Market SDK Bridge */
@@ -661,6 +671,43 @@ export class ConxianMarketSDK {
     activeExemptions: import("./core_types.js").SlaExemptionReason[] = []
   ): import("./core_types.js").SlaPolicyEvaluationResult {
     return ClientInstallerEngine.evaluateSlaPolicyAndExemptions(config, isCommercialB2bContract, activeExemptions);
+  }
+
+
+  // ── Capability 15: Multi-Dimensional Scoring Engine (x402 & ERC-8183) ──
+
+  calculateMultiDimensionalScore(metrics: AgentPerformanceMetrics): MultiDimensionalScoreResult {
+    return this.multiDimensionalScoring.calculateWps(metrics);
+  }
+
+  evaluateNetworkValuationImpact(agentMetrics: AgentPerformanceMetrics[]): NetworkValuationEvaluation {
+    return this.multiDimensionalScoring.evaluateNetworkValuationImpact(agentMetrics);
+  }
+
+  // ── Capability 16: Multi-Cloud Telemetry & Live Yield Validation ──
+
+  aggregateMultiCloudTelemetry(input: MultiCloudTelemetryInput): MultiCloudTelemetryScorecard {
+    return this.monitoringWatcher.aggregateMultiCloudTelemetry(input);
+  }
+
+  evaluateMultiCloudSlaHealth(input: MultiCloudTelemetryInput, baseSla?: SlaHealthResult): SlaHealthResult {
+    const scorecard = this.aggregateMultiCloudTelemetry(input);
+    return this.slaEngine.evaluateMultiCloudSlaHealth(scorecard, baseSla);
+  }
+
+  validateYieldSplitRealtime(grossAmountSat: bigint, telemetryInput: MultiCloudTelemetryInput): RealtimeYieldSplitValidation {
+    const scorecard = this.aggregateMultiCloudTelemetry(telemetryInput);
+    return this.bosYieldSplitter.validateYieldSplitRealtime({ grossAmountSat, telemetry: scorecard });
+  }
+
+  // ── Capability 17: Universal Verification Adapter & BitVM3 Fraud Proofs ──
+
+  async verifyBitVM3Proof(proof: BitVM3GarbledCircuitProof) {
+    return this.verifier.verifyBitVM3Proof(proof);
+  }
+
+  async verifyUniversalProof(cert: AttestationCertificate) {
+    return this.universalVerificationAdapter.verifyUniversalProof(cert);
   }
 
   getCapabilitySummary(): CapabilitySummary {

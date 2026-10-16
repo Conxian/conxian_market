@@ -501,3 +501,117 @@ describe("ConxianMarketSDK Bridge - ADR-004 dynamic fee wiring", () => {
     expect(report.totalFeeSat).toBe(10n);
   });
 });
+
+describe("ConxianMarketSDK Bridge - Multi-Dimensional Scoring, Multi-Cloud Telemetry & BitVM3 Verification", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("calculates multi-dimensional score and network valuation impact via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const score = sdk.calculateMultiDimensionalScore({
+      agentDid: "did:conxian:agent:sdk-score",
+      trustTier: TrustTier.Strict,
+      reputationScore: 90,
+      x402Volume: {
+        totalVolumeSats: 10_000_000n,
+        usdVolume: 6000,
+        successfulPaymentCount: 50,
+        failedPaymentCount: 1,
+      },
+      escrowState: {
+        activeEscrowCount: 2,
+        completedEscrowCount: 20,
+        totalReleasedBountySats: 8_000_000n,
+        totalLockedBountySats: 2_000_000n,
+        slaBreachPenaltyCount: 0,
+      },
+    });
+
+    expect(score.isErpMockDeprecated).toBe(true);
+    expect(score.weightedPerformanceScore).toBeGreaterThan(70);
+
+    const valuation = sdk.evaluateNetworkValuationImpact([
+      {
+        agentDid: "did:conxian:agent:sdk-score",
+        trustTier: TrustTier.Strict,
+        reputationScore: 90,
+        x402Volume: {
+          totalVolumeSats: 10_000_000n,
+          usdVolume: 6000,
+          successfulPaymentCount: 50,
+          failedPaymentCount: 1,
+        },
+        escrowState: {
+          activeEscrowCount: 2,
+          completedEscrowCount: 20,
+          totalReleasedBountySats: 8_000_000n,
+          totalLockedBountySats: 2_000_000n,
+          slaBreachPenaltyCount: 0,
+        },
+      },
+    ]);
+
+    expect(valuation.evaluatedAgentCount).toBe(1);
+    expect(valuation.totalX402VolumeSats).toBe(10_000_000n);
+  });
+
+  it("aggregates multi-cloud telemetry and validates 80/10/10 yield in real time via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const telemetryInput = {
+      supabase: {
+        status: "GREEN" as const,
+        cnxBosSchemaHealthy: true,
+        queryLatencyMs: 30,
+        activeConnections: 5,
+      },
+      neon: {
+        status: "GREEN" as const,
+        lfcHitRatePct: 99.5,
+        workingSetSizeBytes: 500000,
+        computeState: "ACTIVE" as const,
+        activeConnections: 12,
+      },
+      render: {
+        status: "GREEN" as const,
+        serviceUptimePct: 99.9,
+        cpuUsagePct: 25.0,
+        memoryUsagePct: 30.0,
+        instanceCount: 2,
+      },
+    };
+
+    const scorecard = sdk.aggregateMultiCloudTelemetry(telemetryInput);
+    expect(scorecard.overallStatus).toBe("GREEN");
+
+    const slaHealth = sdk.evaluateMultiCloudSlaHealth(telemetryInput);
+    expect(slaHealth.status).toBe("GREEN");
+
+    const validation = sdk.validateYieldSplitRealtime(500_000n, telemetryInput);
+    expect(validation.isYieldSplitValid).toBe(true);
+    expect(validation.builderYieldSat).toBe(400_000n); // 80%
+    expect(validation.platformTreasuryYieldSat).toBe(50_000n); // 10%
+    expect(validation.ecosystemYieldSat).toBe(50_000n); // 10%
+  });
+
+  it("verifies BitVM3 garbled circuit fraud proof and universal proofs via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const proof = {
+      circuitDigest: "0xcircuitdigest123",
+      garbledTableHash: "0xgarbledtable456",
+      wireCommitments: ["0xwirea", "0xwireb"],
+      challengeResponse: "0xchargesp789",
+      estimatedChallengeCostUsd: 35.0,
+      nexusEngineVersion: "v0.4.23-nexus",
+    };
+
+    const bitvmResult = await sdk.verifyBitVM3Proof(proof);
+    expect(bitvmResult.valid).toBe(true);
+    expect(bitvmResult.tier).toBe(TrustTier.Strict);
+
+    const universalResult = await sdk.verifyUniversalProof({ bitvm3_proof: proof });
+    expect(universalResult.valid).toBe(true);
+    expect(universalResult.methodUsed).toBe("BITVM3_GARBLED_CIRCUIT");
+  });
+});
