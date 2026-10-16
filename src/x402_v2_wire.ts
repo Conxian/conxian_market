@@ -7,45 +7,66 @@ export const X402_V2_HEADERS = {
   required: "PAYMENT-REQUIRED", signature: "PAYMENT-SIGNATURE", response: "PAYMENT-RESPONSE",
 } as const;
 const text = z.string().min(1).max(2048);
+const atomicAmount = z.string().min(1).max(256).refine((value) => !/[^0-9]/u.test(value));
+// Upstream normalizes null optional wire fields to absence across implementations.
+const optional = <T extends z.ZodTypeAny>(schema: T) => schema.nullish().transform((value) => value ?? undefined);
+const metadataText = z.string().min(1).max(32).refine((value) => !/[^\x20-\x7e]/u.test(value));
+const iconUrl = text.refine((value) => {
+  try {
+    const url = new URL(value);
+    return /^https?:\/\//u.test(value) && (url.protocol === "https:" || url.protocol === "http:") && !/\s/u.test(value);
+  } catch { return false; }
+});
+const record = z.record(z.unknown());
+// Only server advertisements use this envelope. Client/settlement extensions
+// retain their scheme-specific shapes and are never interpreted as authority.
+const advertisedExtensions = z.record(z.object({ info: record, schema: record }).passthrough());
 const network = z.string().max(41).regex(/^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$/u)
   .refine((value) => !/[\s\u0000-\u001f\u007f]/u.test(value));
 const resource = z.object({
   url: text,
-  description: z.string().max(2048).optional(),
-  mimeType: text.optional(), serviceName: text.optional(),
-  tags: z.array(text).max(64).optional(), iconUrl: text.optional(),
+  description: optional(z.string().max(2048)),
+  mimeType: optional(z.string().max(2048)), serviceName: optional(metadataText),
+  tags: optional(z.array(metadataText).max(5)), iconUrl: optional(iconUrl),
 }).strict();
 export const X402V2RequirementsSchema = z.object({
   scheme: text,
   network,
-  amount: z.string().min(1).max(256).refine((value) => !/[^0-9]/u.test(value)),
+  amount: atomicAmount,
   asset: text,
   payTo: text,
   maxTimeoutSeconds: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-  extra: z.record(z.unknown()).optional(),
+  extra: optional(record),
 }).strict();
 export const X402V2RequiredSchema = z.object({
   x402Version: z.literal(2),
-  error: z.string().max(2048).optional(),
+  error: optional(z.string().max(2048)),
   resource,
   accepts: z.array(X402V2RequirementsSchema).min(1).max(32),
-  extensions: z.record(z.unknown()).optional(),
+  extensions: optional(advertisedExtensions),
 }).strict();
 export const X402V2PayloadSchema = z.object({
   x402Version: z.literal(2),
-  resource,
+  resource: optional(resource),
   accepted: X402V2RequirementsSchema,
-  payload: z.record(z.unknown()),
-  extensions: z.record(z.unknown()).optional(),
+  payload: record,
+  extensions: optional(record),
 }).strict();
 export const X402V2SettlementSchema = z.object({
   success: z.boolean(),
-  errorReason: text.optional(),
+  errorReason: optional(text),
+  errorMessage: optional(z.string().max(2048)),
   transaction: z.string().max(2048),
   network,
-  payer: text.optional(),
-  extensions: z.record(z.unknown()).optional(),
-}).strict();
+  payer: optional(text),
+  amount: optional(atomicAmount),
+  extensions: optional(record),
+  extra: optional(record),
+}).strict().superRefine((value, context) => {
+  if (value.errorReason === "settlement_pending" && (value.success || !value.transaction.trim())) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: "Pending settlement requires an unsuccessful result and broadcast identifier." });
+  }
+});
 export type X402V2Required = z.infer<typeof X402V2RequiredSchema>;
 export type X402V2Payload = z.infer<typeof X402V2PayloadSchema>;
 export type X402V2Settlement = z.infer<typeof X402V2SettlementSchema>;
@@ -73,7 +94,9 @@ export function parseX402V2<K extends Kind>(kind: K, value: unknown): WireTypes[
     if (!Object.hasOwn(schemas, kind)) invalid();
     const parsed = schemas[kind].safeParse(JSON.parse(jsonText(value)) as unknown);
     if (!parsed.success) invalid();
-    return parsed.data as WireTypes[K];
+    // Only normalized optional fields can be undefined: jsonText already
+    // rejected non-JSON input, including undefined inside opaque records.
+    return JSON.parse(JSON.stringify(parsed.data)) as WireTypes[K];
   } catch { return invalid(); }
 }
 
