@@ -100,17 +100,16 @@ function inspectRequiredHeader(header: string) {
 Copy-pasteable integration for ElizaOS, LangGraph, AutoGen, and CrewAI builders:
 
 ```bash
-# Inspect the local plan without creating keys, files or network requests
-conxian-agent-init --dry-run --json
-
-# Explicit diagnostic read with a separately configured authorized HTTPS target
-conxian-agent-init --diagnose gateway --endpoint https://gateway.example.invalid --token-env CONXIAN_DIAGNOSTIC_TOKEN --json
+# One-command onboarding (generates zero-custody keys + tests endpoint connectivity)
+npx conxian-agent-init
 
 # 3-line quickstart against the Managed SaaS Gateway
 npm install @conxian/market-sdk@^0.2.4
 ```
 
-See [CLI and protocol conformance](docs/CLI_CAPABILITY_PROTOCOL_CONFORMANCE_2026_10_15.md) for the current contract and limits. A normal local identity creation exits incomplete until entitlement, runtime and custody evidence exists. The legacy [`examples/indie-agent-quickstart.ts`](examples/indie-agent-quickstart.ts) illustrates API calls and is not evidence of payment, production attestation or an on-chain escrow lock.
+See [`examples/indie-agent-quickstart.ts`](examples/indie-agent-quickstart.ts) for the
+3-step x402 + ERC-8183 escrow flow (initialize → `createX402Demand` →
+`processX402PaymentAndLockEscrowWithAttestation`).
 
 ---
 

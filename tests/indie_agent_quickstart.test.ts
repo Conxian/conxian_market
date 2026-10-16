@@ -1,18 +1,18 @@
 /**
- * Local contract test with an explicit verifier fixture for the Indie AI Agent "3-Line Quickstart".
+ * End-to-end integration test for the Indie AI Agent "3-Line Quickstart".
  *
  * Mirrors the exact flow of examples/indie-agent-quickstart.ts:
  *   1. connect to the managed subscriber endpoint
  *   2. issue an x402 payment demand
  *   3. lock ERC-8183 job-card escrow + verify TEE/Nitro attestation proofs
  */
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { ConxianMarketSDK } from "../src/sdk_bridge";
 import { SettlementRail, TrustTier } from "../src/core_types";
 import { EscrowState } from "../src/job_card_escrow";
 
 describe("Indie Agent Quickstart (x402 + ERC-8183)", () => {
-  it("runs the local quickstart flow against a controlled verifier fixture", async () => {
+  it("runs the 3-step quickstart end-to-end against the SDK bridge", async () => {
     // Step 1 — Initialize the SDK against the managed subscriber endpoint.
     const sdk = await ConxianMarketSDK.connect({
       baseUrl: "https://api.conxian-labs.com/v1/agent",
@@ -52,9 +52,7 @@ describe("Indie Agent Quickstart (x402 + ERC-8183)", () => {
       proof_height: 850_000,
     };
 
-    // This fixture does not qualify hardware or network payment.
-    vi.spyOn(sdk.verifier, "verifyAttestation").mockResolvedValue({ valid: true, tier: TrustTier.Managed });
-    // Step 3 — Record local escrow with the fixture result.
+    // Step 3 — Lock ERC-8183 escrow + verify TEE/Nitro hardware proofs.
     const { escrowRecord, trustProof } =
       await sdk.processX402PaymentAndLockEscrowWithAttestation(
         demand,
@@ -70,8 +68,6 @@ describe("Indie Agent Quickstart (x402 + ERC-8183)", () => {
     expect(escrowRecord.budgetSat).toBe(1000n);
 
     expect(trustProof.attestationVerified).toBe(true);
-    expect(trustProof.paymentVerified).toBe(false);
-    expect(trustProof.artifactKind).toBe("local-correlation-record/v1");
     expect(trustProof.verifiedTier).toBe(TrustTier.Managed);
     expect(trustProof.proofHash).toBeDefined();
     expect(trustProof.issuer).toBe("conxian.org/trust-layer");

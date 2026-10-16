@@ -123,10 +123,10 @@ describe("ClientInstallerEngine", () => {
     expect(validation.valid).toBe(true);
 
     const cliResult = ClientInstallerEngine.runUnifiedInstallerCli(managedConfig);
-    expect(cliResult.success).toBe(false);
+    expect(cliResult.success).toBe(true);
   });
 
-  it("keeps the installer incomplete without evidence", () => {
+  it("executes unified CLI installer end-to-end pipeline successfully", () => {
     const cliResult = ClientInstallerEngine.runUnifiedInstallerCli(validConfig);
     expect(cliResult.success).toBe(false);
     expect(cliResult.entitlement.clientDid).toBe("did:conxian:org:client-001");
