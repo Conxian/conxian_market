@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An explicit x402 v2 HTTP/MCP wire profile with schemas, types, bounded UTF-8/base64 codecs and conformance tests. Payment, signature, registry and settlement verification remain separate integrations.
 
 ### Fixed
+- x402 v2 optional/null field compatibility, server extension envelopes, resource discovery bounds, settlement amount/diagnostics and non-terminal pending-settlement validation. These remain unverified wire claims.
 - CLI/source guidance and the historical GAP-02 test runner now distinguish local conformance from provider, payment, escrow and release evidence.
 
 ## [0.2.4] - 2026-10-03
