@@ -1,34 +1,33 @@
 # Conxian Market SDK (`@conxian/market-sdk`)
 
-> **The Verifiable Settlement, Escrow & Trust Layer for Autonomous Agent Commerce (x402)**
-> **Version:** 0.2.0 | **Status:** Active Production Core | **Capabilities:** 33 Integrated Modules
+> **Client contracts, local planning and commerce integration for autonomous agents**
+> **Source version:** 0.2.4 | **Qualification:** operation-specific provider and release evidence required
 
 ---
 
 ## 🏛 Ecosystem Role & Boundary Alignment
 
-The `conxian_market` repository (`@conxian/market-sdk`) serves as the **verifiable settlement, escrow, SLA enforcement, and trust layer** for autonomous agent commerce (x402).
+The `conxian_market` repository (`@conxian/market-sdk`) supplies commerce calculations, local escrow bookkeeping, SDK clients and onboarding plans. Bitcoin L1 is the trust root for universal-chain integration; there is no native Conxian token. Code interfaces and registry entries are separate from live connections and production qualification.
 
-Rather than building proprietary smart contracts or AI agents, Conxian operates as a **Market-Agnostic, Zero-Custody Value Router and Trust Layer on top of x402**. Conxian orchestrates and monetizes industrial agent labor through:
-- **Attestation-Backed x402 Verification**: Hardware enclave attestation (TEE/Nitro/KeyMint) verification for agent identity and "Verified by Conxian" trust proof artifacts.
-- **Programmable Escrow (ERC-8183 / CJCS Job Cards)**: Non-custodial escrow locks tied to HTTP 402 payment demands and receipts.
-- **Multi-Rail Bitcoin/Stacks/EVM Settlement**: Non-custodial settlement across Lightning, Fedimint, sBTC, ALEX, Citrea, RGB, and EVM ERC-8183.
-- **Autonomous SLA Enforcement & Dispute Arbitration**: Automated delay penalties, gap card bounties, and builder reputation recovery.
+The market-agnostic, non-custodial architecture includes:
 
+- **Attestation client interfaces**: backend-dependent certificate checks; local hashes remain unsigned correlation records.
+- **Escrow models (ERC-8183 / CJCS Job Cards)**: local state and budget calculations; real locks and finality require an independently verified provider.
+- **Multi-rail client contracts**: Lightning, Fedimint, sBTC, ALEX, Citrea, RGB and EVM integrations each retain their own operation gates.
+- **SLA calculations**: job evaluation, penalty and reputation rules; local evaluation does not establish real enforcement or dispute settlement.
+- **Agent interfaces**: offline CLI discovery/preview, bounded authenticated registration diagnostics, and an explicit x402 v2 wire profile.
+
+```mermaid
+flowchart TD
+  SDK["Enclave SDK"] --> Core["Core contracts"]
+  Core --> Gateway["Gateway API"]
+  Core --> Nexus["Nexus observations"]
+  Gateway --> Market["Market clients and local models"]
+  Nexus --> Market
+  Market --> Products["Wallet and Platform consumers"]
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│              CONXIAN MARKET: THE M2M TRUST & SETTLEMENT LAYER          │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│   All other Conxian repos are INFRASTRUCTURE that ENABLES the market.   │
-│                                                                          │
-│   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐   │
-│   │  x402 Trust │  │ Multi-Rail  │  │ ERC-8183    │  │ Zero-Custody │   │
-│   │ Attestation │  │ Settlement  │  │ Escrow      │  │ BYO DeFi     │   │
-│   └─────────────┘  └─────────────┘  └─────────────┘  └──────────────┘   │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+
+Arrows describe source dependencies or client contracts. They do not prove a live deployment or qualified operation; Market mirrors Core types rather than loading Rust directly.
 
 ---
 
@@ -39,18 +38,18 @@ The Marketplace SDK is intentionally designed to consume the Conxian org stack a
 | Dependency | Status in this Repo | Evidence / Module | Notes |
 |:-----------|:-------------------|:------------------|:------|
 | **Conxian/Conxian** | **Deprecated / Archived Reference** | [src/market_agnostic_router.ts](src/market_agnostic_router.ts) | Custom smart contract development is frozen to eliminate maintenance debt and audit overhead in favor of external BYO DeFi adapters. |
-| **lib-conxian-core** | **Directly Used** | [src/core_types.ts](src/core_types.ts) | Shared trust-tier, chain, rail, and settlement type definitions. |
-| **conxian-gateway** | **Directly Used** | [src/gateway_client.ts](src/gateway_client.ts) & [src/settlement.ts](src/settlement.ts) | Primary live integration point for REST endpoints and settlement execution. |
-| **conxian-nexus** | **Directly Used** | [src/verification.ts](src/verification.ts) | Verification and trust-tier attestation semantics. |
-| **conxius-enclave-sdk** | **Security Dependency** | [src/verification.ts](src/verification.ts) & [src/x402_facade.ts](src/x402_facade.ts) | Hardware enclave attestation (Nitro/KeyMint/TEE) and BYOK key handling. |
+| **lib-conxian-core** | **Type alignment** | [src/core_types.ts](src/core_types.ts) | TypeScript mirrors of trust-tier, chain, rail and settlement definitions; no Rust library is loaded here. |
+| **conxian-gateway** | **HTTP client contract** | [src/gateway_client.ts](src/gateway_client.ts) & [src/settlement.ts](src/settlement.ts) | Actual endpoint, authorization, operation evidence and deployment must be verified separately. |
+| **conxian-nexus** | **Registration diagnostic contract** | [src/provider_discovery.ts](src/provider_discovery.ts) | Read-only registrations; no qualified operation or provider health inferred. |
+| **conxius-enclave-sdk** | **External security boundary** | [src/verification.ts](src/verification.ts) & [src/x402_facade.ts](src/x402_facade.ts) | Cryptographic/provider verification belongs to qualified services; this JavaScript package does not load the Rust SDK. |
 | **conxius-platform** | **Control Plane** | Org docs & roadmap | CI/CD automation and release rulesets. |
 | **conxian-business** | **Governance Boundary** | [src/bos_yield_splitter.ts](src/bos_yield_splitter.ts) | Commercial packaging doctrine (80/10/10 split, fee decay, founder vesting). |
 
 ---
 
-## 🛠 Integrated SDK Modules (33 Capabilities)
+## 🛠 SDK Interface Catalog
 
-The `@conxian/market-sdk` package exposes 33 integrated capabilities via `ConxianMarketSDK`:
+The following catalog describes source interfaces. It is not a count of qualified operations or live providers:
 
 1. **Control Model (`verification.ts`)**: TrustTier detection & P0 gap degradation.
 2. **CJCS Escrow (`gateway_client.ts`)**: Programmable Job Card settlement & escrow.
@@ -62,9 +61,11 @@ The `@conxian/market-sdk` package exposes 33 integrated capabilities via `Conxia
 8. **TrustTier Middleware (`trust_tier_middleware.ts`)**: 4-stage pricing pipeline, SLA template resolution & wire headers.
 9. **BOS Yield Splitter (`bos_yield_splitter.ts`)**: 80/10/10 yield split, fee decay timeline, founder vesting & Thin Orchestrator BYOK guard.
 10. **Market-Agnostic Router (`market_agnostic_router.ts`)**: Zero-custody validation, BYO DeFi protocol adapter resolution, M2M MCP routing & deprecation advisory.
-11. **Job Card Escrow Engine (`job_card_escrow.ts`)**: ERC-8183 programmable escrow creation, output submission, SLA-integrated release, dispute/refund handling & reconciliation.
-12. **x402 Escrow Gateway & Attestation Proofs (`x402_facade.ts`)**: Multi-rail HTTP 402 payment demands, hardware attestation proof verification & "Verified by Conxian" trust artifacts.
-13. **Client Installation Engine (`client_onboarding.ts`)**: Enterprise client onboarding, system setup, domain routing firewall & CLI installer.
+11. **Job Card Escrow Engine (`job_card_escrow.ts`)**: in-memory escrow creation, submission, release, dispute/refund and reconciliation models.
+12. **Legacy payment facade (`x402_facade.ts`)**: sats/payment-pointer correlation and attestation client calls; local hashes and bookkeeping are not payment or locked-funds evidence.
+13. **Client Installation Engine (`client_onboarding.ts`)**: configuration validation and local plans; provisioning remains incomplete without independent evidence.
+14. **Provider Discovery (`provider_discovery.ts`)**: bounded read-only Gateway/Nexus registration contracts.
+15. **x402 v2 Wire Profile (`x402_v2_wire.ts`)**: explicit HTTP/MCP codecs and structural schemas; payment and signature verification are separate.
 
 ---
 
@@ -78,49 +79,18 @@ The `@conxian/market-sdk` package exposes 33 integrated capabilities via `Conxia
 
 ---
 
-## ⚡ Quick Start (x402 Attestation Escrow)
+## ⚡ Quick Start (x402 v2 Wire Profile)
 
 ```typescript
-import { ConxianMarketSDK, SettlementRail, TrustTier } from "@conxian/market-sdk";
+import { decodeX402V2Header } from "@conxian/market-sdk";
 
-// Initialize SDK
-const sdk = await ConxianMarketSDK.connect({
-  baseUrl: "https://gateway.conxian.io",
-});
-
-// Create x402 payment demand for job
-const demand = sdk.createX402Demand({
-  id: "job-101",
-  title: "Agent Data Analysis",
-  bountySat: 1_000_000n,
-});
-
-// Receipt received from client agent
-const receipt = {
-  demandId: "job-101",
-  transactionId: "tx-999",
-  amountSat: "1000000",
-  paidAt: Date.now(),
-  payerDid: "did:conxian:client:alice",
-};
-
-// Client enclave attestation certificate
-const cert = {
-  enclave_attestation: "0xenclave_attestation_proof",
-  timestamp: Date.now(),
-};
-
-// Verify attestation & lock ERC-8183 escrow with "Verified by Conxian" trust proof
-const { escrowRecord, trustProof } = await sdk.processX402PaymentAndLockEscrowWithAttestation(
-  demand,
-  receipt,
-  "did:conxian:agent:bob",
-  SettlementRail.Sbtc,
-  cert
-);
-
-console.log(`Escrow Locked: ${escrowRecord.jobId} (State: ${escrowRecord.state})`);
-console.log(`Trust Proof Hash: ${trustProof.proofHash} (Tier: ${trustProof.verifiedTier})`);
+// Source API: use a build containing this change until its package release is published.
+function inspectRequiredHeader(header: string) {
+  const demand = decodeX402V2Header("required", header);
+  // Inspect these values under the caller's policy.
+  // Parsing does not verify payment, execute a tool, lock escrow or grant entitlement.
+  return { resource: demand.resource, accepts: demand.accepts };
+}
 ```
 
 ---
@@ -130,16 +100,17 @@ console.log(`Trust Proof Hash: ${trustProof.proofHash} (Tier: ${trustProof.verif
 Copy-pasteable integration for ElizaOS, LangGraph, AutoGen, and CrewAI builders:
 
 ```bash
-# One-command onboarding (generates zero-custody keys + tests endpoint connectivity)
-npx conxian-agent-init
+# Inspect the local plan without creating keys, files or network requests
+conxian-agent-init --dry-run --json
+
+# Explicit diagnostic read with a separately configured authorized HTTPS target
+conxian-agent-init --diagnose gateway --endpoint https://gateway.example.invalid --token-env CONXIAN_DIAGNOSTIC_TOKEN --json
 
 # 3-line quickstart against the Managed SaaS Gateway
 npm install @conxian/market-sdk@^0.2.4
 ```
 
-See [`examples/indie-agent-quickstart.ts`](examples/indie-agent-quickstart.ts) for the
-3-step x402 + ERC-8183 escrow flow (initialize → `createX402Demand` →
-`processX402PaymentAndLockEscrowWithAttestation`).
+See [CLI and protocol conformance](docs/CLI_CAPABILITY_PROTOCOL_CONFORMANCE_2026_10_15.md) for the current contract and limits. A normal local identity creation exits incomplete until entitlement, runtime and custody evidence exists. The legacy [`examples/indie-agent-quickstart.ts`](examples/indie-agent-quickstart.ts) illustrates API calls and is not evidence of payment, production attestation or an on-chain escrow lock.
 
 ---
 
