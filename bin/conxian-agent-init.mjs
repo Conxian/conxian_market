@@ -24,6 +24,10 @@ const OPTIONS = {
   help: { type: "boolean", short: "h", default: false },
 };
 
+const COMMAND_OPTIONS = ["schema", "graph", "version", "dry-run", "diagnose"];
+const ONBOARDING_OPTIONS = ["gateway", "nexus", "rail", "tier", "output"];
+const DIAGNOSTIC_OPTIONS = ["endpoint", "token-env", "timeout-ms"];
+
 class CliError extends Error {
   constructor(code, message, exitCode = 2) {
     super(message);
@@ -41,6 +45,12 @@ function schema() {
     name: "conxian-agent-init",
     version: VERSION,
     interactive: false,
+    command_selection: {
+      mutually_exclusive: COMMAND_OPTIONS,
+      onboarding_options: ONBOARDING_OPTIONS,
+      diagnostic_options: DIAGNOSTIC_OPTIONS,
+      help: "Standalone or with --json; no command or configuration options.",
+    },
     options: Object.fromEntries(Object.entries(OPTIONS).map(([name, option]) => [name, {
       type: option.type,
       default: option.default,
@@ -75,10 +85,15 @@ function readArgs(argv) {
     seen.add(token.name);
   }
   const values = parsed.values;
-  if (values.diagnose !== undefined && (values["dry-run"] || values.graph || values.schema || values.version)) {
-    throw new CliError("conflicting_commands", "Select diagnostics separately from offline discovery or onboarding.");
+  const commands = COMMAND_OPTIONS.filter((name) => seen.has(name));
+  if (commands.length > 1 || (values.help && commands.length > 0)) {
+    throw new CliError("conflicting_commands", "Select one command; use --help separately.");
   }
-  if (values.diagnose === undefined && ["endpoint", "token-env", "timeout-ms"].some((name) => seen.has(name))) {
+  const onboarding = !values.help && (commands.length === 0 || values["dry-run"]);
+  if (!onboarding && ONBOARDING_OPTIONS.some((name) => seen.has(name))) {
+    throw new CliError("invalid_arguments", "Onboarding options require onboarding or --dry-run.");
+  }
+  if (values.diagnose === undefined && DIAGNOSTIC_OPTIONS.some((name) => seen.has(name))) {
     throw new CliError("invalid_arguments", "Diagnostic options require --diagnose.");
   }
   return parsed.values;
@@ -160,6 +175,7 @@ async function main() {
       "  --timeout-ms <ms> Diagnostic deadline, 1–10000 (default: 5000)",
       "  --version        Package version",
       "  -h, --help       Show help; --help --json returns the command schema",
+      "", "Select one command. Configuration options apply only to onboarding/preview or diagnostics.",
       "", "A local plan does not prove purchased entitlement, runtime health or hardware custody.",
     ].join("\n"));
     return;
