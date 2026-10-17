@@ -52,7 +52,19 @@ export enum ChainId {
 
 // ── Attestation (conxius-enclave-sdk) ──
 
+
+export interface BitVM3GarbledCircuitProof {
+  circuitDigest: string;
+  garbledTableHash: string;
+  wireCommitments: string[];
+  challengeResponse: string;
+  estimatedChallengeCostUsd: number;
+  nexusEngineVersion: string;
+  verifiedTimestampIso?: string;
+}
+
 export interface AttestationCertificate {
+  bitvm3_proof?: BitVM3GarbledCircuitProof;
   /** AWS Nitro / Intel SGX attestation document */
   tee_proof?: string;
   /** ZK proof of correct execution */

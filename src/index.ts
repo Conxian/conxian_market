@@ -183,3 +183,24 @@ export type {
 } from "./core_types.js";
 export { RoundhouseClient, RoundhouseUnsupportedError } from './roundhouse_client.js';
 export type { RoundhouseEndpoint, RoundhouseSettlementEvent, VerifiedByConxianCertificate, RoundhouseClientConfig } from './roundhouse_client.js';
+
+
+export { MultiDimensionalScoringEngine } from "./multi_dimensional_scoring.js";
+export type {
+  X402VolumeInput,
+  Erc8183EscrowStateInput,
+  AgentPerformanceMetrics,
+  MultiDimensionalScoreResult,
+  NetworkValuationEvaluation,
+} from "./multi_dimensional_scoring.js";
+
+export { UniversalVerificationAdapter } from "./verification.js";
+export type { BitVM3GarbledCircuitProof } from "./core_types.js";
+export type {
+  SupabaseBosTelemetry,
+  NeonPostgresTelemetry,
+  RenderDeploymentTelemetry,
+  MultiCloudTelemetryInput,
+  MultiCloudTelemetryScorecard,
+} from "./monitoring_watcher.js";
+export type { RealtimeYieldSplitValidation } from "./bos_yield_splitter.js";

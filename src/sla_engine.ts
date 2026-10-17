@@ -1,3 +1,4 @@
+import type { HealthStatus, MultiCloudTelemetryScorecard, SlaHealthResult } from "./monitoring_watcher.js";
 /**
  * Conxian Market: Autonomous SLA Bounty & Gap Card Engine.
  *
@@ -185,6 +186,37 @@ export const DEFAULT_SLA_RULESET: SlaRule[] = [
 // ── SLA Engine ──
 
 export class SlaEngine {
+  /**
+   * Evaluate SLA Health incorporating multi-cloud deployment telemetry (Supabase, Neon, Render).
+   */
+  evaluateMultiCloudSlaHealth(
+    telemetry: MultiCloudTelemetryScorecard,
+    baseSla?: SlaHealthResult
+  ): SlaHealthResult {
+    const alerts: string[] = baseSla ? [...baseSla.alerts] : [];
+    let status: HealthStatus = baseSla ? baseSla.status : "GREEN";
+
+    if (telemetry.overallStatus === "RED") {
+      status = "RED";
+      alerts.push(...telemetry.alerts);
+    } else if (telemetry.overallStatus === "YELLOW" && status !== "RED") {
+      status = "YELLOW";
+      alerts.push(...telemetry.alerts);
+    }
+
+    return {
+      status,
+      totalAudited: baseSla?.totalAudited ?? 0,
+      breachCount: baseSla?.breachCount ?? 0,
+      abandonmentCount: baseSla?.abandonmentCount ?? 0,
+      staleCount: baseSla?.staleCount ?? 0,
+      violationCount: (baseSla?.violationCount ?? 0) + telemetry.alerts.length,
+      complianceRatePct: baseSla?.complianceRatePct ?? 100,
+      violations: baseSla?.violations ?? [],
+      alerts,
+    };
+  }
+
   private readonly rules: SlaRule[];
 
   constructor(customRules?: SlaRule[]) {
