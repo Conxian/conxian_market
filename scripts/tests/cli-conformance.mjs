@@ -49,6 +49,39 @@ for (const args of [
     assert.deepEqual(readdirSync(dir), []);
   }));
 }
+const commands = [["--help"], ["--schema"], ["--graph"], ["--version"], ["--dry-run"], ["--diagnose", "gateway"]];
+for (let left = 0; left < commands.length; left++) {
+  for (let right = left + 1; right < commands.length; right++) {
+    for (const args of [[...commands[left], ...commands[right]], [...commands[right], ...commands[left]]]) {
+      test(`mixed commands fail before effects: ${args.join(" ")}`, () => context((dir) => {
+        const result = run(dir, [...args, "--json"]);
+        assert.equal(result.status, 2, result.stderr);
+        assert.equal(result.stdout, "");
+        assert.equal(JSON.parse(result.stderr).code, "conflicting_commands");
+        assert.deepEqual(readdirSync(dir), []);
+      }));
+    }
+  }
+}
+for (const args of [
+  ["--help", "--output", "unused.env"],
+  ["--schema", "--output", "unused.env"], ["--graph", "--gateway", "https://example.invalid"],
+  ["--version", "--tier", "MANAGED"], ["--schema", "--nexus", "https://example.invalid"],
+  ["--graph", "--rail", "EVM_ERC8183"],
+  ["--diagnose", "gateway", "--output", "unused.env"],
+  ["--diagnose", "gateway", "--gateway", "https://example.invalid"],
+  ["--diagnose", "nexus", "--nexus", "https://example.invalid"],
+  ["--diagnose", "gateway", "--tier", "MANAGED"],
+  ["--diagnose", "gateway", "--rail", "EVM_ERC8183"],
+]) {
+  test(`unused onboarding options are rejected: ${args.join(" ")}`, () => context((dir) => {
+    const result = run(dir, [...args, "--json"]);
+    assert.equal(result.status, 2, result.stderr);
+    assert.equal(result.stdout, "");
+    assert.equal(JSON.parse(result.stderr).code, "invalid_arguments");
+    assert.deepEqual(readdirSync(dir), []);
+  }));
+}
 test("preview creates no keys, files or network connections", () => context((dir) => {
   const blocker = join(dir, "block-network.mjs");
   writeFileSync(blocker, 'import net from "node:net";\nglobalThis.fetch = () => { throw new Error("network blocked"); };\nnet.Socket.prototype.connect = () => { throw new Error("network blocked"); };\n');
