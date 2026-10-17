@@ -1,7 +1,6 @@
-# Session 63 → Session 64 Implementation Tracker
+# Implementation Tracker — Session 75 Update
 
-> **Generated:** 2026-08-01 | **Source:** `CROSS_REPO_GAP_ANALYSIS_SESSION_48.md` | **Auto-run Approved**
-> **Updated:** 2026-09-16 | **Current issue reality:** Updated in Session 64 following Master Reconnaissance & Architecture Review (`MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` & `SESSION_64_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
+> **Updated:** 2026-10-17 | **Session:** 75 | **Scope:** Multi-Dimensional Scoring, Multi-Cloud Yield Telemetry & BitVM3 Fraud Proof Engine
 
 ---
 
@@ -32,20 +31,15 @@ The live issue set shows this direct implementation path is active and relevant:
    - Candidate #14 (`Real-Time SLA Telemetry Watcher`): `monitoring_watcher.ts` (Session 62).
    - Candidate #15 (`Client Entitlements & Deployment Engine`): `client_onboarding.ts` (Session 63).
    - Candidate #16 (`Master Reconnaissance, Architecture Review & Domain Firewall Engine`): `client_onboarding.ts` (Session 64).
+   - Candidate #17 (`Enterprise SLA Diagnostics`): `client_onboarding.ts` (Session 68).
+   - Candidate #18 (`Enterprise Tiered SLA Policy Engine`): `client_onboarding.ts` (Session 69).
+   - Candidate #19 (`ERC-8004 & MCP-402 SDK Bridge Integration`): `sdk_bridge.ts` (Session 70).
+   - Candidate #20 (`Dynamic Hybrid Fee Floor Engine`): `fee_calculator.ts` (Session 71).
+   - Candidate #21 (`Dynamic Fee Report & Mempool Load Adapter`): `fee_calculator.ts` (Session 72).
+   - Candidate #22 (`CXIP-1317 Org-Wide Upgrade Proposal Analysis`): `docs/research/` (Session 74).
+   - Candidate #23 (`Multi-Dimensional Scoring, Multi-Cloud Telemetry & BitVM3 Fraud Proof Engine`): `src/multi_dimensional_scoring.ts`, `src/monitoring_watcher.ts`, `src/verification.ts`, `src/sdk_bridge.ts` (Session 75).
 
 This repo remains focused on the value and orchestration layer while upstream repos resolve enabling infrastructure.
-
----
-
-## Priority execution chain
-
-The current live execution chain is:
-
-1. **Session 64 Master Reconnaissance & Architecture Review (conxian_market)**: Completed 5-phase org-wide review, verified domain routing firewall (`conxian.org` vs `conxian-labs.com`), and produced `MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` and `SESSION_64_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`.
-2. **Session 63 Client Entitlements & Deployment Alignment (conxian_market)**: Implemented purchase entitlement verification (`verifyClientEntitlements`), deployment manifest alignment (`alignClientDeployment`), and multi-asset connectivity probing (`probeAssetConnectivity`) in `src/client_onboarding.ts`.
-3. **Org enforcement (conxius-platform)**: [#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854), [#1223](https://github.com/Conxian/conxius-platform/issues/1223)
-4. **Trust chain hardening (conxius-enclave-sdk)**: [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242), [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241), [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240), [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202)
-5. **Wallet gate enforcement (conxius-wallet)**: [#444](https://github.com/Conxian/conxius-wallet/issues/444), [#356](https://github.com/Conxian/conxius-wallet/issues/356)
 
 ---
 
@@ -75,6 +69,7 @@ The current live execution chain is:
 | conxian_market | Dynamic Hybrid Fee Floor Engine (`fee_calculator.ts`) | **COMPLETED (S71)** | Dynamic hybrid satoshi floors, 30-day volume decay, load multiplier, ADR-004. |
 | conxian_market | Dynamic Fee Report & Mempool Load Adapter (`fee_calculator.ts`) | **COMPLETED (S72)** | Dynamic fee report aggregator and mempool fee rate load factor adapter (ADR-004). |
 | conxian_market | CXIP-1317 Org-Wide Upgrade Research Expansion (`docs/research/`) | **COMPLETED (S74)** | Comprehensive analysis of CXIP-1317, turnkey asset matrix, and research expansion. |
+| conxian_market | Multi-Dimensional Scoring, Multi-Cloud Telemetry & BitVM3 Engine (`src/`) | **COMPLETED (S75)** | WPS, valuation impact, multi-cloud telemetry, real-time yield validation, BitVM3 proofs (CON-1437/1440/1436). |
 | Conxian | Monorepo Smart Contracts | **DEPRECATED** | Recommended for archiving in favor of BYO DeFi adapters. |
 
 ---

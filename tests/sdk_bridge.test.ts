@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { TrustTier, SettlementRail } from "../src/core_types";
-import { ConxianMarketSDK } from "../src/sdk_bridge";
-import type { GapCard, BuilderReputationRecord } from "../src/sla_engine";
+import { TrustTier, SettlementRail } from "../src/core_types.js";
+import { ConxianMarketSDK } from "../src/sdk_bridge.js";
+import type { GapCard, BuilderReputationRecord } from "../src/sla_engine.js";
 
 describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", () => {
   const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
@@ -17,14 +17,16 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     expect(sdk.bosYieldSplitter).toBeDefined();
     expect(sdk.marketAgnosticRouter).toBeDefined();
     expect(sdk.jobCardEscrowEngine).toBeDefined();
+    expect(sdk.multiDimensionalScoring).toBeDefined();
+    expect(sdk.universalVerificationAdapter).toBeDefined();
   });
 
   it("includes all modules in capability summary", async () => {
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(35);
-    expect(summary.coreCapabilities).toBe(15);
+    expect(summary.totalCapabilities).toBe(38);
+    expect(summary.coreCapabilities).toBe(18);
     expect(summary.trustTierMiddlewareEnabled).toBe(true);
     expect(summary.bosYieldSplitterEnabled).toBe(true);
     expect(summary.marketAgnosticRouterEnabled).toBe(true);
@@ -32,6 +34,9 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     expect(summary.treasuryGovernanceEnabled).toBe(true);
     expect(summary.agentRegistryEnabled).toBe(true);
     expect(summary.mcp402FacadeEnabled).toBe(true);
+    expect(summary.multiDimensionalScoringEnabled).toBe(true);
+    expect(summary.multiCloudTelemetryEnabled).toBe(true);
+    expect(summary.universalVerificationEnabled).toBe(true);
   });
 
   it("executes trust tier pipeline directly via SDK bridge", async () => {
@@ -68,6 +73,96 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
   });
 });
 
+describe("ConxianMarketSDK Bridge - Multi-Dimensional Scoring, Telemetry & BitVM3 Verification (Session 75)", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("exposes multi-dimensional scoring engine methods via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const score = sdk.calculateMultiDimensionalScore({
+      agentDid: "did:conxian:agent-bridge-75",
+      trustTier: TrustTier.Strict,
+      reputationScore: 95,
+      x402Volume: {
+        totalVolumeSats: 25_000_000n,
+        usdVolume: 12_500,
+        successfulPaymentCount: 100,
+        failedPaymentCount: 1,
+      },
+      escrowState: {
+        activeEscrowCount: 2,
+        completedEscrowCount: 28,
+        totalReleasedBountySats: 20_000_000n,
+        totalLockedBountySats: 5_000_000n,
+        slaBreachPenaltyCount: 0,
+      },
+    });
+
+    expect(score.agentDid).toBe("did:conxian:agent-bridge-75");
+    expect(score.weightedPerformanceScore).toBeGreaterThan(80);
+    expect(score.tierMultiplier).toBe(1.25);
+  });
+
+  it("exposes multi-cloud telemetry aggregation and yield validation via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const scorecard = sdk.aggregateMultiCloudTelemetry({
+      supabase: {
+        databaseId: "yauld-db-75",
+        connectionHealth: "HEALTHY",
+        activeQueryLatencyMs: 30,
+        bosStatechainSyncStatus: "IN_SYNC",
+      },
+    });
+
+    expect(scorecard.overallStatus).toBe("GREEN");
+
+    const realtimeValidation = sdk.validateYieldSplitRealtime(500_000n, {
+      supabase: {
+        databaseId: "yauld-db-75",
+        connectionHealth: "HEALTHY",
+        activeQueryLatencyMs: 30,
+        bosStatechainSyncStatus: "IN_SYNC",
+      },
+    });
+
+    expect(realtimeValidation.authorized).toBe(true);
+    expect(realtimeValidation.yieldSplit.builderSat).toBe(400_000n);
+  });
+
+  it("exposes UniversalVerificationAdapter and BitVM3 fraud proof verification via SDK bridge", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const bitvmRes = await sdk.verifyBitVM3Proof({
+      proofId: "proof-bridge-75",
+      circuitDigest: "0xdigest75",
+      garbledTableHash: "0xhash75",
+      challengeResponse: "0xresp75",
+      nexusEngineVersion: "conxian-nexus-v0.4.23",
+      estimatedChallengeCostUsd: 38.0,
+      timestampIso: new Date().toISOString(),
+    });
+
+    expect(bitvmRes.valid).toBe(true);
+    expect(bitvmRes.tier).toBe(TrustTier.Strict);
+
+    const universalRes = await sdk.verifyUniversalProof({
+      bitvm3_proof: {
+        proofId: "proof-bridge-75",
+        circuitDigest: "0xdigest75",
+        garbledTableHash: "0xhash75",
+        challengeResponse: "0xresp75",
+        nexusEngineVersion: "conxian-nexus-v0.4.23",
+        estimatedChallengeCostUsd: 38.0,
+        timestampIso: new Date().toISOString(),
+      },
+    });
+
+    expect(universalRes.valid).toBe(true);
+    expect(universalRes.methodUsed).toBe("BITVM3_GARBLED_CIRCUIT");
+  });
+});
+
 describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Integration", () => {
   const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
 
@@ -75,7 +170,7 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Int
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
     const summary = sdk.getCapabilitySummary();
 
-    expect(summary.totalCapabilities).toBe(35);
+    expect(summary.totalCapabilities).toBe(38);
     expect(summary.marketAgnosticRouterEnabled).toBe(true);
     expect(summary.jobCardEscrowEngineEnabled).toBe(true);
   });
