@@ -110,6 +110,8 @@ conxian-agent-init --diagnose gateway --endpoint https://gateway.example.invalid
 npm install @conxian/market-sdk@^0.2.4
 ```
 
+Select one command per invocation: `--help`, `--schema`, `--graph`, `--version`, `--dry-run`, or `--diagnose`. `--json` applies to any command; `--help --json` returns the schema. Onboarding flags (`--gateway`, `--nexus`, `--rail`, `--tier`, `--output`) apply only to normal onboarding or `--dry-run`. Diagnostic flags (`--endpoint`, `--token-env`, `--timeout-ms`) require `--diagnose`. Mixed commands and unrelated configuration options exit 2 before effects. Run `npm run test:cli` for process conformance; SDK CI includes it in `npm test`.
+
 See [CLI and protocol conformance](docs/CLI_CAPABILITY_PROTOCOL_CONFORMANCE_2026_10_15.md) for the current contract and limits. A normal local identity creation exits incomplete until entitlement, runtime and custody evidence exists. The legacy [`examples/indie-agent-quickstart.ts`](examples/indie-agent-quickstart.ts) illustrates API calls and is not evidence of payment, production attestation or an on-chain escrow lock.
 
 ---
