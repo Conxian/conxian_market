@@ -12,7 +12,7 @@ Session 75 advances the core value capture and verification framework of `@conxi
 
 1. **Multi-Dimensional Performance Scoring Engine (`MultiDimensionalScoringEngine`)**: Computes Weighted Performance Scores (WPS) and dynamic network valuation impact metrics by consuming live x402 transaction volume and ERC-8183 escrow state, deprecating static schema mocks (`erp_mock`).
 2. **Multi-Cloud Yield Telemetry Aggregation (`MonitoringWatcher`, `SlaEngine`, `BosYieldSplitter`)**: Aggregates real-time operational health across Supabase BOS, Neon Postgres, and Render services, feeding the Autonomous SLA Engine and validating 80/10/10 yield splits in real time.
-3. **Universal Verification Adapter & BitVM3 Fraud Proofs (`UniversalVerificationAdapter`, `GatewayVerifier`)**: Executes BitVM3 garbled-circuit fraud proof verification with sub-$50 challenge cost compression aligned with Conxian Nexus v0.4.23 light-client bridge specifications.
+3. **Universal Verification Adapter & BitVM3 Fraud Proofs (`UniversalVerificationAdapter`, `GatewayVerifier`)**: Retains BitVM3 research input and an adapter API. No qualified BitVM3 backend or measured USD challenge-cost guarantee exists; BitVM3 input returns invalid/ObserverOnly. Existing gateway-verified methods remain separate.
 
 ---
 
@@ -22,7 +22,7 @@ Session 75 advances the core value capture and verification framework of `@conxi
 |:-------|:---------|:---------|:------------|:------------|:-----------|
 | **GAP-75-01** | Scoring & Metrics | High | Performance scoring relied on legacy static mocks without consuming live x402 volumes and ERC-8183 escrow states. | `MultiDimensionalScoringEngine` computes WPS (0–100) and network valuation impact using real x402 volumes and escrow state. | Implemented `src/multi_dimensional_scoring.ts` and wired into `ConxianMarketSDK`. |
 | **GAP-75-02** | Telemetry & Yield | High | Telemetry was limited to single-cloud metrics and static yield calculations. | `MonitoringWatcher` aggregates multi-cloud telemetry (Supabase, Neon, Render); `SlaEngine` evaluates multi-cloud SLA health; `BosYieldSplitter` validates 80/10/10 yield splits in real time. | Enhanced `monitoring_watcher.ts`, `sla_engine.ts`, and `bos_yield_splitter.ts`. |
-| **GAP-75-03** | Attestation & Proofs | High | Gateway verification lacked BitVM3 garbled circuit fraud proof verification and universal adapter abstraction. | `GatewayVerifier` verifies BitVM3 garbled circuits under $50 CXIP-1317 compression limit; `UniversalVerificationAdapter` unifies TEE, ZK, Enclave, Light, and BitVM3 proofs. | Enhanced `src/verification.ts` with `verifyBitVM3Proof` and `UniversalVerificationAdapter`. |
+| **GAP-75-03** | Attestation & Proofs | High | Gateway verification lacked BitVM3 garbled circuit fraud proof verification and universal adapter abstraction. | `GatewayVerifier` fails closed for BitVM3 pending a qualified backend. The adapter retains existing gateway verification paths; research strings/costs cannot grant trust. | Enhanced `src/verification.ts` with `verifyBitVM3Proof` and `UniversalVerificationAdapter`. |
 | **GAP-75-04** | SDK Capabilities & Tests | Medium | SDK Bridge lacked Capabilities 15, 16, and 17. | `ConxianMarketSDK` exposes scoring, multi-cloud telemetry, and universal verification methods backed by thorough unit tests. | Wired capabilities into `src/sdk_bridge.ts`, exported in `src/index.ts`, and added comprehensive unit tests in `tests/`. |
 
 ---
@@ -49,3 +49,14 @@ Session 75 advances the core value capture and verification framework of `@conxi
 
 ---
 *Maintained per Conxian Session Cycle standards.*
+
+## 2026-10-19 qualification correction and implementation order
+
+The historical 100% candidate score is an unqualified research ranking, not security acceptance or release evidence. The BitVM3 metadata-only success path has been removed. Keep this PR draft until scoring, telemetry provenance and economic assertions are qualified separately.
+
+1. P0: prevent unverified BitVM3 input from establishing any trust; retain negative fixtures and ordinary independent review.
+2. P1: define the Core/SDK/Nexus proof and authenticated result contract, trusted input/commitment binding, freshness/replay rules and adversarial vectors before any backend integration.
+3. P1: independently qualify telemetry issuer/provenance and measured cost/fee/FX inputs.
+4. P2: compare protocol implementations and performance only after correctness is demonstrated; no purchase tier can substitute for technical verification.
+
+Primary research: [BitVM3 protocol paper](https://bitvm.org/bitvm3.pdf), [BitVM garbled SNARK verifier](https://github.com/BitVM/garbled-snark-verifier), reviewed 2026-10-19. These use committed circuit evaluation and consistency checks; metadata presence/version/cost comparisons are insufficient. See the OpenSpec change `2026-10-19-bitvm3-verification-boundary` for implementation and acceptance boundaries.

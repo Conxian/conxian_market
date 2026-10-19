@@ -65,7 +65,7 @@ export interface AttestationCertificate {
   proof_height?: number;
   /** Hash of the proof */
   proof_hash?: string;
-  /** BitVM3 Garbled Circuit Fraud Proof (CXIP-1317) */
+  /** Unverified BitVM3 research envelope; its presence confers no trust. */
   bitvm3_proof?: BitVM3GarbledCircuitProof;
 }
 
@@ -835,6 +835,7 @@ export interface MultiCloudTelemetryScorecard {
   capturedAtIso: string;
 }
 
+/** Caller-supplied research metadata, not a verified cryptographic receipt. */
 export interface BitVM3GarbledCircuitProof {
   proofId: string;
   circuitDigest: string;

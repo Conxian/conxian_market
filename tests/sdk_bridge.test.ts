@@ -143,8 +143,8 @@ describe("ConxianMarketSDK Bridge - Multi-Dimensional Scoring, Telemetry & BitVM
       timestampIso: new Date().toISOString(),
     });
 
-    expect(bitvmRes.valid).toBe(true);
-    expect(bitvmRes.tier).toBe(TrustTier.Strict);
+    expect(bitvmRes.valid).toBe(false);
+    expect(bitvmRes.tier).toBe(TrustTier.ObserverOnly);
 
     const universalRes = await sdk.verifyUniversalProof({
       bitvm3_proof: {
@@ -158,8 +158,8 @@ describe("ConxianMarketSDK Bridge - Multi-Dimensional Scoring, Telemetry & BitVM
       },
     });
 
-    expect(universalRes.valid).toBe(true);
-    expect(universalRes.methodUsed).toBe("BITVM3_GARBLED_CIRCUIT");
+    expect(universalRes.valid).toBe(false);
+    expect(universalRes.methodUsed).toBe("NONE");
   });
 });
 

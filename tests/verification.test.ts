@@ -70,10 +70,10 @@ describe("verification", () => {
       timestampIso: new Date().toISOString(),
     };
 
-    it("verifies valid BitVM3 garbled circuit fraud proof", async () => {
+    it("reports unavailable for structurally populated research input", async () => {
       const result = await verifier.verifyBitVM3Proof(validBitVM3Proof);
-      expect(result.valid).toBe(true);
-      expect(result.tier).toBe(TrustTier.Strict);
+      expect(result.valid).toBe(false);
+      expect(result.tier).toBe(TrustTier.ObserverOnly);
       expect(result.challengeCostUsd).toBe(42.50);
     });
 
@@ -85,14 +85,14 @@ describe("verification", () => {
 
       const result = await verifier.verifyBitVM3Proof(expensiveProof);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain("exceeds CXIP-1317 $50 compression limit");
+      expect(result.error).toContain("qualified cryptographic backend required");
     });
 
-    it("detects Strict tier from certificate with BitVM3 proof", async () => {
+    it("does not elevate a certificate from BitVM3 metadata", async () => {
       const tier = await verifier.detectTier({
         bitvm3_proof: validBitVM3Proof,
       });
-      expect(tier).toBe(TrustTier.Strict);
+      expect(tier).toBe(TrustTier.ObserverOnly);
     });
   });
 
@@ -110,7 +110,7 @@ describe("verification", () => {
     });
     const adapter = new UniversalVerificationAdapter(verifier);
 
-    it("verifies proof using BitVM3 garbled circuit method", async () => {
+    it("rejects a BitVM3-only certificate", async () => {
       const result = await adapter.verifyUniversalProof({
         bitvm3_proof: {
           proofId: "p1",
@@ -123,9 +123,9 @@ describe("verification", () => {
         },
       });
 
-      expect(result.valid).toBe(true);
-      expect(result.tier).toBe(TrustTier.Strict);
-      expect(result.methodUsed).toBe("BITVM3_GARBLED_CIRCUIT");
+      expect(result.valid).toBe(false);
+      expect(result.tier).toBe(TrustTier.ObserverOnly);
+      expect(result.methodUsed).toBe("NONE");
     });
 
     it("verifies proof using SPV light client fallback method", async () => {

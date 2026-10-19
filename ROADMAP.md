@@ -171,7 +171,7 @@ The Conxian Market SDK serves as the value, settlement, SLA enforcement, and tru
 - [x] Implement `MultiDimensionalScoringEngine` in `src/multi_dimensional_scoring.ts` computing Weighted Performance Scores (WPS) and dynamic valuation impact metrics.
 - [x] Implement multi-cloud telemetry aggregation in `src/monitoring_watcher.ts` (Supabase BOS, Neon Postgres, Render services).
 - [x] Implement multi-cloud SLA health evaluation in `src/sla_engine.ts` and real-time 80/10/10 yield split validation in `src/bos_yield_splitter.ts`.
-- [x] Implement BitVM3 garbled circuit fraud proof verification (<$50 challenge cost) and `UniversalVerificationAdapter` in `src/verification.ts`.
+- [ ] Qualify a real BitVM3 backend and measured cost evidence. The retained `verifyBitVM3Proof` API explicitly returns unavailable/ObserverOnly; `UniversalVerificationAdapter` only accepts existing independently verified methods.
 - [x] Wire Capabilities 15, 16, and 17 into `ConxianMarketSDK` in `src/sdk_bridge.ts` and export in `src/index.ts`.
 - [x] Author comprehensive unit tests in `tests/multi_dimensional_scoring.test.ts`, `tests/multi_cloud_telemetry.test.ts`, `tests/verification.test.ts`, and `tests/sdk_bridge.test.ts` (339 unit tests + 72 CLI tests passing).
 

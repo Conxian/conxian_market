@@ -5,7 +5,8 @@
  * verification. Degrades tiers gracefully when P0 attestation gaps exist.
  *
  * Tiers:
- *   - Strict:       TEE (Nitro/KeyMint) + ZK proof OR BitVM3 Garbled Circuit Fraud Proof (CXIP-1317)
+ *   - Strict:       Gateway-verified TEE (Nitro/KeyMint) + ZK proof
+ *   - BitVM3:       Research input only; verification unavailable
  *   - Managed:      Enclave attestation without ZK proof
  *   - Expedient:    Light client proof (SPV/MMR)
  *   - ObserverOnly: No proof (read-only)
@@ -89,22 +90,14 @@ export class GatewayVerifier implements Verifier {
   async verifyBitVM3Proof(
     proof: BitVM3GarbledCircuitProof
   ): Promise<{ valid: boolean; tier: TrustTier; challengeCostUsd: number; error?: string }> {
-    if (!proof.circuitDigest || !proof.garbledTableHash || !proof.challengeResponse) {
-      return { valid: false, tier: Tier.ObserverOnly, challengeCostUsd: proof.estimatedChallengeCostUsd, error: "Invalid BitVM3 garbled circuit structure or challenge response" };
-    }
-
-    if (proof.estimatedChallengeCostUsd > 50) {
-      return { valid: false, tier: Tier.ObserverOnly, challengeCostUsd: proof.estimatedChallengeCostUsd, error: `BitVM3 challenge cost (${proof.estimatedChallengeCostUsd}) exceeds CXIP-1317 $50 compression limit` };
-    }
-
-    if (!proof.nexusEngineVersion || !proof.nexusEngineVersion.includes("v0.4.23")) {
-      return { valid: false, tier: Tier.ObserverOnly, challengeCostUsd: proof.estimatedChallengeCostUsd, error: `Nexus engine version ${proof.nexusEngineVersion} incompatible with v0.4.23 BitVM3 bridge` };
-    }
-
+    // The candidate has no qualified BitVM3 verifier or authenticated result
+    // contract. Caller-supplied hashes, costs and versions cannot confer trust.
+    // Keep the API for research consumers, but never fabricate verification.
     return {
-      valid: true,
-      tier: Tier.Strict,
+      valid: false,
+      tier: Tier.ObserverOnly,
       challengeCostUsd: proof.estimatedChallengeCostUsd,
+      error: "BitVM3 verification unavailable: qualified cryptographic backend required",
     };
   }
 
@@ -154,8 +147,8 @@ export class GatewayVerifier implements Verifier {
 
 /**
  * Universal Verification Adapter (CXIP-1317)
- * Unifies TEE, ZK, Enclave, SPV Light, and BitVM3 Garbled Circuit Fraud Proofs
- * into a single verification pipeline aligned with Conxian Nexus v0.4.23.
+ * Routes existing gateway verification methods. BitVM3 input is retained for
+ * research compatibility and cannot establish a verified tier.
  */
 export class UniversalVerificationAdapter {
   constructor(private readonly verifier: GatewayVerifier) {}

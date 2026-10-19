@@ -69,7 +69,7 @@ This repo remains focused on the value and orchestration layer while upstream re
 | conxian_market | Dynamic Hybrid Fee Floor Engine (`fee_calculator.ts`) | **COMPLETED (S71)** | Dynamic hybrid satoshi floors, 30-day volume decay, load multiplier, ADR-004. |
 | conxian_market | Dynamic Fee Report & Mempool Load Adapter (`fee_calculator.ts`) | **COMPLETED (S72)** | Dynamic fee report aggregator and mempool fee rate load factor adapter (ADR-004). |
 | conxian_market | CXIP-1317 Org-Wide Upgrade Research Expansion (`docs/research/`) | **COMPLETED (S74)** | Comprehensive analysis of CXIP-1317, turnkey asset matrix, and research expansion. |
-| conxian_market | Multi-Dimensional Scoring, Multi-Cloud Telemetry & BitVM3 Engine (`src/`) | **COMPLETED (S75)** | WPS, valuation impact, multi-cloud telemetry, real-time yield validation, BitVM3 proofs (CON-1437/1440/1436). |
+| conxian_market | Multi-Dimensional Scoring, Multi-Cloud Telemetry & BitVM3 Engine (`src/`) | **RESEARCH / UNQUALIFIED (S75)** | Scoring, valuation and telemetry are candidate models. BitVM3 backend unavailable; metadata cannot establish verification or measured costs (CON-1437/1440/1436). |
 | Conxian | Monorepo Smart Contracts | **DEPRECATED** | Recommended for archiving in favor of BYO DeFi adapters. |
 
 ---

@@ -1,3 +1,8 @@
+# 2026-10-19 — Candidate verification boundary
+
+- BitVM3 research input now fails closed until a qualified cryptographic backend exists; no metadata-based trust or challenge-cost guarantee.
+- Preserve the research and public adapter API; restore the trusted dev branch policy and add adversarial verifier/SDK fixtures.
+
 # Changelog
 
 All notable changes to the Conxian Market SDK (`@conxian/market-sdk`) project will be documented in this file.
