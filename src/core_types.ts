@@ -845,3 +845,18 @@ export interface BitVM3GarbledCircuitProof {
   estimatedChallengeCostUsd: number; // Target <$50
   timestampIso: string;
 }
+
+/** Authenticated result contract returned by a verified Gateway/Nexus BitVM3 verifier backend. */
+export interface BitVM3AuthenticatedResult {
+  verified: boolean;
+  signerPublicKey?: string;
+  signature?: string;
+  commitmentHash?: string;
+  executionInputHash?: string;
+  blockNumber?: number;
+  nonce?: string;
+  measuredChallengeCostSat?: number;
+  measuredChallengeCostUsd?: number;
+  verifiedAtIso?: string;
+  rejectionReason?: string;
+}
