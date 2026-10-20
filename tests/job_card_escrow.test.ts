@@ -6,7 +6,7 @@ import {
   TrustTier,
   SettlementRail,
   ConxianMarketSDK,
-} from "../src";
+} from "../src/index.js";
 
 describe("JobCardEscrowEngine (Session 54 Candidate #6 & Session 65 Candidate #1)", () => {
   let engine: JobCardEscrowEngine;
@@ -204,6 +204,6 @@ describe("JobCardEscrowEngine (Session 54 Candidate #6 & Session 65 Candidate #1
 
     const summary = sdk.getCapabilitySummary();
     expect(summary.jobCardEscrowEngineEnabled).toBe(true);
-    expect(summary.coreCapabilities).toBe(15);
+    expect(summary.coreCapabilities).toBe(18);
   });
 });

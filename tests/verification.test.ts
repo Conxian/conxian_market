@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { DEFAULT_FEATURE_FLAGS, TrustTier } from "../src/core_types";
-import { GatewayClient } from "../src/gateway_client";
-import { GatewayVerifier, degradeTierForP0Gaps, detectTrustTierStatic } from "../src/verification";
+import { DEFAULT_FEATURE_FLAGS, TrustTier, type BitVM3GarbledCircuitProof } from "../src/core_types.js";
+import { GatewayClient } from "../src/gateway_client.js";
+import { GatewayVerifier, UniversalVerificationAdapter, degradeTierForP0Gaps, detectTrustTierStatic } from "../src/verification.js";
 
 describe("verification", () => {
   describe("detectTrustTierStatic", () => {
@@ -53,34 +53,91 @@ describe("verification", () => {
     });
   });
 
-  describe("GatewayVerifier", () => {
-    it("verifyTeeZk returns false when attestationAvailable is false", async () => {
-      const mockGateway = {} as GatewayClient;
-      const verifier = new GatewayVerifier(mockGateway, {
-        ...DEFAULT_FEATURE_FLAGS,
-        attestationAvailable: false,
-      });
-
-      const res = await verifier.verifyTeeZk("tee", "zk");
-      expect(res).toBe(false);
+  describe("GatewayVerifier & BitVM3 Proofs", () => {
+    const mockGateway = {} as GatewayClient;
+    const verifier = new GatewayVerifier(mockGateway, {
+      ...DEFAULT_FEATURE_FLAGS,
+      attestationAvailable: true,
     });
 
-    it("verifyTeeZk calls gateway and returns true when valid and Strict", async () => {
-      const mockGateway = {
-        verifyAttestation: vi.fn().mockResolvedValue({ valid: true, tier: TrustTier.Strict }),
-      } as unknown as GatewayClient;
+    const validBitVM3Proof: BitVM3GarbledCircuitProof = {
+      proofId: "proof-123",
+      circuitDigest: "0x123abc",
+      garbledTableHash: "0x456def",
+      challengeResponse: "0x789ghi",
+      nexusEngineVersion: "conxian-nexus-v0.4.23",
+      estimatedChallengeCostUsd: 42.50, // under $50 limit
+      timestampIso: new Date().toISOString(),
+    };
 
-      const verifier = new GatewayVerifier(mockGateway, {
-        ...DEFAULT_FEATURE_FLAGS,
-        attestationAvailable: true,
+    it("reports unavailable for structurally populated research input", async () => {
+      const result = await verifier.verifyBitVM3Proof(validBitVM3Proof);
+      expect(result.valid).toBe(false);
+      expect(result.tier).toBe(TrustTier.ObserverOnly);
+      expect(result.challengeCostUsd).toBe(42.50);
+    });
+
+    it("rejects BitVM3 proof if challenge cost exceeds $50 CXIP-1317 threshold", async () => {
+      const expensiveProof: BitVM3GarbledCircuitProof = {
+        ...validBitVM3Proof,
+        estimatedChallengeCostUsd: 150.00,
+      };
+
+      const result = await verifier.verifyBitVM3Proof(expensiveProof);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("qualified cryptographic backend required");
+    });
+
+    it("does not elevate a certificate from BitVM3 metadata", async () => {
+      const tier = await verifier.detectTier({
+        bitvm3_proof: validBitVM3Proof,
       });
-
-      const res = await verifier.verifyTeeZk("tee", "zk");
-      expect(res).toBe(true);
-      expect(mockGateway.verifyAttestation).toHaveBeenCalledWith({ teeProof: "tee", zkProof: "zk" });
+      expect(tier).toBe(TrustTier.ObserverOnly);
     });
   });
-});
+
+  describe("UniversalVerificationAdapter", () => {
+    const mockGateway = {
+      verifyAttestation: vi.fn().mockImplementation(async (params) => {
+        if (params.lightProof) return { valid: true, tier: TrustTier.Expedient };
+        return { valid: false };
+      }),
+    } as unknown as GatewayClient;
+
+    const verifier = new GatewayVerifier(mockGateway, {
+      ...DEFAULT_FEATURE_FLAGS,
+      attestationAvailable: true,
+    });
+    const adapter = new UniversalVerificationAdapter(verifier);
+
+    it("rejects a BitVM3-only certificate", async () => {
+      const result = await adapter.verifyUniversalProof({
+        bitvm3_proof: {
+          proofId: "p1",
+          circuitDigest: "cd1",
+          garbledTableHash: "gth1",
+          challengeResponse: "cr1",
+          nexusEngineVersion: "v0.4.23",
+          estimatedChallengeCostUsd: 25.0,
+          timestampIso: new Date().toISOString(),
+        },
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.tier).toBe(TrustTier.ObserverOnly);
+      expect(result.methodUsed).toBe("NONE");
+    });
+
+    it("verifies proof using SPV light client fallback method", async () => {
+      const result = await adapter.verifyUniversalProof({
+        light_proof: "spv-proof-header",
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.tier).toBe(TrustTier.Expedient);
+      expect(result.methodUsed).toBe("LIGHT_SPV");
+    });
+  });
 
   describe("GatewayVerifier Capabilities", () => {
     it("reports P0 gaps when attestation is disabled", () => {
@@ -115,3 +172,4 @@ describe("verification", () => {
       expect(caps.p0Gaps.length).toBe(0);
     });
   });
+});

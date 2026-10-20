@@ -10,10 +10,15 @@
  *   - Babylon Staking Concentration & Slashing Watcher
  *   - Treasury Runway & Asset Allocation Split Calculator
  *   - CJCS SLA Rule Audit & Telemetry Health Watcher
+ *   - Multi-Cloud Telemetry Aggregation (Supabase, Neon, Render)
  *   - Unified Health Snapshot & Alert Generation
  */
 
 import { TrustTier } from "./core_types.js";
+import type {
+  MultiCloudTelemetryInput,
+  MultiCloudTelemetryScorecard,
+} from "./core_types.js";
 
 // ── Health Severity Status ──
 
@@ -186,6 +191,80 @@ export interface UnifiedHealthSnapshot {
  * MonitoringWatcher Engine.
  */
 export class MonitoringWatcher {
+  /**
+   * Aggregate multi-cloud telemetry operational metrics (Supabase BOS, Neon Postgres, Render Services).
+   */
+  aggregateMultiCloudTelemetry(input: MultiCloudTelemetryInput): MultiCloudTelemetryScorecard {
+    const alerts: string[] = [];
+    let supabaseStatus: HealthStatus = "GREEN";
+    let neonStatus: HealthStatus = "GREEN";
+    let renderStatus: HealthStatus = "GREEN";
+
+    // 1. Supabase BOS Telemetry
+    if (input.supabase) {
+      if (input.supabase.connectionHealth === "DOWN") {
+        supabaseStatus = "RED";
+        alerts.push(`CRITICAL: Supabase BOS Database (${input.supabase.databaseId}) connection DOWN`);
+      } else if (
+        input.supabase.connectionHealth === "DEGRADED" ||
+        input.supabase.activeQueryLatencyMs > 500 ||
+        input.supabase.bosStatechainSyncStatus === "LAGGING"
+      ) {
+        supabaseStatus = "YELLOW";
+        alerts.push(
+          `WARNING: Supabase BOS Database (${input.supabase.databaseId}) latency/sync degraded (${input.supabase.activeQueryLatencyMs}ms, ${input.supabase.bosStatechainSyncStatus})`
+        );
+      } else if (input.supabase.bosStatechainSyncStatus === "OUT_OF_SYNC") {
+        supabaseStatus = "RED";
+        alerts.push(`CRITICAL: Supabase BOS Database (${input.supabase.databaseId}) statechain OUT_OF_SYNC`);
+      }
+    }
+
+    // 2. Neon Postgres Telemetry
+    if (input.neon) {
+      if (input.neon.computeState === "SUSPENDED" || input.neon.cpuUsagePct > 90) {
+        neonStatus = "RED";
+        alerts.push(
+          `CRITICAL: Neon Postgres Project (${input.neon.projectId}) high load or suspended (CPU: ${input.neon.cpuUsagePct}%, State: ${input.neon.computeState})`
+        );
+      } else if (input.neon.cpuUsagePct > 75 || input.neon.connectionPoolUtilizationPct > 80) {
+        neonStatus = "YELLOW";
+        alerts.push(
+          `WARNING: Neon Postgres Project (${input.neon.projectId}) connection pool or CPU high (Pool: ${input.neon.connectionPoolUtilizationPct}%)`
+        );
+      }
+    }
+
+    // 3. Render Web Service Telemetry
+    if (input.render) {
+      if (input.render.status === "CRASHED" || input.render.status === "SUSPENDED") {
+        renderStatus = "RED";
+        alerts.push(`CRITICAL: Render Web Service (${input.render.serviceId}) status ${input.render.status}`);
+      } else if (input.render.p95HttpLatencyMs > 1500 || input.render.restartCount24h > 3) {
+        renderStatus = "YELLOW";
+        alerts.push(
+          `WARNING: Render Web Service (${input.render.serviceId}) latency or restart count high (${input.render.p95HttpLatencyMs}ms, Restarts: ${input.render.restartCount24h})`
+        );
+      }
+    }
+
+    let overallStatus: HealthStatus = "GREEN";
+    if (supabaseStatus === "RED" || neonStatus === "RED" || renderStatus === "RED") {
+      overallStatus = "RED";
+    } else if (supabaseStatus === "YELLOW" || neonStatus === "YELLOW" || renderStatus === "YELLOW") {
+      overallStatus = "YELLOW";
+    }
+
+    return {
+      overallStatus,
+      supabaseStatus,
+      neonStatus,
+      renderStatus,
+      alerts,
+      capturedAtIso: input.capturedAtIso ?? new Date().toISOString(),
+    };
+  }
+
   /** Evaluate sBTC Peg and Signer Quorum Health */
   evaluateSbtcHealth(input: SbtcHealthInput): SbtcHealthResult {
     const alerts: string[] = [];
