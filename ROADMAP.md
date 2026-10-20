@@ -1,7 +1,7 @@
 # Conxian Ecosystem & Market SDK Roadmap
 
-> **Current Session:** Session 71
-> **Strategic Directive:** M2M Trust Layer Research Expansion, Project Alignment & Implementation
+> **Current Session:** Session 75
+> **Strategic Directive:** Multi-Dimensional Performance Scoring, Multi-Cloud Telemetry Aggregation, and BitVM3 Fraud Proof Engine
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
 
 ---
@@ -118,7 +118,7 @@ The Conxian Market SDK serves as the value, settlement, SLA enforcement, and tru
 - [x] Conduct cross-repo gap analysis and update `MASTER_RECONNAISSANCE_AND_ARCHITECTURE_REVIEW.md` with candidate gap matrix.
 - [x] Verify B2B domain routing firewall and enterprise onboarding installer pipeline across 115 test cases (`npm test`).
 
-### Session 66 — M2M Trust Layer Research Expansion, Project Alignment & Implementation (CURRENT)
+### Session 66 — M2M Trust Layer Research Expansion, Project Alignment & Implementation
 - [x] Execute session initialization from ledger at `.session/ledger.md`.
 - [x] Synchronize repository submodules per declared policy and re-evaluate `conxian_market` override.
 - [x] Conduct systematic reconnaissance across assets (`conxian-gateway`, `conxius-enclave-sdk`, `lib-conxian-core`, `conxian_market`, `conxian-nexus`), external standards (Linux Foundation x402, Visa/Mastercard agent protocols, W3C DID, ERC-8004, ISO 20022 pacs.008, M2M market sizing primary sources), and GitHub surfaces.
@@ -127,18 +127,6 @@ The Conxian Market SDK serves as the value, settlement, SLA enforcement, and tru
 - [x] Author unit tests in `tests/x402_facade.test.ts` and `tests/sdk_bridge.test.ts`.
 - [x] Create research document `docs/research/SESSION_66_RESEARCH_EXPANSION_AND_GAP_MATRIX.md` and Architectural Decision Record `docs/adr/ADR_002_M2M_X402_TRUST_LAYER.md`.
 - [x] Update `README.md` positioning to "verifiable settlement, escrow, and trust layer for autonomous agent commerce (x402)".
-
----
-
-## 🔮 Upstream Dependencies & Future Work
-
-1. **Upstream Enclave Attestation (`conxius-enclave-sdk`)**:
-   - Resolve P0 blockers [#242](https://github.com/Conxian/Conxian/issues/242) (AWS Nitro), [#241](https://github.com/Conxian/Conxian/issues/241) (Android KeyMint), and [#240](https://github.com/Conxian/Conxian/issues/240) (Attestation Roots) to allow Strict and Managed trust tier promotion without P0 degradation.
-2. **Upstream CI & Org Rulesets (`conxius-platform`)**:
-   - Enforce unified CI validation scripts and rulesets ([#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854)).
-
----
-*Roadmap maintained and updated per session cycle.*
 
 ### Session 68 — B2B Enterprise Client Onboarding SLA Diagnostics Engine
 - [x] Execute session initialization and baseline check (120 test cases passing).
@@ -162,8 +150,7 @@ The Conxian Market SDK serves as the value, settlement, SLA enforcement, and tru
 - [x] Expose `registerAgent`, `getAgent`, `isAgentAuthorized`, `updateAgentReputation`, `createMcp402Demand`, and `authorizeMcp402ToolCall` on `ConxianMarketSDK`.
 - [x] Add unit tests in `tests/sdk_bridge.test.ts` verifying 140 passing tests across 17 test files (`npm test`).
 
-
-### Session 71 — Dynamic Hybrid Fee Floor & System Load Self-Adjustment Model (CURRENT)
+### Session 71 — Dynamic Hybrid Fee Floor & System Load Self-Adjustment Model
 - [x] Execute session initialization and SHA baseline check (140 test cases passing).
 - [x] System reconnaissance, cross-industry fee research, and gap analysis (`docs/research/SESSION_71_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
 - [x] Author ADR-004 (`docs/adr/ADR_004_DYNAMIC_FEE_FLOOR_MODEL.md`) establishing hybrid satoshi floors, 30-day volume decay curves, dynamic system load multipliers, and enterprise subscription caps.
@@ -171,3 +158,31 @@ The Conxian Market SDK serves as the value, settlement, SLA enforcement, and tru
 - [x] Add core types (`FeeOptions`, `VolumeDecayTier`, `DynamicFeeResult`, `DynamicRevenueScenario`, `DynamicRevenueProjection`) in `src/core_types.ts`.
 - [x] Wire `calculateDynamicFee`, `getVolumeDecayedBps`, `getRailDefaultFlatFloor`, and `projectDynamicRevenue` onto `ConxianMarketSDK` bridge (`src/sdk_bridge.ts`).
 - [x] Expand unit test suite in `tests/fee_calculator.test.ts` and `tests/sdk_bridge.test.ts`, verifying 166 passing tests across 19 test files (`npm test`).
+
+### Session 74 — CXIP-1317 Strategic Org-Wide Proposal Alignment & Research Expansion
+- [x] Execute session initialization and SHA baseline check (184 test cases passing).
+- [x] System reconnaissance and comprehensive strategic analysis of CXIP-1317 org-wide upgrade proposal (`conxian-business#1317`).
+- [x] Author `docs/research/CXIP1317_ORG_WIDE_UPGRADE_PROPOSAL_ANALYSIS.md` detailing taxonomy, fee optimization ($15k -> <$50), ISO 20022/x402 convergence, and turnkey asset matrix.
+- [x] Author `docs/research/SESSION_74_RESEARCH_EXPANSION_AND_GAP_MATRIX.md` recording ATS methodology, gap matrix, candidate scoring, and verification records.
+
+### Session 75 — Multi-Dimensional Scoring, Multi-Cloud Yield Telemetry & BitVM3 Fraud Proof Engine (CURRENT)
+- [x] Execute session initialization and SHA baseline check.
+- [x] System reconnaissance across CXIP-1317, CON-1437, CON-1440, and CON-1436 specifications.
+- [x] Implement `MultiDimensionalScoringEngine` in `src/multi_dimensional_scoring.ts` computing Weighted Performance Scores (WPS) and dynamic valuation impact metrics.
+- [x] Implement multi-cloud telemetry aggregation in `src/monitoring_watcher.ts` (Supabase BOS, Neon Postgres, Render services).
+- [x] Implement multi-cloud SLA health evaluation in `src/sla_engine.ts` and real-time 80/10/10 yield split validation in `src/bos_yield_splitter.ts`.
+- [ ] Qualify a real BitVM3 backend and measured cost evidence. The retained `verifyBitVM3Proof` API explicitly returns unavailable/ObserverOnly; `UniversalVerificationAdapter` only accepts existing independently verified methods.
+- [x] Wire Capabilities 15, 16, and 17 into `ConxianMarketSDK` in `src/sdk_bridge.ts` and export in `src/index.ts`.
+- [x] Author comprehensive unit tests in `tests/multi_dimensional_scoring.test.ts`, `tests/multi_cloud_telemetry.test.ts`, `tests/verification.test.ts`, and `tests/sdk_bridge.test.ts` (339 unit tests + 72 CLI tests passing).
+
+---
+
+## 🔮 Upstream Dependencies & Future Work
+
+1. **Upstream Enclave Attestation (`conxius-enclave-sdk`)**:
+   - Resolve P0 blockers [#242](https://github.com/Conxian/Conxian/issues/242) (AWS Nitro), [#241](https://github.com/Conxian/Conxian/issues/241) (Android KeyMint), and [#240](https://github.com/Conxian/Conxian/issues/240) (Attestation Roots) to allow Strict and Managed trust tier promotion without P0 degradation.
+2. **Upstream CI & Org Rulesets (`conxius-platform`)**:
+   - Enforce unified CI validation scripts and rulesets ([#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854)).
+
+---
+*Roadmap maintained and updated per session cycle.*
