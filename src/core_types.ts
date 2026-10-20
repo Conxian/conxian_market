@@ -835,17 +835,6 @@ export interface MultiCloudTelemetryScorecard {
   capturedAtIso: string;
 }
 
-/** Caller-supplied research metadata, not a verified cryptographic receipt. */
-export interface BitVM3GarbledCircuitProof {
-  proofId: string;
-  circuitDigest: string;
-  garbledTableHash: string;
-  challengeResponse: string;
-  nexusEngineVersion: string; // Must match v0.4.23+
-  estimatedChallengeCostUsd: number; // Target <$50
-  timestampIso: string;
-}
-
 /** Authenticated result contract returned by a verified Gateway/Nexus BitVM3 verifier backend. */
 export interface BitVM3AuthenticatedResult {
   verified: boolean;
@@ -859,4 +848,18 @@ export interface BitVM3AuthenticatedResult {
   measuredChallengeCostUsd?: number;
   verifiedAtIso?: string;
   rejectionReason?: string;
+}
+
+/** Caller-supplied research metadata, not a verified cryptographic receipt. */
+export interface BitVM3GarbledCircuitProof {
+  proofId: string;
+  circuitDigest: string;
+  garbledTableHash: string;
+  challengeResponse: string;
+  nexusEngineVersion: string; // Must match v0.4.23+
+  estimatedChallengeCostUsd: number; // Target <$50
+  timestampIso: string;
+  nonce?: string;
+  executionInputHash?: string;
+  authenticatedResult?: BitVM3AuthenticatedResult;
 }
