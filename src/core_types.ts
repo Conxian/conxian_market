@@ -835,7 +835,7 @@ export interface MultiCloudTelemetryScorecard {
   capturedAtIso: string;
 }
 
-/** Authenticated result contract returned by a verified Gateway/Nexus BitVM3 verifier backend. */
+/** Proposed result envelope. Caller-controlled fields are NOT authenticated or trusted. */
 export interface BitVM3AuthenticatedResult {
   verified: boolean;
   signerPublicKey?: string;

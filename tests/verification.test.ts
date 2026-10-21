@@ -94,6 +94,28 @@ describe("verification", () => {
       });
       expect(tier).toBe(TrustTier.ObserverOnly);
     });
+
+    it.each([
+      { verified: true },
+      { verified: true, signerPublicKey: "attacker", signature: "forged" },
+      { verified: true, commitmentHash: "0x123abc", executionInputHash: "input", nonce: "reused", measuredChallengeCostUsd: 1, verifiedAtIso: "2000-01-01T00:00:00Z" },
+      { verified: true, measuredChallengeCostUsd: Number.NaN },
+      { verified: true, measuredChallengeCostUsd: -1 },
+    ])("never trusts caller-supplied verification claims: %j", async (authenticatedResult) => {
+      const proof = { ...validBitVM3Proof, executionInputHash: "input", nonce: "reused", authenticatedResult };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        for (const result of [await verifier.verifyBitVM3Proof(proof), await verifier.verifyBitVM3ProofWithBoundary(proof)]) {
+          expect(result.valid).toBe(false);
+          expect(result.tier).toBe(TrustTier.ObserverOnly);
+          expect(result.error).toContain("qualified cryptographic backend required");
+        }
+        expect(await verifier.detectTier({ bitvm3_proof: proof })).toBe(TrustTier.ObserverOnly);
+        expect((await verifier.verifyAttestation({ bitvm3_proof: proof })).valid).toBe(false);
+        const universal = await new UniversalVerificationAdapter(verifier).verifyUniversalProof({ bitvm3_proof: proof });
+        expect(universal.valid).toBe(false);
+        expect(universal.tier).toBe(TrustTier.ObserverOnly);
+      }
+    });
   });
 
   describe("UniversalVerificationAdapter", () => {

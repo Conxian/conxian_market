@@ -6,7 +6,7 @@
  *
  * Tiers:
  *   - Strict:       Gateway-verified TEE (Nitro/KeyMint) + ZK proof
- *   - BitVM3:       Research input only; verification unavailable without authenticated contract
+ *   - BitVM3:       Research input only; qualified verification backend unavailable
  *   - Managed:      Enclave attestation without ZK proof
  *   - Expedient:    Light client proof (SPV/MMR)
  *   - ObserverOnly: No proof (read-only)
@@ -14,7 +14,6 @@
 
 import type {
   AttestationCertificate,
-  BitVM3AuthenticatedResult,
   BitVM3GarbledCircuitProof,
   FeatureFlags,
   TrustTier,
@@ -100,79 +99,20 @@ export class GatewayVerifier implements Verifier {
   }
 
   /**
-   * Evaluates BitVM3 garbled circuit fraud proof under CXIP-1317 & OpenSpec 2026-10-19-bitvm3-verification-boundary.
-   * Requires an authenticated result contract from a verified Gateway/Nexus verifier backend.
+   * Retains the proposed BitVM3 boundary API for research compatibility.
+   * Always fails closed until independently authenticated verification is wired.
    */
   async verifyBitVM3ProofWithBoundary(
     proof: BitVM3GarbledCircuitProof
   ): Promise<{ valid: boolean; tier: TrustTier; challengeCostUsd: number; error?: string }> {
-    // 1. Without authenticated result contract, return fail-closed unavailable
-    if (!proof.authenticatedResult) {
-      return {
-        valid: false,
-        tier: Tier.ObserverOnly,
-        challengeCostUsd: proof.estimatedChallengeCostUsd,
-        error: "BitVM3 verification unavailable: qualified cryptographic backend required",
-      };
-    }
-
-    const auth = proof.authenticatedResult;
-
-    // 2. Validate authenticated result verified flag
-    if (!auth.verified) {
-      return {
-        valid: false,
-        tier: Tier.ObserverOnly,
-        challengeCostUsd: auth.measuredChallengeCostUsd ?? proof.estimatedChallengeCostUsd,
-        error: auth.rejectionReason ?? "BitVM3 proof rejected by verifier backend",
-      };
-    }
-
-    // 3. Commitment and input binding check
-    if (auth.commitmentHash && auth.commitmentHash !== proof.circuitDigest) {
-      return {
-        valid: false,
-        tier: Tier.ObserverOnly,
-        challengeCostUsd: auth.measuredChallengeCostUsd ?? proof.estimatedChallengeCostUsd,
-        error: "Commitment hash mismatch between proof circuit digest and authenticated result",
-      };
-    }
-
-    if (proof.executionInputHash && auth.executionInputHash && proof.executionInputHash !== auth.executionInputHash) {
-      return {
-        valid: false,
-        tier: Tier.ObserverOnly,
-        challengeCostUsd: auth.measuredChallengeCostUsd ?? proof.estimatedChallengeCostUsd,
-        error: "Execution input hash mismatch between proof envelope and authenticated result",
-      };
-    }
-
-    // 4. Nonce / Replay check
-    if (proof.nonce && auth.nonce && proof.nonce !== auth.nonce) {
-      return {
-        valid: false,
-        tier: Tier.ObserverOnly,
-        challengeCostUsd: auth.measuredChallengeCostUsd ?? proof.estimatedChallengeCostUsd,
-        error: "Replay detection: proof nonce does not match authenticated result nonce",
-      };
-    }
-
-    // 5. Challenge Cost Compression Limit ($50 CXIP-1317 target)
-    const measuredCost = auth.measuredChallengeCostUsd ?? proof.estimatedChallengeCostUsd;
-    if (measuredCost > 50.0) {
-      return {
-        valid: false,
-        tier: Tier.ObserverOnly,
-        challengeCostUsd: measuredCost,
-        error: `Challenge cost $${measuredCost.toFixed(2)} exceeds CXIP-1317 compression limit ($50.00)`,
-      };
-    }
-
-    // 6. Validated BitVM3 proof
+    // The envelope and any embedded result are caller-controlled research data.
+    // No qualified issuer/signature/freshness/replay verifier is wired here.
+    // Preserve the candidate API without allowing metadata to establish trust.
     return {
-      valid: true,
-      tier: Tier.Strict,
-      challengeCostUsd: measuredCost,
+      valid: false,
+      tier: Tier.ObserverOnly,
+      challengeCostUsd: proof.estimatedChallengeCostUsd,
+      error: "BitVM3 verification unavailable: qualified cryptographic backend required",
     };
   }
 
@@ -222,7 +162,7 @@ export class GatewayVerifier implements Verifier {
 
 /**
  * Universal Verification Adapter (CXIP-1317)
- * Routes existing gateway verification methods and evaluates BitVM3 verification boundary contracts.
+ * Routes existing gateway verification methods. BitVM3 envelopes confer no trust.
  */
 export class UniversalVerificationAdapter {
   constructor(private readonly verifier: GatewayVerifier) {}
