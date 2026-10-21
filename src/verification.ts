@@ -6,13 +6,18 @@
  *
  * Tiers:
  *   - Strict:       Gateway-verified TEE (Nitro/KeyMint) + ZK proof
- *   - BitVM3:       Research input only; verification unavailable
+ *   - BitVM3:       Research input only; qualified verification backend unavailable
  *   - Managed:      Enclave attestation without ZK proof
  *   - Expedient:    Light client proof (SPV/MMR)
  *   - ObserverOnly: No proof (read-only)
  */
 
-import type { AttestationCertificate, BitVM3GarbledCircuitProof, FeatureFlags, TrustTier } from "./core_types.js";
+import type {
+  AttestationCertificate,
+  BitVM3GarbledCircuitProof,
+  FeatureFlags,
+  TrustTier,
+} from "./core_types.js";
 import { TrustTier as Tier } from "./core_types.js";
 import { DEFAULT_FEATURE_FLAGS } from "./core_types.js";
 import type { GatewayClient } from "./gateway_client.js";
@@ -90,9 +95,19 @@ export class GatewayVerifier implements Verifier {
   async verifyBitVM3Proof(
     proof: BitVM3GarbledCircuitProof
   ): Promise<{ valid: boolean; tier: TrustTier; challengeCostUsd: number; error?: string }> {
-    // The candidate has no qualified BitVM3 verifier or authenticated result
-    // contract. Caller-supplied hashes, costs and versions cannot confer trust.
-    // Keep the API for research consumers, but never fabricate verification.
+    return this.verifyBitVM3ProofWithBoundary(proof);
+  }
+
+  /**
+   * Retains the proposed BitVM3 boundary API for research compatibility.
+   * Always fails closed until independently authenticated verification is wired.
+   */
+  async verifyBitVM3ProofWithBoundary(
+    proof: BitVM3GarbledCircuitProof
+  ): Promise<{ valid: boolean; tier: TrustTier; challengeCostUsd: number; error?: string }> {
+    // The envelope and any embedded result are caller-controlled research data.
+    // No qualified issuer/signature/freshness/replay verifier is wired here.
+    // Preserve the candidate API without allowing metadata to establish trust.
     return {
       valid: false,
       tier: Tier.ObserverOnly,
@@ -114,7 +129,7 @@ export class GatewayVerifier implements Verifier {
   async detectTier(cert: AttestationCertificate): Promise<TrustTier> {
     // BitVM3 garbled circuit fraud proof (CXIP-1317)
     if (cert.bitvm3_proof) {
-      const bitvmRes = await this.verifyBitVM3Proof(cert.bitvm3_proof);
+      const bitvmRes = await this.verifyBitVM3ProofWithBoundary(cert.bitvm3_proof);
       if (bitvmRes.valid) {
         return bitvmRes.tier;
       }
@@ -147,8 +162,7 @@ export class GatewayVerifier implements Verifier {
 
 /**
  * Universal Verification Adapter (CXIP-1317)
- * Routes existing gateway verification methods. BitVM3 input is retained for
- * research compatibility and cannot establish a verified tier.
+ * Routes existing gateway verification methods. BitVM3 envelopes confer no trust.
  */
 export class UniversalVerificationAdapter {
   constructor(private readonly verifier: GatewayVerifier) {}
@@ -160,7 +174,7 @@ export class UniversalVerificationAdapter {
     details: string;
   }> {
     if (cert.bitvm3_proof) {
-      const res = await this.verifier.verifyBitVM3Proof(cert.bitvm3_proof);
+      const res = await this.verifier.verifyBitVM3ProofWithBoundary(cert.bitvm3_proof);
       if (res.valid) {
         return {
           valid: true,
