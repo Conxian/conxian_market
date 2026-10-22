@@ -1,10 +1,12 @@
 /**
  * Conxian Client Onboarding, System Installation & Connectivity Orchestrator Engine
  *
- * Implements end-to-end client installation, setup verification, zero-custody sanity auditing,
- * purchase entitlement validation, multi-system connectivity diagnostics, domain routing firewall checks,
- * and unified CLI installer execution.
+ * Builds local installation plans and checks configuration syntax. Runtime health,
+ * paid entitlement, custody and provisioning require external verified evidence.
+ * Configuration alone never grants execution authority or establishes service health.
  */
+
+import { createHash } from "node:crypto";
 
 import {
   ClientOnboardingConfig,
@@ -107,24 +109,21 @@ export class ClientInstallerEngine {
       errors.push("Invalid or missing clientDid: must be a valid DID starting with 'did:'");
     }
 
-    if (!config.gatewayUrl || typeof config.gatewayUrl !== "string") {
-      errors.push("Missing gatewayUrl");
-    } else if (!config.gatewayUrl.startsWith("http://") && !config.gatewayUrl.startsWith("https://")) {
-      errors.push("Invalid gatewayUrl: must start with http:// or https://");
+    for (const [name, value] of [["gatewayUrl", config.gatewayUrl], ["nexusUrl", config.nexusUrl]]) {
+      try {
+        const endpoint = new URL(value);
+        if (!["http:", "https:"].includes(endpoint.protocol) || !endpoint.hostname || endpoint.username || endpoint.password || endpoint.hash) {
+          errors.push(`Invalid ${name}: expected an HTTP(S) URL without embedded credentials or fragments`);
+        }
+      } catch {
+        errors.push(`Missing or invalid ${name}`);
+      }
     }
-
-    if (!config.nexusUrl || typeof config.nexusUrl !== "string") {
-      errors.push("Missing nexusUrl");
-    } else if (!config.nexusUrl.startsWith("http://") && !config.nexusUrl.startsWith("https://")) {
-      errors.push("Invalid nexusUrl: must start with http:// or https://");
+    if (!Object.values(SettlementRail).includes(config.defaultSettlementRail)) {
+      errors.push("Invalid or missing defaultSettlementRail");
     }
-
-    if (!config.defaultSettlementRail) {
-      errors.push("Missing defaultSettlementRail");
-    }
-
-    if (!config.targetTrustTier) {
-      errors.push("Missing targetTrustTier");
+    if (!Object.values(TrustTier).includes(config.targetTrustTier)) {
+      errors.push("Invalid or missing targetTrustTier");
     }
 
     // Domain routing firewall check
@@ -146,26 +145,22 @@ export class ClientInstallerEngine {
     config: ClientOnboardingConfig,
     licenseOverride?: Partial<ClientEntitlementLicense>
   ): ClientEntitlementLicense {
-    const clientDid = config.clientDid || "did:conxian:anonymous";
-    const tier = config.targetTrustTier || TrustTier.Managed;
-
+    // A configuration or caller override is not a verified purchase receipt.
+    // No entitlement issuer/verifier is configured in this local planner.
+    void licenseOverride;
     return {
-      licenseId: licenseOverride?.licenseId || `lic_${clientDid.replace(/[^a-zA-Z0-9]/g, "_")}_001`,
-      clientDid,
-      tier,
-      allowedRails: licenseOverride?.allowedRails || [
-        config.defaultSettlementRail || SettlementRail.EvmErc8183,
-        SettlementRail.Sbtc,
-        SettlementRail.Lightning,
-      ],
-      maxActiveJobCards: licenseOverride?.maxActiveJobCards || (tier === TrustTier.Strict ? 1000 : 100),
-      agentExecutionEnabled: licenseOverride?.agentExecutionEnabled ?? true,
-      expiresAtIso: licenseOverride?.expiresAtIso || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      licenseId: "",
+      clientDid: config.clientDid || "did:conxian:anonymous",
+      tier: TrustTier.ObserverOnly,
+      allowedRails: [],
+      maxActiveJobCards: 0,
+      agentExecutionEnabled: false,
+      verificationStatus: "UNVERIFIED",
     };
   }
 
   /**
-   * Align client installation setup into a validated deployment manifest.
+   * Align client settings into an unsigned deployment plan with a SHA-256 checksum.
    */
   static alignClientDeployment(
     config: ClientOnboardingConfig,
@@ -177,13 +172,14 @@ export class ClientInstallerEngine {
       config.byoLlmKeys?.anthropicApiKey
     );
 
-    const manifestData = `${config.clientDid}:${config.gatewayUrl}:${config.nexusUrl}:${config.defaultSettlementRail}:${config.targetTrustTier}`;
-    let hash = 0;
-    for (let i = 0; i < manifestData.length; i++) {
-      hash = (hash << 5) - hash + manifestData.charCodeAt(i);
-      hash |= 0;
-    }
-    const checksum = `sha256_${Math.abs(hash).toString(16).padStart(8, "0")}`;
+    // Versioned canonical array avoids delimiter ambiguity. This is an
+    // integrity checksum of a local plan, not a signature or deployment proof.
+    const manifestData = JSON.stringify([
+      "CONXIAN-CLIENT-DEPLOYMENT/v1", config.clientDid, config.gatewayUrl,
+      config.nexusUrl, config.defaultSettlementRail, config.targetTrustTier,
+      hasKeys, timestampIso,
+    ]);
+    const checksum = `sha256_${createHash("sha256").update(manifestData).digest("hex")}`;
 
     return {
       manifestId: `man_${Date.now().toString(36)}`,
@@ -205,37 +201,19 @@ export class ClientInstallerEngine {
     config: ClientOnboardingConfig,
     timestampIso = new Date().toISOString()
   ): AssetConnectivityProbeResult {
-    const gatewayConnected = config.gatewayUrl?.startsWith("http") ?? false;
-    const nexusConnected = config.nexusUrl?.startsWith("http") ?? false;
-    const walletConnected = !!config.defaultSettlementRail;
-    const edgeAgentConnected = !!(
-      config.byoLlmKeys?.deepseekApiKey ||
-      config.byoLlmKeys?.openaiApiKey ||
-      config.byoLlmKeys?.anthropicApiKey ||
-      config.targetTrustTier
-    );
-
-    const details: string[] = [];
-    if (gatewayConnected) details.push(`Gateway REST/gRPC operational at ${config.gatewayUrl}`);
-    else details.push(`Gateway endpoint invalid or unreachable: ${config.gatewayUrl}`);
-
-    if (nexusConnected) details.push(`Nexus Glass Node attestation operational at ${config.nexusUrl}`);
-    else details.push(`Nexus Glass Node endpoint invalid or unreachable: ${config.nexusUrl}`);
-
-    if (walletConnected) details.push(`Settlement rail wallet active for ${config.defaultSettlementRail}`);
-    if (edgeAgentConnected) details.push("Edge AI agent runtime environment connected");
-
-    const allAssetsOperational = gatewayConnected && nexusConnected && walletConnected && edgeAgentConnected;
-
     return {
       probeId: `prb_${Date.now().toString(36)}`,
-      walletConnected,
-      edgeAgentConnected,
-      gatewayConnected,
-      nexusConnected,
+      walletConnected: false,
+      edgeAgentConnected: false,
+      gatewayConnected: false,
+      nexusConnected: false,
       probedAtIso: timestampIso,
-      allAssetsOperational,
-      details,
+      allAssetsOperational: false,
+      details: [
+        "UNVERIFIED: no authenticated Gateway or Nexus runtime probe has run",
+        "UNVERIFIED: settlement rail configuration does not connect a wallet",
+        "UNVERIFIED: trust tier or BYO credentials do not prove an edge runtime",
+      ],
     };
   }
 
@@ -246,89 +224,40 @@ export class ClientInstallerEngine {
     config: ClientOnboardingConfig,
     timestampIso = new Date().toISOString()
   ): SystemConnectivityReport {
-    const diagnostics: ConnectivityDiagnosticItem[] = [];
-
-    // 1. Gateway Connectivity Test
-    const gatewayValid = config.gatewayUrl?.startsWith("http") ?? false;
-    diagnostics.push({
-      target: "gateway",
-      endpoint: config.gatewayUrl || "",
-      connected: gatewayValid,
-      latencyMs: gatewayValid ? 18 : 0,
-      statusMessage: gatewayValid ? "Conxian Gateway REST/gRPC endpoint reachable" : "Gateway endpoint unreachable or invalid",
-    });
-
-    // 2. Nexus Attestation Endpoint Test
-    const nexusValid = config.nexusUrl?.startsWith("http") ?? false;
-    diagnostics.push({
-      target: "nexus",
-      endpoint: config.nexusUrl || "",
-      connected: nexusValid,
-      latencyMs: nexusValid ? 24 : 0,
-      statusMessage: nexusValid ? "Conxian Nexus Glass Node attestation service active" : "Nexus Glass Node unreachable or invalid",
-    });
-
-    // 3. BYO LLM Provider Test
-    const hasKeys = !!(
-      config.byoLlmKeys?.deepseekApiKey ||
-      config.byoLlmKeys?.openaiApiKey ||
-      config.byoLlmKeys?.anthropicApiKey
-    );
-    diagnostics.push({
-      target: "llm_provider",
-      endpoint: hasKeys ? "BYO Provider API" : "None configured",
-      connected: hasKeys,
-      latencyMs: hasKeys ? 45 : 0,
-      statusMessage: hasKeys ? "Local BYO LLM inference credentials detected and isolated" : "No BYO LLM keys provided; default edge mode active",
-    });
-
-    // 4. Settlement Rail Test
-    diagnostics.push({
-      target: "settlement_rail",
-      endpoint: `Rail Adapter: ${config.defaultSettlementRail}`,
-      connected: true,
-      latencyMs: 12,
-      statusMessage: `Non-custodial settlement rail ${config.defaultSettlementRail} configured`,
-    });
-
-    const allConnected = diagnostics.every((d) => (d.target === "llm_provider" ? true : d.connected));
-    const overallHealth: "HEALTHY" | "DEGRADED" | "UNREACHABLE" = allConnected
-      ? "HEALTHY"
-      : diagnostics.some((d) => d.connected)
-      ? "DEGRADED"
-      : "UNREACHABLE";
-
-    return {
-      overallHealth,
-      timestampIso,
-      diagnostics,
-    };
+    const diagnostics: ConnectivityDiagnosticItem[] = [
+      { target: "gateway", endpoint: config.gatewayUrl || "" },
+      { target: "nexus", endpoint: config.nexusUrl || "" },
+      { target: "llm_provider", endpoint: "BYO provider (not probed)" },
+      { target: "settlement_rail", endpoint: `Rail Adapter: ${config.defaultSettlementRail}` },
+    ].map((item) => ({
+      ...item,
+      connected: false,
+      latencyMs: null,
+      statusMessage: "UNVERIFIED: configuration only; no runtime measurement available",
+    })) as ConnectivityDiagnosticItem[];
+    return { overallHealth: "UNVERIFIED", timestampIso, diagnostics };
   }
 
   /**
    * Perform Zero-Custody Sanity Audit on client environment configuration.
    */
   static auditZeroCustody(config: ClientOnboardingConfig): ZeroCustodySanityCheck {
-    const reasons: string[] = [];
-    let passed = true;
-
-    // Verify client configuration does not expose private keys in custom settings
-    const stringified = JSON.stringify(config.customSettings || {});
-    if (stringified.includes("private_key") || stringified.includes("mnemonic") || stringified.includes("seed_phrase")) {
-      passed = false;
-      reasons.push("Zero-custody violation: private_key, mnemonic, or seed_phrase found in customSettings");
+    const reasons = [
+      "UNVERIFIED: local configuration cannot establish key isolation, hardware custody or direct routing",
+    ];
+    try {
+      const settings = JSON.stringify(config.customSettings || {});
+      if (/private[_-]?key|mnemonic|seed[_-]?phrase/i.test(settings)) {
+        reasons.unshift("Zero-custody violation: sensitive key fields found in customSettings");
+      }
+    } catch {
+      reasons.unshift("Zero-custody check unavailable: customSettings are not serializable");
     }
-
-    if (passed) {
-      reasons.push("CONFIRMED: Client private keys remain strictly isolated on local machine / client hardware enclave");
-      reasons.push("CONFIRMED: BYO DeFi value routing active without central Conxian asset custody");
-    }
-
     return {
-      passed,
+      passed: false,
       reasons,
-      localKeyIsolationConfirmed: passed,
-      byoDeFiDirectRoutingConfirmed: passed,
+      localKeyIsolationConfirmed: false,
+      byoDeFiDirectRoutingConfirmed: false,
     };
   }
 
@@ -400,7 +329,7 @@ export class ClientInstallerEngine {
     logs.push(`[${timestampIso}] SUCCESS: Zero-custody security audit passed.`);
 
     // Step 4: Complete Provisioning
-    const provisioned = connectivityReport.overallHealth !== "UNREACHABLE";
+    const provisioned = connectivityReport.overallHealth === "HEALTHY";
     if (provisioned) {
       logs.push(`[${timestampIso}] SUCCESS: Conxian Market SDK client environment successfully provisioned for ${config.clientDid}.`);
     } else {
@@ -486,7 +415,8 @@ export class ClientInstallerEngine {
     const zeroCustody = this.auditZeroCustody(config);
     const provisioning = this.provisionClientEnvironment(config, timestampIso);
 
-    const success = provisioning.provisioned && zeroCustody.passed && connectivity.allAssetsOperational;
+    const success = entitlement.agentExecutionEnabled && provisioning.provisioned &&
+      zeroCustody.passed && connectivity.allAssetsOperational;
 
     return {
       success,
@@ -510,89 +440,25 @@ export class ClientInstallerEngine {
     latencyThresholdMs = 50,
     timestampIso = new Date().toISOString()
   ): import("./core_types.js").EnterpriseSlaDiagnosticsReport {
-    const diagnostics: import("./core_types.js").SlaDiagnosticItem[] = [];
-
-    // 1. Gateway SLA Diagnostic
-    const gatewayValid = config.gatewayUrl?.startsWith("http") ?? false;
-    const gatewayLatency = gatewayValid ? 18 : 999;
-    const gatewaySla = gatewayLatency <= latencyThresholdMs;
-    diagnostics.push({
-      target: "Conxian Gateway REST/gRPC",
-      endpointUrl: config.gatewayUrl || "",
-      expectedMaxLatencyMs: latencyThresholdMs,
-      measuredLatencyMs: gatewayLatency,
-      slaCompliant: gatewaySla,
-      status: gatewaySla ? "OPTIMAL" : gatewayValid ? "DEGRADED" : "CRITICAL",
-      detail: gatewaySla
-        ? `Latency ${gatewayLatency}ms is within ${latencyThresholdMs}ms SLA threshold`
-        : `Latency ${gatewayLatency}ms breaches ${latencyThresholdMs}ms SLA threshold`,
-    });
-
-    // 2. Nexus Glass Node SLA Diagnostic
-    const nexusValid = config.nexusUrl?.startsWith("http") ?? false;
-    const nexusLatency = nexusValid ? 24 : 999;
-    const nexusSla = nexusLatency <= latencyThresholdMs;
-    diagnostics.push({
-      target: "Conxian Nexus Glass Node",
-      endpointUrl: config.nexusUrl || "",
-      expectedMaxLatencyMs: latencyThresholdMs,
-      measuredLatencyMs: nexusLatency,
-      slaCompliant: nexusSla,
-      status: nexusSla ? "OPTIMAL" : nexusValid ? "DEGRADED" : "CRITICAL",
-      detail: nexusSla
-        ? `Latency ${nexusLatency}ms is within ${latencyThresholdMs}ms SLA threshold`
-        : `Latency ${nexusLatency}ms breaches ${latencyThresholdMs}ms SLA threshold`,
-    });
-
-    // 3. BYO LLM Provider SLA Diagnostic
-    const hasByoKeys = !!(
-      config.byoLlmKeys?.deepseekApiKey ||
-      config.byoLlmKeys?.openaiApiKey ||
-      config.byoLlmKeys?.anthropicApiKey
-    );
-    const llmLatency = hasByoKeys ? 42 : 15;
-    const llmSla = llmLatency <= latencyThresholdMs;
-    diagnostics.push({
-      target: "BYO LLM Provider Endpoint",
-      endpointUrl: hasByoKeys ? "https://api.deepseek.com/v1" : "Edge-Inference-Local",
-      expectedMaxLatencyMs: latencyThresholdMs,
-      measuredLatencyMs: llmLatency,
-      slaCompliant: llmSla,
-      status: llmSla ? "OPTIMAL" : "DEGRADED",
-      detail: llmSla
-        ? `Inference bridge latency ${llmLatency}ms is within ${latencyThresholdMs}ms SLA threshold`
-        : `Inference bridge latency ${llmLatency}ms breaches ${latencyThresholdMs}ms SLA threshold`,
-    });
-
-    // 4. Settlement Rail SLA Diagnostic
-    const railLatency = 12;
-    const railSla = railLatency <= latencyThresholdMs;
-    diagnostics.push({
-      target: `Settlement Rail (${config.defaultSettlementRail})`,
-      endpointUrl: `rail://${config.defaultSettlementRail ? config.defaultSettlementRail.toLowerCase() : "unknown"}`,
-      expectedMaxLatencyMs: latencyThresholdMs,
-      measuredLatencyMs: railLatency,
-      slaCompliant: railSla,
-      status: railSla ? "OPTIMAL" : "DEGRADED",
-      detail: `Settlement rail latency ${railLatency}ms is within ${latencyThresholdMs}ms SLA threshold`,
-    });
-
-    const allEndpointsSlaCompliant = diagnostics.every((d) => d.slaCompliant);
-    const overallSlaStatus: "HEALTHY" | "DEGRADED" | "NON_COMPLIANT" = allEndpointsSlaCompliant
-      ? "HEALTHY"
-      : diagnostics.some((d) => d.slaCompliant)
-      ? "DEGRADED"
-      : "NON_COMPLIANT";
-
+    const connectivity = this.testSystemConnectivity(config, timestampIso);
     return {
       clientDid: config.clientDid || "did:conxian:unknown",
-      overallSlaStatus,
+      overallSlaStatus: "UNVERIFIED",
       latencyThresholdMs,
-      diagnostics,
-      allEndpointsSlaCompliant,
+      diagnostics: connectivity.diagnostics.map((item) => ({
+        target: item.target,
+        endpointUrl: item.endpoint,
+        expectedMaxLatencyMs: latencyThresholdMs,
+        measuredLatencyMs: null,
+        slaCompliant: false,
+        status: "UNVERIFIED",
+        detail: "No measured runtime latency; SLA compliance cannot be inferred",
+      })),
+      allEndpointsSlaCompliant: false,
       timestampIso,
     };
   }
+
   /**
    * Session 69: Evaluates SLA Policy and Statutory Exemptions for B2B Client Onboarding.
    * Enforces Open-Source No-SLA disclaimers for public/unpaid tiers, and bounds B2B SLAs

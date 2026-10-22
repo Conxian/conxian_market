@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "command": "graph",
+  "status": "ok",
+  "kind": "architecture_reference",
+  "observed_at": "2026-10-15",
+  "runtime_discovery_performed": false,
+  "production_qualified": false,
+  "scope": "Public component roles and inspected source dependencies; internal governance details remain in the canonical private KB.",
+  "nodes": [
+    {"id":"sdk","repository":"Conxian/conxius-enclave-sdk","role":"cryptographic primitives and provider evidence"},
+    {"id":"core","repository":"Conxian/lib-conxian-core","role":"shared protocol and capability contracts"},
+    {"id":"gateway","repository":"Conxian/conxian-gateway","role":"adapter and verification API","cli":"cmd/conxian-cli"},
+    {"id":"nexus","repository":"Conxian/conxian-nexus","role":"observation and orchestration"},
+    {"id":"market","repository":"Conxian/conxian_market","role":"commercial SDK, local onboarding plan and bounded registration diagnostics","cli":"bin/conxian-agent-init.mjs"},
+    {"id":"platform","repository":"Conxian/conxius-platform","role":"control UI and lifecycle tooling","cli":"scripts/agent-discovery.ts; scripts/agent-coordination.ts"},
+    {"id":"wallet","repository":"Conxian/conxius-wallet","role":"client operation delivery"},
+    {"id":"labs-site","repository":"Conxian/conxian-labs-site","role":"commercial website source"},
+    {"id":"protocol-site","repository":"Conxian/conxian-org-site","role":"protocol and developer website source"},
+    {"id":"public-site","repository":"Conxian/conxian.github.io","role":"public presentation source"},
+    {"id":"public-governance","repository":"Conxian/.github","role":"public organization guidance"},
+    {"id":"internal-governance","role":"portfolio coordination and canonical private knowledge"}
+  ],
+  "edges": [
+    {"from":"core","to":"sdk","kind":"source_dependency","evidence":"lib-conxian-core/Cargo.toml"},
+    {"from":"gateway","to":"core","kind":"source_dependency","evidence":"conxian-gateway/Cargo.toml at 0b15b59e2c1f031db0049ad36e6b8125f0918174"},
+    {"from":"nexus","to":"core","kind":"source_dependency","evidence":"conxian-nexus/Cargo.toml"},
+    {"from":"platform","to":"market","kind":"source_dependency","evidence":"conxius-platform/services/admin-dashboard/package.json at c8bd1b3a90e1eb1f38d9ca7b94d5d663877c623b"},
+    {"from":"market","to":"gateway","kind":"http_client_contract","evidence":"src/gateway_client.ts; src/provider_discovery.ts; client contracts and read-only registrations do not establish qualified operations"},
+    {"from":"market","to":"nexus","kind":"diagnostic_contract","evidence":"src/provider_discovery.ts; bounded authenticated registration read, no qualified operations"},
+    {"from":"platform","to":"gateway","kind":"diagnostic_contract","evidence":"bounded provider-registration ingestion; no qualified operation implied"},
+    {"from":"platform","to":"nexus","kind":"diagnostic_contract","evidence":"bounded provider-registration ingestion; no qualified operation implied"},
+    {"from":"wallet","to":"gateway","kind":"design_intent","evidence":"qualified operation negotiation remains a separate integration gate"},
+    {"from":"internal-governance","to":"public-governance","kind":"guidance_boundary","evidence":"publish only reviewed public-safe evidence"}
+  ],
+  "boundaries": [
+    "Bitcoin-rooted universal-chain scope; no native Conxian token",
+    "Registrations, assets, protocol modules and capability evidence are separate measures",
+    "A graph edge is not connectivity, custody, runtime health, deployment or production acceptance",
+    "Retired Orbit references do not define an active execution provider"
+  ]
+}

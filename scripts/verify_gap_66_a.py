@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 """
-Verification Script for Gap GAP-02 / Candidate CAN-66-A:
-Attestation-Backed x402 Payment Verification & Escrow Lock Engine.
+Local conformance checks for the historical GAP-02 / CAN-66-A candidate.
 
-Proves that x402 payment receipts accompanied by TEE/Enclave attestation
-certificates are successfully verified, generate "Verified by Conxian" trust proof
-artifacts, and lock funds into ERC-8183 job card escrows.
+Unit tests exercise local facade and SDK behavior. They do not establish
+payment verification, hardware identity, locked funds or release acceptance.
 """
 
 import sys
 import subprocess
-import json
 
 def main():
     print("=== Conxian Session 66: Verification Script (GAP-02 / CAN-66-A) ===")
@@ -25,8 +22,8 @@ def main():
 
     print(res.stdout)
     print("✅ [2/3] Unit tests passed with 100% success.")
-    print("✅ [3/3] Attestation-backed x402 payment verification, trust proof generation, and escrow locking verified.")
-    print("\nRESULT: GAP-02 CLOSED — Candidate CAN-66-A Verified.")
+    print("✅ [3/3] Local facade and SDK conformance checked.")
+    print("\nRESULT: LOCAL CONFORMANCE PASSED. Payment, provider, escrow and release acceptance remain separate evidence gates.")
     sys.exit(0)
 
 if __name__ == "__main__":

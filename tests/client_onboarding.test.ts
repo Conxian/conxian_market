@@ -34,19 +34,19 @@ describe("ClientInstallerEngine", () => {
     expect(result.errors.length).toBeGreaterThan(0);
   });
 
-  it("executes system connectivity diagnostics successfully", () => {
+  it("does not derive service health from configuration", () => {
     const report = ClientInstallerEngine.testSystemConnectivity(validConfig);
-    expect(report.overallHealth).toBe("HEALTHY");
+    expect(report.overallHealth).toBe("UNVERIFIED");
     expect(report.diagnostics).toHaveLength(4);
-    expect(report.diagnostics.find((d) => d.target === "gateway")?.connected).toBe(true);
-    expect(report.diagnostics.find((d) => d.target === "nexus")?.connected).toBe(true);
+    expect(report.diagnostics.find((d) => d.target === "gateway")?.connected).toBe(false);
+    expect(report.diagnostics.find((d) => d.target === "nexus")?.connected).toBe(false);
   });
 
-  it("audits zero-custody safety rules cleanly", () => {
+  it("leaves custody unverified without provider evidence", () => {
     const audit = ClientInstallerEngine.auditZeroCustody(validConfig);
-    expect(audit.passed).toBe(true);
-    expect(audit.localKeyIsolationConfirmed).toBe(true);
-    expect(audit.byoDeFiDirectRoutingConfirmed).toBe(true);
+    expect(audit.passed).toBe(false);
+    expect(audit.localKeyIsolationConfirmed).toBe(false);
+    expect(audit.byoDeFiDirectRoutingConfirmed).toBe(false);
   });
 
   it("detects zero-custody violations when private keys are leaked", () => {
@@ -62,37 +62,37 @@ describe("ClientInstallerEngine", () => {
     expect(audit.reasons[0]).toContain("Zero-custody violation");
   });
 
-  it("executes full client environment provisioning workflow", () => {
+  it("does not provision an environment from configuration alone", () => {
     const provisioning = ClientInstallerEngine.provisionClientEnvironment(validConfig);
-    expect(provisioning.provisioned).toBe(true);
+    expect(provisioning.provisioned).toBe(false);
     expect(provisioning.configSummary.clientDid).toBe("did:conxian:org:client-001");
-    expect(provisioning.connectivityReport.overallHealth).toBe("HEALTHY");
-    expect(provisioning.zeroCustodyCheck.passed).toBe(true);
+    expect(provisioning.connectivityReport.overallHealth).toBe("UNVERIFIED");
+    expect(provisioning.zeroCustodyCheck.passed).toBe(false);
     expect(provisioning.onboardingLogs.length).toBeGreaterThan(0);
   });
 
-  it("verifies client license entitlements and execution limits", () => {
+  it("does not grant a paid license from the requested tier", () => {
     const entitlement = ClientInstallerEngine.verifyClientEntitlements(validConfig);
     expect(entitlement.clientDid).toBe("did:conxian:org:client-001");
-    expect(entitlement.tier).toBe(TrustTier.Strict);
-    expect(entitlement.maxActiveJobCards).toBe(1000);
-    expect(entitlement.agentExecutionEnabled).toBe(true);
+    expect(entitlement.tier).toBe(TrustTier.ObserverOnly);
+    expect(entitlement.maxActiveJobCards).toBe(0);
+    expect(entitlement.agentExecutionEnabled).toBe(false);
   });
 
-  it("aligns client configuration into a signed deployment manifest", () => {
+  it("aligns client configuration into an unsigned deployment plan", () => {
     const manifest = ClientInstallerEngine.alignClientDeployment(validConfig);
     expect(manifest.clientDid).toBe("did:conxian:org:client-001");
     expect(manifest.checksum).toContain("sha256_");
     expect(manifest.hasByoLlmKeys).toBe(true);
   });
 
-  it("probes end-to-end multi-asset connectivity", () => {
+  it("does not infer connected assets from settings", () => {
     const probe = ClientInstallerEngine.probeAssetConnectivity(validConfig);
-    expect(probe.allAssetsOperational).toBe(true);
-    expect(probe.gatewayConnected).toBe(true);
-    expect(probe.nexusConnected).toBe(true);
-    expect(probe.walletConnected).toBe(true);
-    expect(probe.edgeAgentConnected).toBe(true);
+    expect(probe.allAssetsOperational).toBe(false);
+    expect(probe.gatewayConnected).toBe(false);
+    expect(probe.nexusConnected).toBe(false);
+    expect(probe.walletConnected).toBe(false);
+    expect(probe.edgeAgentConnected).toBe(false);
   });
 
   it("verifies domain routing firewall and catches domain misconfiguration", () => {
@@ -123,16 +123,16 @@ describe("ClientInstallerEngine", () => {
     expect(validation.valid).toBe(true);
 
     const cliResult = ClientInstallerEngine.runUnifiedInstallerCli(managedConfig);
-    expect(cliResult.success).toBe(true);
+    expect(cliResult.success).toBe(false);
   });
 
-  it("executes unified CLI installer end-to-end pipeline successfully", () => {
+  it("keeps the installer incomplete without evidence", () => {
     const cliResult = ClientInstallerEngine.runUnifiedInstallerCli(validConfig);
-    expect(cliResult.success).toBe(true);
+    expect(cliResult.success).toBe(false);
     expect(cliResult.entitlement.clientDid).toBe("did:conxian:org:client-001");
     expect(cliResult.manifest?.checksum).toBeDefined();
-    expect(cliResult.connectivity.allAssetsOperational).toBe(true);
-    expect(cliResult.zeroCustody.passed).toBe(true);
-    expect(cliResult.provisioning.provisioned).toBe(true);
+    expect(cliResult.connectivity.allAssetsOperational).toBe(false);
+    expect(cliResult.zeroCustody.passed).toBe(false);
+    expect(cliResult.provisioning.provisioned).toBe(false);
   });
 });

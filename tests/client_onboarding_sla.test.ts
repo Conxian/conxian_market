@@ -19,31 +19,31 @@ describe("B2B Enterprise Client Onboarding SLA Diagnostics Engine", () => {
     },
   };
 
-  it("should evaluate enterprise SLA diagnostics with HEALTHY status when latency is within threshold", () => {
+  it("leaves SLA status unverified without measurements", () => {
     const report = ClientInstallerEngine.runEnterpriseSlaDiagnostics(validConfig, 50);
 
     expect(report.clientDid).toBe("did:conxian:enterprise:acme_corp");
-    expect(report.overallSlaStatus).toBe("HEALTHY");
-    expect(report.allEndpointsSlaCompliant).toBe(true);
+    expect(report.overallSlaStatus).toBe("UNVERIFIED");
+    expect(report.allEndpointsSlaCompliant).toBe(false);
     expect(report.diagnostics).toHaveLength(4);
 
-    const gatewayDiag = report.diagnostics.find((d) => d.target === "Conxian Gateway REST/gRPC");
-    expect(gatewayDiag?.status).toBe("OPTIMAL");
-    expect(gatewayDiag?.slaCompliant).toBe(true);
+    const gatewayDiag = report.diagnostics.find((d) => d.target === "gateway");
+    expect(gatewayDiag?.status).toBe("UNVERIFIED");
+    expect(gatewayDiag?.slaCompliant).toBe(false);
 
-    const nexusDiag = report.diagnostics.find((d) => d.target === "Conxian Nexus Glass Node");
-    expect(nexusDiag?.status).toBe("OPTIMAL");
-    expect(nexusDiag?.slaCompliant).toBe(true);
+    const nexusDiag = report.diagnostics.find((d) => d.target === "nexus");
+    expect(nexusDiag?.status).toBe("UNVERIFIED");
+    expect(nexusDiag?.slaCompliant).toBe(false);
   });
 
-  it("should evaluate enterprise SLA diagnostics with NON_COMPLIANT status when latency threshold is strict and breached", () => {
+  it("does not manufacture a latency breach from a threshold", () => {
     const report = ClientInstallerEngine.runEnterpriseSlaDiagnostics(validConfig, 10);
 
-    expect(report.overallSlaStatus).toBe("NON_COMPLIANT");
+    expect(report.overallSlaStatus).toBe("UNVERIFIED");
     expect(report.allEndpointsSlaCompliant).toBe(false);
 
-    const gatewayDiag = report.diagnostics.find((d) => d.target === "Conxian Gateway REST/gRPC");
-    expect(gatewayDiag?.status).toBe("DEGRADED");
+    const gatewayDiag = report.diagnostics.find((d) => d.target === "gateway");
+    expect(gatewayDiag?.status).toBe("UNVERIFIED");
     expect(gatewayDiag?.slaCompliant).toBe(false);
   });
 
@@ -52,7 +52,7 @@ describe("B2B Enterprise Client Onboarding SLA Diagnostics Engine", () => {
     const report = sdk.runEnterpriseSlaDiagnostics(validConfig, 100);
 
     expect(report.clientDid).toBe("did:conxian:enterprise:acme_corp");
-    expect(report.overallSlaStatus).toBe("HEALTHY");
-    expect(report.allEndpointsSlaCompliant).toBe(true);
+    expect(report.overallSlaStatus).toBe("UNVERIFIED");
+    expect(report.allEndpointsSlaCompliant).toBe(false);
   });
 });
