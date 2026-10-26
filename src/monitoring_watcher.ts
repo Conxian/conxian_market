@@ -200,11 +200,29 @@ export class MonitoringWatcher {
     let neonStatus: HealthStatus = "GREEN";
     let renderStatus: HealthStatus = "GREEN";
 
+    // Settlement authorization requires a complete scorecard. Optional inputs keep
+    // diagnostics composable, but missing providers must never be interpreted as healthy.
+    if (!input.supabase) {
+      supabaseStatus = "RED";
+      alerts.push("CRITICAL: Supabase BOS telemetry unavailable");
+    }
+    if (!input.neon) {
+      neonStatus = "RED";
+      alerts.push("CRITICAL: Neon Postgres telemetry unavailable");
+    }
+    if (!input.render) {
+      renderStatus = "RED";
+      alerts.push("CRITICAL: Render Web Service telemetry unavailable");
+    }
+
     // 1. Supabase BOS Telemetry
     if (input.supabase) {
       if (input.supabase.connectionHealth === "DOWN") {
         supabaseStatus = "RED";
         alerts.push(`CRITICAL: Supabase BOS Database (${input.supabase.databaseId}) connection DOWN`);
+      } else if (input.supabase.bosStatechainSyncStatus === "OUT_OF_SYNC") {
+        supabaseStatus = "RED";
+        alerts.push(`CRITICAL: Supabase BOS Database (${input.supabase.databaseId}) statechain OUT_OF_SYNC`);
       } else if (
         input.supabase.connectionHealth === "DEGRADED" ||
         input.supabase.activeQueryLatencyMs > 500 ||
@@ -214,9 +232,6 @@ export class MonitoringWatcher {
         alerts.push(
           `WARNING: Supabase BOS Database (${input.supabase.databaseId}) latency/sync degraded (${input.supabase.activeQueryLatencyMs}ms, ${input.supabase.bosStatechainSyncStatus})`
         );
-      } else if (input.supabase.bosStatechainSyncStatus === "OUT_OF_SYNC") {
-        supabaseStatus = "RED";
-        alerts.push(`CRITICAL: Supabase BOS Database (${input.supabase.databaseId}) statechain OUT_OF_SYNC`);
       }
     }
 
