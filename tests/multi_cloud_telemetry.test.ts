@@ -55,6 +55,45 @@ describe("Multi-Cloud Telemetry & Yield Validation", () => {
     expect(scorecard.alerts.some((a) => a.includes("DOWN"))).toBe(true);
   });
 
+  it("fails closed when telemetry providers are absent", () => {
+    const scorecard = watcher.aggregateMultiCloudTelemetry({});
+    const validation = BosYieldSplitter.validateYieldSplitRealtime({
+      grossAmountSat: 1_000_000n,
+      telemetry: scorecard,
+    });
+
+    expect(scorecard.overallStatus).toBe("RED");
+    expect(scorecard.supabaseStatus).toBe("RED");
+    expect(scorecard.neonStatus).toBe("RED");
+    expect(scorecard.renderStatus).toBe("RED");
+    expect(scorecard.alerts).toEqual(
+      expect.arrayContaining([
+        "CRITICAL: Supabase BOS telemetry unavailable",
+        "CRITICAL: Neon Postgres telemetry unavailable",
+        "CRITICAL: Render Web Service telemetry unavailable",
+      ])
+    );
+    expect(validation.authorized).toBe(false);
+  });
+
+  it("keeps OUT_OF_SYNC critical when Supabase is also degraded", () => {
+    const scorecard = watcher.aggregateMultiCloudTelemetry({
+      ...healthyInput,
+      supabase: {
+        ...healthyInput.supabase!,
+        connectionHealth: "DEGRADED",
+        activeQueryLatencyMs: 900,
+        bosStatechainSyncStatus: "OUT_OF_SYNC",
+      },
+    });
+
+    expect(scorecard.overallStatus).toBe("RED");
+    expect(scorecard.supabaseStatus).toBe("RED");
+    expect(scorecard.alerts).toContain(
+      `CRITICAL: Supabase BOS Database (${healthyInput.supabase!.databaseId}) statechain OUT_OF_SYNC`
+    );
+  });
+
   it("evaluates multi-cloud SLA health with telemetry alerts", () => {
     const degradedInput: MultiCloudTelemetryInput = {
       ...healthyInput,
