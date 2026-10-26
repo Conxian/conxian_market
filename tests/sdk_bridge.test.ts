@@ -106,25 +106,34 @@ describe("ConxianMarketSDK Bridge - Multi-Dimensional Scoring, Telemetry & BitVM
   it("exposes multi-cloud telemetry aggregation and yield validation via SDK bridge", async () => {
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
 
-    const scorecard = sdk.aggregateMultiCloudTelemetry({
+    const healthyTelemetry = {
       supabase: {
         databaseId: "yauld-db-75",
-        connectionHealth: "HEALTHY",
+        connectionHealth: "HEALTHY" as const,
         activeQueryLatencyMs: 30,
-        bosStatechainSyncStatus: "IN_SYNC",
+        bosStatechainSyncStatus: "IN_SYNC" as const,
       },
-    });
+      neon: {
+        projectId: "market-neon-75",
+        branchId: "br-main",
+        computeState: "ACTIVE" as const,
+        cpuUsagePct: 20,
+        memoryUsagePct: 35,
+        connectionPoolUtilizationPct: 25,
+      },
+      render: {
+        serviceId: "market-gateway-75",
+        status: "LIVE" as const,
+        p95HttpLatencyMs: 100,
+        restartCount24h: 0,
+      },
+    };
+
+    const scorecard = sdk.aggregateMultiCloudTelemetry(healthyTelemetry);
 
     expect(scorecard.overallStatus).toBe("GREEN");
 
-    const realtimeValidation = sdk.validateYieldSplitRealtime(500_000n, {
-      supabase: {
-        databaseId: "yauld-db-75",
-        connectionHealth: "HEALTHY",
-        activeQueryLatencyMs: 30,
-        bosStatechainSyncStatus: "IN_SYNC",
-      },
-    });
+    const realtimeValidation = sdk.validateYieldSplitRealtime(500_000n, healthyTelemetry);
 
     expect(realtimeValidation.authorized).toBe(true);
     expect(realtimeValidation.yieldSplit.builderSat).toBe(400_000n);
