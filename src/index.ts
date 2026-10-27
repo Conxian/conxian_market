@@ -186,3 +186,20 @@ export type {
 } from "./core_types.js";
 export { RoundhouseClient, RoundhouseUnsupportedError } from './roundhouse_client.js';
 export type { RoundhouseEndpoint, RoundhouseSettlementEvent, VerifiedByConxianCertificate, RoundhouseClientConfig } from './roundhouse_client.js';
+
+// Session 76: Export Decentralized System Readiness, Issue Fallback & Opportunity Types & Functions
+export {
+  evaluateSystemReadiness,
+  resolveIssueFallback,
+  scoreBusinessOpportunity,
+  DEFAULT_RAIL_PROFILES,
+} from "./decentralized_systems.js";
+export type {
+  DecentralizedSystemRail,
+  SystemReadinessTier,
+  DecentralizedSystemReadinessInput,
+  DecentralizedSystemReadinessReport,
+  IssueFallbackEvaluation,
+  BusinessOpportunityInput,
+  BusinessOpportunityScorecard,
+} from "./core_types.js";
