@@ -131,4 +131,72 @@ describe("Multi-Cloud Telemetry & Yield Validation", () => {
     expect(validation.authorized).toBe(false); // Paused on RED
     expect(validation.warnings.some((w) => w.includes("paused"))).toBe(true);
   });
+  it("fails closed for stale, invalid, or future telemetry timestamps", () => {
+    const fresh = watcher.aggregateMultiCloudTelemetry({
+      ...healthyInput,
+      capturedAtIso: "2026-10-29T07:00:00.000Z",
+    });
+
+    const stale = BosYieldSplitter.validateYieldSplitRealtime({
+      grossAmountSat: 1_000_000n,
+      telemetry: fresh,
+      evaluatedAtIso: "2026-10-29T07:06:00.001Z",
+    });
+    expect(stale.authorized).toBe(false);
+    expect(stale.warnings).toContain(
+      "Yield split settlement paused: telemetry is older than the five-minute freshness window"
+    );
+
+    const invalid = BosYieldSplitter.validateYieldSplitRealtime({
+      grossAmountSat: 1_000_000n,
+      telemetry: { ...fresh, capturedAtIso: "not-a-timestamp" },
+      evaluatedAtIso: "2026-10-29T07:00:00.000Z",
+    });
+    expect(invalid.authorized).toBe(false);
+    expect(invalid.warnings).toContain(
+      "Yield split settlement paused: telemetry timestamps are missing or invalid"
+    );
+
+    const future = BosYieldSplitter.validateYieldSplitRealtime({
+      grossAmountSat: 1_000_000n,
+      telemetry: { ...fresh, capturedAtIso: "2026-10-29T07:00:31.000Z" },
+      evaluatedAtIso: "2026-10-29T07:00:00.000Z",
+    });
+    expect(future.authorized).toBe(false);
+    expect(future.warnings).toContain(
+      "Yield split settlement paused: telemetry capture time is in the future"
+    );
+  });
+
+  it("retains telemetry warnings when the base SLA is already RED", () => {
+    const warning = "WARNING: Render latency exceeds the operational threshold";
+    const scorecard = watcher.aggregateMultiCloudTelemetry({
+      ...healthyInput,
+      capturedAtIso: "2026-10-29T07:00:00.000Z",
+      render: {
+        ...healthyInput.render!,
+        p95HttpLatencyMs: 2500,
+      },
+    });
+    expect(scorecard.alerts).toContain(warning.replace("exceeds the operational threshold", "latency elevated (2500ms)"));
+
+    const baseSla = {
+      status: "RED" as const,
+      totalAudited: 1,
+      breachCount: 1,
+      abandonmentCount: 0,
+      staleCount: 0,
+      violationCount: 1,
+      complianceRatePct: 0,
+      violations: [],
+      alerts: ["CRITICAL: Existing SLA breach"],
+    };
+    const result = slaEngine.evaluateMultiCloudSlaHealth(scorecard, baseSla);
+    expect(result.status).toBe("RED");
+    expect(result.alerts).toEqual(
+      expect.arrayContaining(["CRITICAL: Existing SLA breach", ...scorecard.alerts])
+    );
+    expect(result.violationCount).toBe(1 + scorecard.alerts.length);
+  });
+
 });
