@@ -169,7 +169,6 @@ describe("Multi-Cloud Telemetry & Yield Validation", () => {
   });
 
   it("retains telemetry warnings when the base SLA is already RED", () => {
-    const warning = "WARNING: Render latency exceeds the operational threshold";
     const scorecard = watcher.aggregateMultiCloudTelemetry({
       ...healthyInput,
       capturedAtIso: "2026-10-29T07:00:00.000Z",
@@ -178,7 +177,9 @@ describe("Multi-Cloud Telemetry & Yield Validation", () => {
         p95HttpLatencyMs: 2500,
       },
     });
-    expect(scorecard.alerts).toContain(warning.replace("exceeds the operational threshold", "latency elevated (2500ms)"));
+    expect(scorecard.alerts).toContain(
+      "WARNING: Render Web Service (srv-conxian-gateway) latency or restart count high (2500ms, Restarts: 0)"
+    );
 
     const baseSla = {
       status: "RED" as const,
