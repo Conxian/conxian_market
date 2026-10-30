@@ -1,0 +1,31 @@
+{
+  "upstreamRevision": "0e6e8c55d86b4f14234fb6e49a4052074fb93e57",
+  "cases": [
+    {
+      "kind": "required",
+      "value": {
+        "x402Version": 2,
+        "resource": { "url": "https://example.invalid/resource", "serviceName": "Conformance fixture", "tags": ["test", "wire", "offline", "synthetic", "unverified"], "iconUrl": "https://example.invalid/icon.png" },
+        "accepts": [{ "scheme": "exact", "network": "eip155:84532", "amount": "10000", "asset": "test-asset", "payTo": "test-recipient", "maxTimeoutSeconds": 60 }],
+        "extensions": { "test": { "info": { "enabled": true }, "schema": { "type": "object" } } }
+      }
+    },
+    {
+      "kind": "signature",
+      "value": {
+        "x402Version": 2,
+        "accepted": { "scheme": "exact", "network": "eip155:84532", "amount": "10000", "asset": "test-asset", "payTo": "test-recipient", "maxTimeoutSeconds": 60 },
+        "payload": { "signature": "synthetic-unverified-claim" },
+        "extensions": { "test": { "clientData": "opaque" } }
+      }
+    },
+    {
+      "kind": "response",
+      "value": { "success": false, "errorReason": "settlement_pending", "errorMessage": "Synthetic confirmation timeout", "transaction": "test-broadcast-identifier", "network": "eip155:84532", "amount": "900719925474099312345", "extra": { "test": "opaque" } }
+    },
+    {
+      "kind": "response",
+      "value": { "success": true, "transaction": "test-transaction", "network": "eip155:84532", "amount": "0" }
+    }
+  ]
+}

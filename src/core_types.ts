@@ -65,6 +65,8 @@ export interface AttestationCertificate {
   proof_height?: number;
   /** Hash of the proof */
   proof_hash?: string;
+  /** Unverified BitVM3 research envelope; its presence confers no trust. */
+  bitvm3_proof?: BitVM3GarbledCircuitProof;
 }
 
 export interface AttestationResult {
@@ -413,6 +415,9 @@ export interface CapabilitySummary {
   clientInstallerEnabled?: boolean;
   agentRegistryEnabled?: boolean;
   mcp402FacadeEnabled?: boolean;
+  multiDimensionalScoringEnabled?: boolean;
+  multiCloudTelemetryEnabled?: boolean;
+  universalVerificationEnabled?: boolean;
 }
 
 // ── SLA Penalty & Escrow Clawback Types (Session 59) ──
@@ -498,7 +503,6 @@ export interface FounderEscrowPayoutResult {
   violations: string[];
 }
 
-
 // ── Client Onboarding & Unified Installer Types (Session 61) ──
 
 export interface ClientOnboardingConfig {
@@ -519,12 +523,12 @@ export interface ConnectivityDiagnosticItem {
   target: "gateway" | "nexus" | "llm_provider" | "settlement_rail";
   endpoint: string;
   connected: boolean;
-  latencyMs: number;
+  latencyMs: number | null;
   statusMessage: string;
 }
 
 export interface SystemConnectivityReport {
-  overallHealth: "HEALTHY" | "DEGRADED" | "UNREACHABLE";
+  overallHealth: "HEALTHY" | "DEGRADED" | "UNREACHABLE" | "UNVERIFIED";
   timestampIso: string;
   diagnostics: ConnectivityDiagnosticItem[];
 }
@@ -555,6 +559,7 @@ export interface ClientProvisioningResult {
 // ── Session 63: End-to-End Client Purchase & Unified Installer Types ──
 
 export interface ClientEntitlementLicense {
+  verificationStatus?: "UNVERIFIED" | "VERIFIED";
   licenseId: string;
   clientDid: string;
   tier: TrustTier;
@@ -643,15 +648,15 @@ export interface SlaDiagnosticItem {
   target: string;
   endpointUrl: string;
   expectedMaxLatencyMs: number;
-  measuredLatencyMs: number;
+  measuredLatencyMs: number | null;
   slaCompliant: boolean;
-  status: "OPTIMAL" | "DEGRADED" | "CRITICAL";
+  status: "OPTIMAL" | "DEGRADED" | "CRITICAL" | "UNVERIFIED";
   detail: string;
 }
 
 export interface EnterpriseSlaDiagnosticsReport {
   clientDid: string;
-  overallSlaStatus: "HEALTHY" | "DEGRADED" | "NON_COMPLIANT";
+  overallSlaStatus: "HEALTHY" | "DEGRADED" | "NON_COMPLIANT" | "UNVERIFIED";
   latencyThresholdMs: number;
   diagnostics: SlaDiagnosticItem[];
   allEndpointsSlaCompliant: boolean;
@@ -741,4 +746,120 @@ export interface LoadOracleAdapterConfig {
   sample: MempoolFeeSample;
   baselineFastestFeeSatVb?: number;
   maxFastestFeeSatVb?: number;
+}
+
+// ── Session 75: Multi-Dimensional Scoring, Multi-Cloud Telemetry & BitVM3 Types ──
+
+export interface X402VolumeInput {
+  totalVolumeSats: bigint;
+  usdVolume: number;
+  successfulPaymentCount: number;
+  failedPaymentCount: number;
+  throughputTps?: number;
+  periodStartIso?: string;
+  periodEndIso?: string;
+}
+
+export interface Erc8183EscrowStateInput {
+  activeEscrowCount: number;
+  completedEscrowCount: number;
+  totalReleasedBountySats: bigint;
+  totalLockedBountySats: bigint;
+  slaBreachPenaltyCount: number;
+  averageEscrowDurationHours?: number;
+}
+
+export interface AgentPerformanceMetrics {
+  agentDid: string;
+  trustTier: TrustTier;
+  reputationScore: number;
+  x402Volume: X402VolumeInput;
+  escrowState: Erc8183EscrowStateInput;
+}
+
+export interface MultiDimensionalScoreResult {
+  agentDid: string;
+  weightedPerformanceScore: number; // WPS (0-100)
+  reputationSubScore: number;
+  x402VolumeSubScore: number;
+  escrowReliabilitySubScore: number;
+  tierMultiplier: number;
+  evaluatedAtIso: string;
+}
+
+export interface NetworkValuationEvaluation {
+  totalActiveAgents: number;
+  aggregateWps: number;
+  networkValuationImpactScore: number;
+  totalVolumeSats: bigint;
+  totalEscrowLockedSats: bigint;
+  timestampIso: string;
+}
+
+export interface SupabaseBosMetricInput {
+  databaseId: string;
+  connectionHealth: "HEALTHY" | "DEGRADED" | "DOWN";
+  activeQueryLatencyMs: number;
+  bosStatechainSyncStatus: "IN_SYNC" | "LAGGING" | "OUT_OF_SYNC";
+}
+
+export interface NeonPostgresMetricInput {
+  projectId: string;
+  branchId: string;
+  computeState: "ACTIVE" | "SUSPENDED" | "PROVISIONING";
+  cpuUsagePct: number;
+  memoryUsagePct: number;
+  connectionPoolUtilizationPct: number;
+}
+
+export interface RenderServiceMetricInput {
+  serviceId: string;
+  status: "LIVE" | "BUILDING" | "CRASHED" | "SUSPENDED";
+  p95HttpLatencyMs: number;
+  restartCount24h: number;
+}
+
+export interface MultiCloudTelemetryInput {
+  supabase?: SupabaseBosMetricInput;
+  neon?: NeonPostgresMetricInput;
+  render?: RenderServiceMetricInput;
+  capturedAtIso?: string;
+}
+
+export interface MultiCloudTelemetryScorecard {
+  overallStatus: "GREEN" | "YELLOW" | "RED";
+  supabaseStatus: "GREEN" | "YELLOW" | "RED";
+  neonStatus: "GREEN" | "YELLOW" | "RED";
+  renderStatus: "GREEN" | "YELLOW" | "RED";
+  alerts: string[];
+  capturedAtIso: string;
+}
+
+/** Proposed result envelope. Caller-controlled fields are NOT authenticated or trusted. */
+export interface BitVM3AuthenticatedResult {
+  verified: boolean;
+  signerPublicKey?: string;
+  signature?: string;
+  commitmentHash?: string;
+  executionInputHash?: string;
+  blockNumber?: number;
+  nonce?: string;
+  measuredChallengeCostSat?: number;
+  measuredChallengeCostUsd?: number;
+  verifiedAtIso?: string;
+  rejectionReason?: string;
+}
+
+/** Caller-supplied research metadata, not a verified cryptographic receipt. */
+export interface BitVM3GarbledCircuitProof {
+  proofId: string;
+  circuitDigest: string;
+  garbledTableHash: string;
+  challengeResponse: string;
+  nexusEngineVersion: string; // Must match v0.4.23+
+  estimatedChallengeCostUsd: number; // Target <$50
+  timestampIso: string;
+  nonce?: string;
+  executionInputHash?: string;
+  authenticatedResult?: BitVM3AuthenticatedResult;
 }

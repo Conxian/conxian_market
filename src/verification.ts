@@ -1,17 +1,23 @@
 /**
  * Conxian Gateway Verifier — Attestation & TrustTier Detection.
  *
- * Integrates with conxian-gateway / conxian-nexus for TEE and ZK proof
+ * Integrates with conxian-gateway / conxian-nexus for TEE, ZK, Enclave, Light, and BitVM3 proof
  * verification. Degrades tiers gracefully when P0 attestation gaps exist.
  *
  * Tiers:
- *   - Strict:       TEE (Nitro/KeyMint) + ZK proof (Groth16/Plonky2)
+ *   - Strict:       Gateway-verified TEE (Nitro/KeyMint) + ZK proof
+ *   - BitVM3:       Research input only; qualified verification backend unavailable
  *   - Managed:      Enclave attestation without ZK proof
  *   - Expedient:    Light client proof (SPV/MMR)
  *   - ObserverOnly: No proof (read-only)
  */
 
-import type { AttestationCertificate, FeatureFlags, TrustTier } from "./core_types.js";
+import type {
+  AttestationCertificate,
+  BitVM3GarbledCircuitProof,
+  FeatureFlags,
+  TrustTier,
+} from "./core_types.js";
 import { TrustTier as Tier } from "./core_types.js";
 import { DEFAULT_FEATURE_FLAGS } from "./core_types.js";
 import type { GatewayClient } from "./gateway_client.js";
@@ -28,6 +34,7 @@ export interface Verifier {
   verifyTeeZk(teeProof: string, zkProof: string): Promise<boolean>;
   verifyEnclave(proof: string): Promise<boolean>;
   verifyLight(proof: string): Promise<boolean>;
+  verifyBitVM3Proof(proof: BitVM3GarbledCircuitProof): Promise<{ valid: boolean; tier: TrustTier; challengeCostUsd: number; error?: string }>;
   getCapabilities(): AttestationCapabilities;
 }
 
@@ -59,7 +66,7 @@ export class GatewayVerifier implements Verifier {
     if (!this.flags.attestationAvailable) return false; // P0-1..P0-3 gate
     try {
       const result = await this.gateway.verifyAttestation({ teeProof, zkProof });
-      return result.valid && result.tier === Tier.Strict;
+      return result.valid === true && result.tier === Tier.Strict;
     } catch {
       return false;
     }
@@ -69,7 +76,7 @@ export class GatewayVerifier implements Verifier {
     if (!this.flags.attestationAvailable) return false; // P0-1..P0-3 gate
     try {
       const result = await this.gateway.verifyAttestation({ enclaveAttestation: proof });
-      return result.valid && result.tier === Tier.Managed;
+      return result.valid === true && result.tier === Tier.Managed;
     } catch {
       return false;
     }
@@ -79,10 +86,34 @@ export class GatewayVerifier implements Verifier {
     // Light client verification is always available (SPV/MMR)
     try {
       const result = await this.gateway.verifyAttestation({ lightProof: proof });
-      return result.valid && result.tier === Tier.Expedient;
+      return result.valid === true && result.tier === Tier.Expedient;
     } catch {
       return false;
     }
+  }
+
+  async verifyBitVM3Proof(
+    proof: BitVM3GarbledCircuitProof
+  ): Promise<{ valid: boolean; tier: TrustTier; challengeCostUsd: number; error?: string }> {
+    return this.verifyBitVM3ProofWithBoundary(proof);
+  }
+
+  /**
+   * Retains the proposed BitVM3 boundary API for research compatibility.
+   * Always fails closed until independently authenticated verification is wired.
+   */
+  async verifyBitVM3ProofWithBoundary(
+    proof: BitVM3GarbledCircuitProof
+  ): Promise<{ valid: boolean; tier: TrustTier; challengeCostUsd: number; error?: string }> {
+    // The envelope and any embedded result are caller-controlled research data.
+    // No qualified issuer/signature/freshness/replay verifier is wired here.
+    // Preserve the candidate API without allowing metadata to establish trust.
+    return {
+      valid: false,
+      tier: Tier.ObserverOnly,
+      challengeCostUsd: proof.estimatedChallengeCostUsd,
+      error: "BitVM3 verification unavailable: qualified cryptographic backend required",
+    };
   }
 
   async verifyAttestation(cert: AttestationCertificate): Promise<{ valid: boolean; tier: TrustTier; error?: string }> {
@@ -96,6 +127,14 @@ export class GatewayVerifier implements Verifier {
   }
 
   async detectTier(cert: AttestationCertificate): Promise<TrustTier> {
+    // BitVM3 garbled circuit fraud proof (CXIP-1317)
+    if (cert.bitvm3_proof) {
+      const bitvmRes = await this.verifyBitVM3ProofWithBoundary(cert.bitvm3_proof);
+      if (bitvmRes.valid) {
+        return bitvmRes.tier;
+      }
+    }
+
     // Strict: TEE + ZK proof
     if (cert.tee_proof && cert.zk_proof) {
       if (await this.verifyTeeZk(cert.tee_proof, cert.zk_proof)) {
@@ -118,6 +157,76 @@ export class GatewayVerifier implements Verifier {
     }
 
     return Tier.ObserverOnly;
+  }
+}
+
+/**
+ * Universal Verification Adapter (CXIP-1317)
+ * Routes existing gateway verification methods. BitVM3 envelopes confer no trust.
+ */
+export class UniversalVerificationAdapter {
+  constructor(private readonly verifier: GatewayVerifier) {}
+
+  async verifyUniversalProof(cert: AttestationCertificate): Promise<{
+    valid: boolean;
+    tier: TrustTier;
+    methodUsed: "TEE_ZK" | "ENCLAVE" | "LIGHT_SPV" | "BITVM3_GARBLED_CIRCUIT" | "NONE";
+    details: string;
+  }> {
+    if (cert.bitvm3_proof) {
+      const res = await this.verifier.verifyBitVM3ProofWithBoundary(cert.bitvm3_proof);
+      if (res.valid) {
+        return {
+          valid: true,
+          tier: res.tier,
+          methodUsed: "BITVM3_GARBLED_CIRCUIT",
+          details: `Verified BitVM3 garbled circuit fraud proof on Nexus ${cert.bitvm3_proof.nexusEngineVersion} (Cost: $${res.challengeCostUsd})`,
+        };
+      }
+    }
+
+    if (cert.tee_proof && cert.zk_proof) {
+      const valid = await this.verifier.verifyTeeZk(cert.tee_proof, cert.zk_proof);
+      if (valid) {
+        return {
+          valid: true,
+          tier: Tier.Strict,
+          methodUsed: "TEE_ZK",
+          details: "Verified TEE + ZK hardware attestation proof",
+        };
+      }
+    }
+
+    if (cert.enclave_attestation) {
+      const valid = await this.verifier.verifyEnclave(cert.enclave_attestation);
+      if (valid) {
+        return {
+          valid: true,
+          tier: Tier.Managed,
+          methodUsed: "ENCLAVE",
+          details: "Verified Enclave SDK attestation proof",
+        };
+      }
+    }
+
+    if (cert.light_proof) {
+      const valid = await this.verifier.verifyLight(cert.light_proof);
+      if (valid) {
+        return {
+          valid: true,
+          tier: Tier.Expedient,
+          methodUsed: "LIGHT_SPV",
+          details: "Verified SPV/MMR light client proof",
+        };
+      }
+    }
+
+    return {
+      valid: false,
+      tier: Tier.ObserverOnly,
+      methodUsed: "NONE",
+      details: "No valid attestation proof found",
+    };
   }
 }
 

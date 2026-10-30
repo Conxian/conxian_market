@@ -1,22 +1,36 @@
 import { ClientInstallerEngine } from "./client_onboarding.js";
 import { AgentRegistry, type AgentCard, type AgentRegistryEntry, type AgentReputationRecord } from "./agent_registry.js";
 import { Mcp402Facade, type McpToolCall, type Mcp402PaymentGateResult } from "./mcp_402.js";
+import { MultiDimensionalScoringEngine } from "./multi_dimensional_scoring.js";
+import { UniversalVerificationAdapter } from "./verification.js";
+import type {
+  AgentPerformanceMetrics,
+  BitVM3GarbledCircuitProof,
+  MultiCloudTelemetryInput,
+  MultiCloudTelemetryScorecard,
+  MultiDimensionalScoreResult,
+  NetworkValuationEvaluation,
+} from "./core_types.js";
+import type { RealtimeYieldSplitValidation } from "./bos_yield_splitter.js";
+
 /**
  * Conxian Market SDK Bridge — Unified Client Interface for Marketplace Services.
  *
  * Integrates:
  *   - Gateway Client (relay, RWA verification, blocks, NTT)
- *   - Gateway Verifier (attestation cert verification, trust tier detection)
+ *   - Gateway Verifier (attestation cert verification, trust tier detection, BitVM3 garbled circuits)
+ *   - Universal Verification Adapter (CXIP-1317 unified proof verification)
  *   - Settlement Orchestrator (cross-chain settlement routing across 8 rails & non-custodial proof verification)
- *   - SLA Engine (autonomous SLA evaluation, gap card bounties & auto-resolution)
- *   - Monitoring Watcher (sBTC, Fedimint, Babylon, and Treasury health monitoring)
+ *   - SLA Engine (autonomous SLA evaluation, gap card bounties & auto-resolution, multi-cloud SLA health)
+ *   - Monitoring Watcher (sBTC, Fedimint, Babylon, Treasury, and Multi-cloud telemetry watcher)
  *   - TrustTier Middleware (HTTP/MCP request verification & routing pipeline)
- *   - BOS Yield Splitter (80/10/10 yield matrix, fee decay, founder vesting, inference policy, Treasury Timelock & Founder Escrow)
- *   - Market-Agnostic Router (Zero-custody validation, BYO DeFi protocol adapter resolution, M2M route execution, Conxian/Conxian deprecation advisory)
- *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission, SLA-integrated release, dispute/refund handling, escrow reconciliation)
+ *   - BOS Yield Splitter (80/10/10 yield matrix, real-time yield validation, fee decay, founder vesting, inference policy)
+ *   - Market-Agnostic Router (Zero-custody validation, BYO DeFi protocol adapter resolution)
+ *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission)
  *   - Fee Calculator (2% protocol fee with tier/rail breakdown)
- *   - x402 Escrow Gateway (Multi-rail HTTP 402 payment demands, attestation verification & ERC-8183 budget locking)
- *   - Client Installer Engine (Client onboarding, system setup, domain routing firewall, and unified CLI installer)
+ *   - x402 Escrow Gateway (Multi-rail HTTP 402 payment demands)
+ *   - Client Installer Engine (Client onboarding, system setup, domain routing firewall)
+ *   - Multi-Dimensional Scoring Engine (WPS and network valuation impact using live x402 volume and escrow state)
  */
 
 import { GatewayClient, type GatewayConfig } from "./gateway_client.js";
@@ -69,7 +83,7 @@ import {
   type FounderEscrowSchedule,
   type FounderEscrowPayoutResult,
 } from "./core_types.js";
-import { MonitoringWatcher, type UnifiedHealthSnapshot } from "./monitoring_watcher.js";
+import { MonitoringWatcher, type SlaHealthResult, type UnifiedHealthSnapshot } from "./monitoring_watcher.js";
 import type {
   BabylonStakingInput,
   FedimintMintInput,
@@ -140,6 +154,8 @@ export class ConxianMarketSDK {
   readonly x402EscrowGateway: X402EscrowGateway;
   readonly agentRegistry: AgentRegistry;
   readonly mcp402Facade: Mcp402Facade;
+  readonly multiDimensionalScoring: MultiDimensionalScoringEngine;
+  readonly universalVerificationAdapter: UniversalVerificationAdapter;
   readonly flags: FeatureFlags;
 
   private constructor(
@@ -163,6 +179,8 @@ export class ConxianMarketSDK {
     this.x402EscrowGateway = new X402EscrowGateway(this.jobCardEscrowEngine);
     this.agentRegistry = new AgentRegistry();
     this.mcp402Facade = new Mcp402Facade();
+    this.multiDimensionalScoring = new MultiDimensionalScoringEngine();
+    this.universalVerificationAdapter = new UniversalVerificationAdapter(this.verifier);
   }
 
   /** Connect to gateway and instantiate full Market SDK Bridge */
@@ -644,8 +662,41 @@ export class ConxianMarketSDK {
     return this.mcp402Facade.authorize(call, receipt);
   }
 
-  // ── Capability Summary (All Modules Wired) ──
+  // ── Capability 15: Multi-Dimensional Scoring Engine (x402 & ERC-8183) ──
 
+  calculateMultiDimensionalScore(metrics: AgentPerformanceMetrics): MultiDimensionalScoreResult {
+    return this.multiDimensionalScoring.calculateWps(metrics);
+  }
+
+  evaluateNetworkValuationImpact(agentMetrics: AgentPerformanceMetrics[]): NetworkValuationEvaluation {
+    return this.multiDimensionalScoring.evaluateNetworkValuationImpact(agentMetrics);
+  }
+
+  // ── Capability 16: Multi-Cloud Telemetry & Live Yield Validation ──
+
+  aggregateMultiCloudTelemetry(input: MultiCloudTelemetryInput): MultiCloudTelemetryScorecard {
+    return this.monitoringWatcher.aggregateMultiCloudTelemetry(input);
+  }
+
+  evaluateMultiCloudSlaHealth(input: MultiCloudTelemetryInput, baseSla?: SlaHealthResult): SlaHealthResult {
+    const scorecard = this.aggregateMultiCloudTelemetry(input);
+    return this.slaEngine.evaluateMultiCloudSlaHealth(scorecard, baseSla);
+  }
+
+  validateYieldSplitRealtime(grossAmountSat: bigint, telemetryInput: MultiCloudTelemetryInput): RealtimeYieldSplitValidation {
+    const scorecard = this.aggregateMultiCloudTelemetry(telemetryInput);
+    return this.bosYieldSplitter.validateYieldSplitRealtime({ grossAmountSat, telemetry: scorecard });
+  }
+
+  // ── Capability 17: Universal Verification Adapter & BitVM3 Fraud Proofs ──
+
+  async verifyBitVM3Proof(proof: BitVM3GarbledCircuitProof) {
+    return this.verifier.verifyBitVM3Proof(proof);
+  }
+
+  async verifyUniversalProof(cert: AttestationCertificate) {
+    return this.universalVerificationAdapter.verifyUniversalProof(cert);
+  }
 
   runEnterpriseSlaDiagnostics(
     config: import("./core_types.js").ClientOnboardingConfig,
@@ -674,9 +725,9 @@ export class ConxianMarketSDK {
     }
 
     return {
-      coreCapabilities: 15,
+      coreCapabilities: 18,
       enclaveCapabilities: 16,
-      totalCapabilities: 35,
+      totalCapabilities: 38,
       activeRails: this.settlement.availableRails(Tier.Strict),
       activeTiers: this.flags.attestationAvailable
         ? [Tier.ObserverOnly, Tier.Expedient, Tier.Managed, Tier.Strict]
@@ -725,6 +776,9 @@ export class ConxianMarketSDK {
       clientInstallerEnabled: true,
       agentRegistryEnabled: true,
       mcp402FacadeEnabled: true,
+      multiDimensionalScoringEnabled: true,
+      multiCloudTelemetryEnabled: true,
+      universalVerificationEnabled: true,
     };
   }
 
@@ -732,4 +786,11 @@ export class ConxianMarketSDK {
   getAvailableRails(tier: TrustTier): SettlementRail[] {
     return this.settlement.availableRails(tier);
   }
+}
+
+import { RoundhouseClient, type RoundhouseClientConfig } from './roundhouse_client.js';
+
+/** Local unverified discovery only; external verification/publication remain unavailable. */
+export function createRoundhouseClient(config?: RoundhouseClientConfig): RoundhouseClient {
+  return new RoundhouseClient(config);
 }

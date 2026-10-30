@@ -10,11 +10,13 @@
  *    - Enforces 48-hour timelock delay for treasury transfers > $50,000 (100,000,000 satoshis).
  *    - Enforces 3-of-5 multisig quorum verification.
  *    - Manages founder compensation escrow payouts with DAO bonus validation.
+ * 6. Real-Time Yield Split Validation (Session 75): Validates 80/10/10 splits against live multi-cloud telemetry.
  */
 
 import type {
   FounderEscrowPayoutResult,
   FounderEscrowSchedule,
+  MultiCloudTelemetryScorecard,
   TimelockTransactionRequest,
   TimelockValidationResult,
 } from "./core_types.js";
@@ -24,6 +26,13 @@ export interface YieldSplit {
   builderSat: bigint;            // 80%
   platformTreasurySat: bigint;   // 10%
   ecosystemStakeholdersSat: bigint; // 10%
+}
+
+export interface RealtimeYieldSplitValidation {
+  yieldSplit: YieldSplit;
+  telemetryStatus: "GREEN" | "YELLOW" | "RED";
+  authorized: boolean;
+  warnings: string[];
 }
 
 export interface FeeDecayTier {
@@ -94,6 +103,29 @@ export class BosYieldSplitter {
       builderSat,
       platformTreasurySat,
       ecosystemStakeholdersSat,
+    };
+  }
+
+  /**
+   * Validate 80/10/10 yield split execution in real-time backed by multi-cloud telemetry scorecard.
+   */
+  static validateYieldSplitRealtime(input: {
+    grossAmountSat: bigint;
+    telemetry: MultiCloudTelemetryScorecard;
+  }): RealtimeYieldSplitValidation {
+    const yieldSplit = BosYieldSplitter.calculateYieldSplit(input.grossAmountSat);
+    const warnings: string[] = [...input.telemetry.alerts];
+    const authorized = input.telemetry.overallStatus !== "RED";
+
+    if (!authorized) {
+      warnings.push("Yield split settlement paused due to CRITICAL multi-cloud telemetry alert");
+    }
+
+    return {
+      yieldSplit,
+      telemetryStatus: input.telemetry.overallStatus,
+      authorized,
+      warnings,
     };
   }
 

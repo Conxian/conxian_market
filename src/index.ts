@@ -3,14 +3,23 @@
  *
  * Core exports for non-custodial value routing, SLA enforcement, TrustTier pricing,
  * telemetry monitoring, BOS yield splitting, ERC-8183 escrow management, attestation proof verification,
- * x402 gateway integration with attestation proof artifacts, and autonomous SLA gap card auto-resolution.
+ * x402 gateway integration with attestation proof artifacts, autonomous SLA gap card auto-resolution,
+ * multi-dimensional scoring engine, multi-cloud telemetry watcher, and BitVM3 fraud proof verification.
  */
 
 export * from "./core_types.js";
+export { readRegistrationDiagnostic, validateRegistrationManifest, REGISTRATION_MAX_BYTES } from "./provider_discovery.js";
+export type { RegistrationOwner, RegistrationDiagnostic } from "./provider_discovery.js";
+export {
+  X402_V2_WIRE_PROFILE, X402_V2_MAX_BYTES, X402_V2_HEADERS,
+  X402V2RequirementsSchema, X402V2RequiredSchema, X402V2PayloadSchema, X402V2SettlementSchema,
+  parseX402V2, encodeX402V2Header, decodeX402V2Header, x402V2McpRequired, x402V2McpPayment,
+} from "./x402_v2_wire.js";
+export type { X402V2Required, X402V2Payload, X402V2Settlement } from "./x402_v2_wire.js";
 export { GatewayClient } from "./gateway_client.js";
 export { SettlementResultSchema, ProtocolFeeRecordSchema, M2MSettlementResponseSchema } from "./wire_contract.js";
 export type { ValidatedSettlementResult } from "./wire_contract.js";
-export { GatewayVerifier, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification.js";
+export { GatewayVerifier, UniversalVerificationAdapter, detectTrustTierStatic, degradeTierForP0Gaps } from "./verification.js";
 export type { AttestationCapabilities } from "./verification.js";
 export { SettlementOrchestrator } from "./settlement.js";
 export type { SettlementProofVerificationResult } from "./settlement.js";
@@ -76,6 +85,7 @@ export type {
 export { BosYieldSplitter, FEE_DECAY_TIMELINE } from "./bos_yield_splitter.js";
 export type {
   YieldSplit,
+  RealtimeYieldSplitValidation,
   FeeDecayTier,
   ProtocolFeeDistribution,
   FounderVestingInput,
@@ -131,6 +141,7 @@ export type {
 } from "./agent_registry.js";
 export { Mcp402Facade } from "./mcp_402.js";
 export type { McpToolCall, Mcp402PaymentGateResult } from "./mcp_402.js";
+export { MultiDimensionalScoringEngine } from "./multi_dimensional_scoring.js";
 export { ConxianMarketSDK } from "./sdk_bridge.js";
 
 export { ClientInstallerEngine } from "./client_onboarding.js";
@@ -173,3 +184,5 @@ export type {
   MempoolFeeSample,
   LoadOracleAdapterConfig,
 } from "./core_types.js";
+export { RoundhouseClient, RoundhouseUnsupportedError } from './roundhouse_client.js';
+export type { RoundhouseEndpoint, RoundhouseSettlementEvent, VerifiedByConxianCertificate, RoundhouseClientConfig } from './roundhouse_client.js';
