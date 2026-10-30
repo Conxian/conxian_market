@@ -7,7 +7,7 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
   const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
 
   it("connects and exposes SDK capabilities", async () => {
-    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+    const sdk = await ConxianMarketSDK.connect({ baseUrl: "https://gateway.conxian.io" });
     expect(sdk.gateway).toBeDefined();
     expect(sdk.verifier).toBeDefined();
     expect(sdk.settlement).toBeDefined();
@@ -603,5 +603,41 @@ describe("ConxianMarketSDK Bridge - ADR-004 dynamic fee wiring", () => {
     expect(report.totalSettlements).toBe(1);
     expect(report.floorDominatedSettlements).toBe(1);
     expect(report.totalFeeSat).toBe(10n);
+  });
+});
+
+describe("Session 76 SDK Bridge Capabilities", () => {
+  const dummyConfig = { baseUrl: "https://gateway.conxian.io" };
+
+  it("exposes evaluateDecentralizedReadiness, resolveIssueFallback, and scoreBusinessOpportunity", async () => {
+    const sdk = await ConxianMarketSDK.connect(dummyConfig);
+
+    const readiness = sdk.evaluateDecentralizedReadiness({
+      rail: "EVM_ERC8183",
+      securityScore: 95,
+      throughputTps: 500,
+      avgLatencyMs: 1500,
+      avgFeeSat: 100,
+      uptimePct: 99.9,
+      verificationIntegrityScore: 95,
+    });
+    expect(readiness.rail).toBe("EVM_ERC8183");
+    expect(readiness.tier).toBe("PRODUCTION_READY");
+
+    const fallback = sdk.resolveIssueFallback("BITCOIN_L1", "Mempool congestion fee >100 sat/vB");
+    expect(fallback.primaryRail).toBe("BITCOIN_L1");
+    expect(fallback.recommendedFallbackRail).toBe("STACKS_SBTC");
+
+    const opp = sdk.scoreBusinessOpportunity({
+      opportunityId: "OPP-SDK-76",
+      title: "SDK Escrow Yield Split",
+      targetRail: "EVM_ERC8183",
+      estimatedTamUsd: 20000000,
+      feeCapturePct: 10.0,
+      technicalFeasibilityScore: 95,
+      slaAlignmentScore: 90,
+    });
+    expect(opp.opportunityId).toBe("OPP-SDK-76");
+    expect(opp.projectedAnnualRevenueUsd).toBe(2000000);
   });
 });
