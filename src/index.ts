@@ -131,6 +131,17 @@ export type {
   X402TrustProofArtifact,
   X402AttestationVerificationResult,
 } from "./x402_facade.js";
+export {
+  HttpLightningPaymentVerifier,
+  verifyLightningPayment,
+  managedSubscriptionDemand,
+} from "./lightning_payment.js";
+export type {
+  LightningInvoiceStatus,
+  LightningPaymentVerifier,
+  LightningPaymentVerification,
+  ManagedSubscriptionPlan,
+} from "./lightning_payment.js";
 export { AgentRegistry, agentCardDigest } from "./agent_registry.js";
 export type {
   AgentCard,
@@ -186,3 +197,20 @@ export type {
 } from "./core_types.js";
 export { RoundhouseClient, RoundhouseUnsupportedError } from './roundhouse_client.js';
 export type { RoundhouseEndpoint, RoundhouseSettlementEvent, VerifiedByConxianCertificate, RoundhouseClientConfig } from './roundhouse_client.js';
+
+// Session 76: Export Decentralized System Readiness, Issue Fallback & Opportunity Types & Functions
+export {
+  evaluateSystemReadiness,
+  resolveIssueFallback,
+  scoreBusinessOpportunity,
+  DEFAULT_RAIL_PROFILES,
+} from "./decentralized_systems.js";
+export type {
+  DecentralizedSystemRail,
+  SystemReadinessTier,
+  DecentralizedSystemReadinessInput,
+  DecentralizedSystemReadinessReport,
+  IssueFallbackEvaluation,
+  BusinessOpportunityInput,
+  BusinessOpportunityScorecard,
+} from "./core_types.js";

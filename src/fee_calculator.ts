@@ -1,4 +1,8 @@
 /**
+ * Pricing architecture: see Conxian/conxian-business ADR-009 — market fee-bps
+ * feeds the gateway meter (ProtocolFeeRecord), not a separate revenue stream.
+ */
+/**
  * Conxian Protocol Fee Calculator (CON-1427).
  *
  * Implements the dynamic hybrid fee model (ADR-004) with competitive,
