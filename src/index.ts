@@ -131,6 +131,17 @@ export type {
   X402TrustProofArtifact,
   X402AttestationVerificationResult,
 } from "./x402_facade.js";
+export {
+  HttpLightningPaymentVerifier,
+  verifyLightningPayment,
+  managedSubscriptionDemand,
+} from "./lightning_payment.js";
+export type {
+  LightningInvoiceStatus,
+  LightningPaymentVerifier,
+  LightningPaymentVerification,
+  ManagedSubscriptionPlan,
+} from "./lightning_payment.js";
 export { AgentRegistry, agentCardDigest } from "./agent_registry.js";
 export type {
   AgentCard,
