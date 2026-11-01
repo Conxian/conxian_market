@@ -89,7 +89,7 @@ export class GatewayClient {
 
   /** Fetches and runtime-validates the response against a wire-contract schema. */
   private async fetchJsonValidated<T>(
-    schema: z.ZodType<T, z.ZodTypeDef, unknown>,
+    schema: z.ZodType<T, unknown>,
     path: string,
     options: RequestInit = {},
     meta: { idempotencyKey?: string; correlationId?: string } = {},
