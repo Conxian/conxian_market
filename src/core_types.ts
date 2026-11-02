@@ -863,3 +863,72 @@ export interface BitVM3GarbledCircuitProof {
   executionInputHash?: string;
   authenticatedResult?: BitVM3AuthenticatedResult;
 }
+
+// ── Session 76: Decentralized System Readiness, Issue Fallback & Opportunity Types ──
+
+export type DecentralizedSystemRail =
+  | "BITCOIN_L1"
+  | "STACKS_SBTC"
+  | "EVM_ERC8183"
+  | "FEDIMINT_MINT"
+  | "LIGHTNING_NETWORK"
+  | "TEE_ENCLAVE"
+  | "BITVM3_PROOF"
+  | "ZK_LIGHT_CLIENT";
+
+export type SystemReadinessTier = "PRODUCTION_READY" | "BETA_SUPPORTED" | "RESEARCH_ONLY";
+
+export interface DecentralizedSystemReadinessInput {
+  rail: DecentralizedSystemRail;
+  securityScore: number; // 0-100
+  throughputTps: number;
+  avgLatencyMs: number;
+  avgFeeSat: number;
+  uptimePct: number; // 0-100
+  verificationIntegrityScore: number; // 0-100
+  activeIssues?: string[];
+}
+
+export interface DecentralizedSystemReadinessReport {
+  rail: DecentralizedSystemRail;
+  overallReadinessScore: number; // 0-100
+  tier: SystemReadinessTier;
+  securitySubScore: number;
+  latencySubScore: number;
+  costSubScore: number;
+  livenessSubScore: number;
+  verificationSubScore: number;
+  evaluatedAtIso: string;
+  activeIssues: string[];
+}
+
+export interface IssueFallbackEvaluation {
+  primaryRail: DecentralizedSystemRail;
+  issueDetected: string;
+  fallbackRequired: boolean;
+  recommendedFallbackRail: DecentralizedSystemRail | null;
+  fallbackReadinessTier: SystemReadinessTier | null;
+  trustTierImpact: TrustTier;
+  routingReason: string;
+  evaluatedAtIso: string;
+}
+
+export interface BusinessOpportunityInput {
+  opportunityId: string;
+  title: string;
+  targetRail: DecentralizedSystemRail;
+  estimatedTamUsd: number;
+  feeCapturePct: number;
+  technicalFeasibilityScore: number; // 0-100
+  slaAlignmentScore: number; // 0-100
+}
+
+export interface BusinessOpportunityScorecard {
+  opportunityId: string;
+  title: string;
+  targetRail: DecentralizedSystemRail;
+  overallOpportunityScore: number; // 0-100
+  projectedAnnualRevenueUsd: number;
+  feasibilityTier: "HIGH" | "MEDIUM" | "LOW";
+  evaluatedAtIso: string;
+}

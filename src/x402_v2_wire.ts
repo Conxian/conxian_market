@@ -17,10 +17,10 @@ const iconUrl = text.refine((value) => {
     return /^https?:\/\//u.test(value) && (url.protocol === "https:" || url.protocol === "http:") && !/\s/u.test(value);
   } catch { return false; }
 });
-const record = z.record(z.unknown());
+const record = z.record(z.string(), z.unknown());
 // Only server advertisements use this envelope. Client/settlement extensions
 // retain their scheme-specific shapes and are never interpreted as authority.
-const advertisedExtensions = z.record(z.object({ info: record, schema: record }).passthrough());
+const advertisedExtensions = z.record(z.string(), z.object({ info: record, schema: record }).passthrough());
 const network = z.string().max(41).regex(/^[-a-z0-9]{3,8}:[-_a-zA-Z0-9]{1,32}$/u)
   .refine((value) => !/[\s\u0000-\u001f\u007f]/u.test(value));
 const resource = z.object({

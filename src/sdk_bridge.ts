@@ -1,3 +1,16 @@
+import {
+  evaluateSystemReadiness,
+  resolveIssueFallback,
+  scoreBusinessOpportunity,
+} from "./decentralized_systems.js";
+import type {
+  DecentralizedSystemRail,
+  DecentralizedSystemReadinessInput,
+  DecentralizedSystemReadinessReport,
+  IssueFallbackEvaluation,
+  BusinessOpportunityInput,
+  BusinessOpportunityScorecard,
+} from "./core_types.js";
 import { ClientInstallerEngine } from "./client_onboarding.js";
 import { AgentRegistry, type AgentCard, type AgentRegistryEntry, type AgentReputationRecord } from "./agent_registry.js";
 import { Mcp402Facade, type McpToolCall, type Mcp402PaymentGateResult } from "./mcp_402.js";
@@ -706,7 +719,25 @@ export class ConxianMarketSDK {
     return ClientInstallerEngine.runEnterpriseSlaDiagnostics(config, latencyThresholdMs, timestampIso);
   }
 
-  evaluateSlaPolicyAndExemptions(
+    // ── Capability 18: Decentralized System Readiness, Issue Fallback & Opportunity ──
+
+  evaluateDecentralizedReadiness(input: DecentralizedSystemReadinessInput): DecentralizedSystemReadinessReport {
+    return evaluateSystemReadiness(input);
+  }
+
+  resolveIssueFallback(
+    primaryRail: DecentralizedSystemRail,
+    issueDetected: string,
+    availableReports?: DecentralizedSystemReadinessReport[]
+  ): IssueFallbackEvaluation {
+    return resolveIssueFallback(primaryRail, issueDetected, availableReports);
+  }
+
+  scoreBusinessOpportunity(input: BusinessOpportunityInput): BusinessOpportunityScorecard {
+    return scoreBusinessOpportunity(input);
+  }
+
+evaluateSlaPolicyAndExemptions(
     config: import("./core_types.js").ClientOnboardingConfig,
     isCommercialB2bContract: boolean = false,
     activeExemptions: import("./core_types.js").SlaExemptionReason[] = []

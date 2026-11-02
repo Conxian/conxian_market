@@ -112,12 +112,29 @@ export class BosYieldSplitter {
   static validateYieldSplitRealtime(input: {
     grossAmountSat: bigint;
     telemetry: MultiCloudTelemetryScorecard;
+    evaluatedAtIso?: string;
   }): RealtimeYieldSplitValidation {
     const yieldSplit = BosYieldSplitter.calculateYieldSplit(input.grossAmountSat);
     const warnings: string[] = [...input.telemetry.alerts];
-    const authorized = input.telemetry.overallStatus !== "RED";
+    const evaluatedAtMs = Date.parse(input.evaluatedAtIso ?? new Date().toISOString());
+    const capturedAtMs = Date.parse(input.telemetry.capturedAtIso);
+    const maxTelemetryAgeMs = 5 * 60 * 1000;
+    const maxFutureSkewMs = 30 * 1000;
+    let telemetryIsFresh = Number.isFinite(evaluatedAtMs) && Number.isFinite(capturedAtMs);
 
-    if (!authorized) {
+    if (!telemetryIsFresh) {
+      warnings.push("Yield split settlement paused: telemetry timestamps are missing or invalid");
+    } else if (capturedAtMs > evaluatedAtMs + maxFutureSkewMs) {
+      telemetryIsFresh = false;
+      warnings.push("Yield split settlement paused: telemetry capture time is in the future");
+    } else if (evaluatedAtMs - capturedAtMs > maxTelemetryAgeMs) {
+      telemetryIsFresh = false;
+      warnings.push("Yield split settlement paused: telemetry is older than the five-minute freshness window");
+    }
+
+    const authorized = telemetryIsFresh && input.telemetry.overallStatus !== "RED";
+
+    if (input.telemetry.overallStatus === "RED") {
       warnings.push("Yield split settlement paused due to CRITICAL multi-cloud telemetry alert");
     }
 

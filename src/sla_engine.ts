@@ -199,11 +199,10 @@ export class SlaEngine {
 
     if (telemetry.overallStatus === "RED") {
       status = "RED";
-      alerts.push(...telemetry.alerts);
     } else if (telemetry.overallStatus === "YELLOW" && status !== "RED") {
       status = "YELLOW";
-      alerts.push(...telemetry.alerts);
     }
+    alerts.push(...telemetry.alerts);
 
     return {
       status,
