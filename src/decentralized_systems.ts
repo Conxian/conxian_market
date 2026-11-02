@@ -166,11 +166,10 @@ export function resolveIssueFallback(
   issueDetected: string,
   availableReports?: DecentralizedSystemReadinessReport[]
 ): IssueFallbackEvaluation {
-  const normalizedIssue = issueDetected.toUpperCase();
   const now = new Date().toISOString();
 
   let recommendedFallbackRail: DecentralizedSystemRail | null = null;
-  let trustTierImpact: TrustTier = TrustTier.Strict;
+  let trustTierImpact: TrustTier;
   let routingReason = "";
 
   if (primaryRail === "BITCOIN_L1") {
@@ -201,14 +200,14 @@ export function resolveIssueFallback(
 
   // Find fallback report if provided
   let fallbackReadinessTier: SystemReadinessTier | null = null;
-  if (availableReports && recommendedFallbackRail) {
+  if (availableReports) {
     const found = availableReports.find((r) => r.rail === recommendedFallbackRail);
     if (found) {
       fallbackReadinessTier = found.tier;
     }
   }
 
-  if (!fallbackReadinessTier && recommendedFallbackRail) {
+  if (!fallbackReadinessTier) {
     const report = evaluateSystemReadiness(DEFAULT_RAIL_PROFILES[recommendedFallbackRail]);
     fallbackReadinessTier = report.tier;
   }
