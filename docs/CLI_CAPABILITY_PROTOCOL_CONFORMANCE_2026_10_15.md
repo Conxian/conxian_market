@@ -29,6 +29,15 @@ Server-advertised extensions require object-valued `info` and `schema` envelopes
 
 Successful parsing, an opaque signature, or a `success` field in a settlement response remains an unverified wire claim. No signature validation, resource/terms authorization, replay consumption, transaction/finality verification, durable settlement, entitlement, tool execution, or ERC-8004 registry lookup occurs here. Market #176/#159 retain those gates. The legacy facade is not silently converted or labelled v2 compatible.
 
+## Bounded consumption and entitlement contracts (#176 / #159)
+
+Two additive, fail-closed contracts make the deferred gates explicit without claiming provider acceptance:
+
+- `ReplayGuard` (`src/replay_guard.ts`, profile `conxian-x402-replay-guard/1`) consumes an *independently verified* payment claim identifier and reports `replay: true` for a second consumption inside a bounded window. It derives a SHA-256 key and never retains the raw identifier. It is **process-local, in-memory** only — durable, shared replay protection remains a provider/deployment concern.
+- `resolveClientEntitlement` (`src/entitlement_resolver.ts`, profile `conxian-entitlement-resolver/1`) resolves a purchased entitlement through an optional `EntitlementResolver` and fails closed to the UNVERIFIED ObserverOnly baseline when the resolver is absent, throws, returns null, or yields a license that is not `VERIFIED`, DID-bound and unexpired.
+
+Neither contract validates a signature, settles a payment, issues a durable entitlement, or asserts production qualification; both keep local previews explicit and never silently enable paid execution or change custody/pricing.
+
 ## Research and selection
 
 Checked on 15 October 2026:

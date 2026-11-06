@@ -16,6 +16,16 @@ export {
   parseX402V2, encodeX402V2Header, decodeX402V2Header, x402V2McpRequired, x402V2McpPayment,
 } from "./x402_v2_wire.js";
 export type { X402V2Required, X402V2Payload, X402V2Settlement } from "./x402_v2_wire.js";
+export {
+  REPLAY_GUARD_PROFILE, DEFAULT_REPLAY_WINDOW_MS, DEFAULT_REPLAY_MAX_ENTRIES,
+  REPLAY_MAX_IDENTIFIER_BYTES, replayKeyFor, ReplayGuard,
+} from "./replay_guard.js";
+export type { ReplayConsumptionResult, ReplayGuardOptions } from "./replay_guard.js";
+export {
+  ENTITLEMENT_RESOLVER_PROFILE, unverifiedObserverLicense, isUsableEntitlement,
+  resolveClientEntitlement,
+} from "./entitlement_resolver.js";
+export type { EntitlementPurchaseReference, EntitlementResolver } from "./entitlement_resolver.js";
 export { GatewayClient } from "./gateway_client.js";
 export { SettlementResultSchema, ProtocolFeeRecordSchema, M2MSettlementResponseSchema } from "./wire_contract.js";
 export type { ValidatedSettlementResult } from "./wire_contract.js";
