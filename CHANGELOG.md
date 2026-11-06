@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Bounded authenticated Gateway/Nexus registration diagnostics for SDK callers and the noninteractive CLI, with strict wire contracts, redacted errors, whole-response deadlines and no operation grants.
 - An explicit x402 v2 HTTP/MCP wire profile with schemas, types, bounded UTF-8/base64 codecs and conformance tests. Payment, signature, registry and settlement verification remain separate integrations.
+- A fail-closed `ReplayGuard` that consumes an independently verified payment claim identifier and rejects a second consumption inside a bounded window (in-memory only; durable replay protection remains a provider concern).
+- A fail-closed `resolveClientEntitlement` contract that resolves a purchased entitlement through an optional provider resolver and degrades to the UNVERIFIED ObserverOnly baseline otherwise.
 
 ### Fixed
 - x402 v2 optional/null field compatibility, server extension envelopes, resource discovery bounds, settlement amount/diagnostics and non-terminal pending-settlement validation. These remain unverified wire claims.
