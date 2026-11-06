@@ -24,9 +24,9 @@ jobs:
     name: Markdown & YAML Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Lint markdown
-        uses: DavidAnson/markdownlint-cli2-action@v19
+        uses: DavidAnson/markdownlint-cli2-action@v25
         with:
           config: |
             {
@@ -63,7 +63,7 @@ jobs:
     name: Link Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Check internal markdown links
         run: |
           errors=0
@@ -91,7 +91,7 @@ jobs:
     name: Schema & Structure Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Verify required files exist
         run: |
           required=("README.md" "LICENSE" "SECURITY.md" "CONTRIBUTING.md" "ROADMAP.md" "docs/AGENTS.md")
