@@ -31,8 +31,11 @@ jobs:
       db_url: ${{ steps.create_neon_branch.outputs.db_url }}
       db_url_with_pooler: ${{ steps.create_neon_branch.outputs.db_url_with_pooler }}
     needs: setup
+    # Dependabot-triggered runs cannot read repository secrets, so the action
+    # would fail with "Input required and not supplied: api_key". Dependabot
+    # dependency bumps do not need a database preview branch.
     if: |
-      github.event_name == 'pull_request' && (
+      github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' && (
       github.event.action == 'synchronize'
       || github.event.action == 'opened'
       || github.event.action == 'reopened')
@@ -89,7 +92,7 @@ jobs:
   delete_neon_branch:
     name: Delete Neon Branch
     needs: setup
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Delete Neon Branch
