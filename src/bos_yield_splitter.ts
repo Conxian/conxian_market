@@ -1,3 +1,11 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Conxian Labs (Pty) Ltd
+//
+// Part of the @conxian/market-sdk revenue moat. This file is licensed
+// AGPL-3.0-or-later, NOT MIT: see LICENSING.md. Running a modified version
+// of this file as a network service obliges you to offer the corresponding
+// source to your users (AGPL-3.0 section 13), or to obtain a commercial
+// licence from Conxian Labs.
 /**
  * Conxian Market: Business Operating System (BOS) Yield Splitter & Thin Orchestrator Guard.
  *
