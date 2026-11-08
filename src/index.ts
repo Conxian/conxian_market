@@ -8,7 +8,7 @@
  */
 
 export * from "./core_types.js";
-export { readRegistrationDiagnostic, validateRegistrationManifest, REGISTRATION_MAX_BYTES } from "./provider_discovery.js";
+export { readRegistrationDiagnostic, validateRegistrationManifest, REGISTRATION_MAX_BYTES, dlcCetAvailableFrom } from "./provider_discovery.js";
 export type { RegistrationOwner, RegistrationDiagnostic } from "./provider_discovery.js";
 export {
   X402_V2_WIRE_PROFILE, X402_V2_MAX_BYTES, X402_V2_HEADERS,

@@ -120,3 +120,12 @@ export async function readRegistrationDiagnostic(config: {
   } catch { return result(controller.signal.aborted ? "request_timeout" : "request_failed"); }
   finally { clearTimeout(timer); }
 }
+
+/**
+ * Derives whether the DLC CET capability is available from a registration
+ * diagnostic. True only when the gateway's manifest was observed and advertises
+ * the `dlc` capability — never inferred from an unavailable/invalid manifest.
+ */
+export function dlcCetAvailableFrom(diagnostic: RegistrationDiagnostic): boolean {
+  return diagnostic.state === "registered" && diagnostic.adapterIds.includes("dlc");
+}
