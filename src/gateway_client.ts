@@ -11,6 +11,8 @@ import type {
   BuilderIdentity,
   ChainId,
   DlcBond,
+  DlcCetRequest,
+  DlcCetResult,
   JobCard,
   M2MSettlement,
   MrrReport,
@@ -201,6 +203,47 @@ export class GatewayClient {
     return this.fetchJson<DlcBond>("/v1/dlc/bond", {
       method: "POST",
       body: JSON.stringify({ ...params, amountSat: params.amountSat.toString() }),
+    });
+  }
+
+  /**
+   * Build an adaptor-signature CET for a DLC outcome (real path).
+   * Returns `broadcastReady: false` until the oracle attestation scalar is
+   * supplied and the completed signature verifies.
+   */
+  async createDlcCet(request: DlcCetRequest): Promise<DlcCetResult> {
+    return this.fetchJson<DlcCetResult>("/v1/dlc/cet", {
+      method: "POST",
+      body: JSON.stringify({
+        contract_id: request.contractId,
+        outcome: request.outcome,
+        oracle_nonce: request.oracleNonce,
+        signer_secret: request.signerSecret,
+        signer_nonce: request.signerNonce,
+        oracle_attestation_scalar: request.oracleAttestationScalar,
+        spec: {
+          party_a_pubkey: request.spec.partyAPubkey,
+          party_b_pubkey: request.spec.partyBPubkey,
+          party_a_payout_address: request.spec.partyAPayoutAddress,
+          party_b_payout_address: request.spec.partyBPayoutAddress,
+          total_collateral_sats: request.spec.totalCollateralSats,
+          oracle_pubkey: request.spec.oraclePubkey,
+          event_id: request.spec.eventId,
+          refund_locktime: request.spec.refundLocktime,
+          feerate_sats_per_vbyte: request.spec.feerateSatsPerVbyte,
+          funding_inputs: request.spec.fundingInputs.map((i) => ({
+            txid: i.txid,
+            vout: i.vout,
+            amount_sats: i.amountSats,
+            party: i.party,
+          })),
+          outcomes: request.spec.outcomes.map((o) => ({
+            outcome: o.outcome,
+            party_a_payout_sats: o.partyAPayoutSats,
+            party_b_payout_sats: o.partyBPayoutSats,
+          })),
+        },
+      }),
     });
   }
 
