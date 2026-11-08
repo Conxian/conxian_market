@@ -192,6 +192,50 @@ export enum DlcBondStatus {
   Refunded = "REFUNDED",
 }
 
+/** Request for the gateway's adaptor-signature CET builder (`POST /v1/dlc/cet`). */
+export interface DlcCetRequest {
+  contractId: string;
+  outcome: string;
+  /** Hex-encoded oracle per-outcome nonce point (R). */
+  oracleNonce: string;
+  /** Hex-encoded signer secret scalar (32 bytes). */
+  signerSecret: string;
+  /** Hex-encoded signer nonce scalar (32 bytes). */
+  signerNonce: string;
+  /** Hex-encoded oracle attestation scalar `s`; absent until the oracle attests. */
+  oracleAttestationScalar?: string;
+  spec: DlcCetSpec;
+}
+
+/** Wire spec for a DLC contract (mirrors the gateway `DlcContractSpec`). */
+export interface DlcCetSpec {
+  partyAPubkey: string;
+  partyBPubkey: string;
+  partyAPayoutAddress: string;
+  partyBPayoutAddress: string;
+  totalCollateralSats: number;
+  oraclePubkey: string;
+  eventId: string;
+  refundLocktime: number;
+  feerateSatsPerVbyte?: number;
+  fundingInputs: Array<{ txid: string; vout: number; amountSats: number; party: string }>;
+  outcomes: Array<{ outcome: string; partyAPayoutSats: number; partyBPayoutSats: number }>;
+}
+
+/** Result of the gateway's adaptor-signature CET builder. */
+export interface DlcCetResult {
+  contractId: string;
+  outcome: string;
+  cetTxid: string;
+  cetSighash: string;
+  adaptedNonce: string;
+  adaptorScalar: string;
+  /** Present only once the oracle attestation scalar completed the CET. */
+  completedSignature: string | null;
+  /** True only when a completed signature verified — the CET may be broadcast. */
+  broadcastReady: boolean;
+}
+
 // ── FROST / MuSig2 Types (conxius-enclave-sdk: frost) ──
 
 export interface Musig2KeyAggregation {
@@ -391,7 +435,7 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
   bitvm2Available: false,        // ProtocolUnsupported gate
   frostAvailable: false,         // ProtocolUnsupported gate
   arkAvailable: false,           // ProtocolUnsupported gate
-  dlcCetAvailable: false,        // CET stub
+  dlcCetAvailable: false,        // default off; enable when the gateway advertises DLC support
 };
 
 export interface CapabilitySummary {

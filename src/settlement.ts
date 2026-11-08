@@ -23,6 +23,8 @@ import type {
   VtxoTransfer,
   YieldOpportunity,
   AttestationCertificate,
+  DlcCetRequest,
+  DlcCetResult,
 } from "./core_types.js";
 import { SettlementRail as Rail, TrustTier as Tier } from "./core_types.js";
 import { DEFAULT_FEATURE_FLAGS } from "./core_types.js";
@@ -152,9 +154,25 @@ export class SettlementOrchestrator {
     maturity: number;
   }) {
     if (!this.flags.dlcCetAvailable) {
-      throw new Error("DLC CET execution path not available (gateway stub)");
+      throw new Error(
+        "DLC CET execution path not available: the gateway does not advertise DLC support",
+      );
     }
     return this.gateway.createDlcBond(params);
+  }
+
+  /**
+   * Build an adaptor-signature CET for a DLC outcome via the gateway's real
+   * CET path. Gated on the same capability flag: when the gateway does not
+   * advertise DLC support, this fails closed rather than returning a stub.
+   */
+  async createDlcCet(request: DlcCetRequest): Promise<DlcCetResult> {
+    if (!this.flags.dlcCetAvailable) {
+      throw new Error(
+        "DLC CET execution path not available: the gateway does not advertise DLC support",
+      );
+    }
+    return this.gateway.createDlcCet(request);
   }
 
   /** Aggregate MuSig2 keys for threshold signing */
