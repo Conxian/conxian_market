@@ -20,31 +20,31 @@ In Session 56, a comprehensive multi-repository audit, infrastructure health ass
 ## 2. Infrastructure & Cloud Resource Audit
 
 ### A. Managed Neon PostgreSQL Databases
-- **Conxian Nexus (`orange-paper-76209725`)**:
+- **Conxian Nexus (`neon-project-<redacted>`)**:
   - **Region:** `aws-eu-central-1` | **Engine:** PG17
   - **Role:** Primary metadata & authentication store. Schemas: `cnx_bos`, `erp_mock`, `affiliate`, `neon_auth`.
-- **Business Operating System (`noisy-flower-17484435`)**:
+- **Business Operating System (`neon-project-<redacted>`)**:
   - **Region:** `aws-us-east-2` | **Engine:** PG18
   - **Role:** BOS analytical store & corporate telemetry.
-- **Market (`small-math-44741750`)**:
+- **Market (`neon-project-<redacted>`)**:
   - **Region:** `aws-eu-central-1` | **Engine:** PG18
   - **Role:** Marketplace event, order, and settlement log store.
-- **Gateway (`noisy-cloud-41146057`)**:
+- **Gateway (`neon-project-<redacted>`)**:
   - **Region:** `aws-ap-southeast-1` | **Engine:** PG18
   - **Role:** Edge ingress & gateway connection log store.
-- **Conxian Core (`sparkling-sunset-69236559`)**:
+- **Conxian Core (`neon-project-<redacted>`)**:
   - **Region:** `aws-us-east-2` | **Engine:** PG18
   - **Role:** Core orchestrator state store.
 
 ### B. Render Cloud Services
-- **Workspace:** `Conxian-Business` (`tea-d6u0edngi27c73dvhsg0`)
+- **Workspace:** `Conxian-Business` (`tea-<redacted>`)
 - **Active Web Services:**
-  - `conxian-ui-prod` (`srv-d96fl2mq1p3s73c2e8k0`): Node runtime on `main`.
-  - `conxian-ui` (`srv-d7b0el3uibrs73b2qjg0`): Node runtime on `main`.
-  - `conxian-business` (`srv-d9gam3m1a83c73bmrfc0`): Docker container runtime.
+  - `conxian-ui-prod` (`srv-<redacted>`): Node runtime on `main`.
+  - `conxian-ui` (`srv-<redacted>`): Node runtime on `main`.
+  - `conxian-business` (`srv-<redacted>`): Docker container runtime.
 - **Active Static Sites:**
-  - `conxian-business-static-docs` (`srv-d9h2nu2b6mfs738i6gb0`): Documentation host.
-  - `conxian-labs-static-v1` (`srv-d8fmr7v40ujc73b7ba8g`): Labs portal.
+  - `conxian-business-static-docs` (`srv-<redacted>`): Documentation host.
+  - `conxian-labs-static-v1` (`srv-<redacted>`): Labs portal.
 
 ---
 

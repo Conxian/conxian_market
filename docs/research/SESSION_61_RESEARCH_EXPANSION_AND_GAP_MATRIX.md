@@ -24,16 +24,16 @@ Session 61 conducts a comprehensive review and research expansion across the ent
 ## 2. Infrastructure & Cloud Resource Audit
 
 ### Managed Neon PostgreSQL Instances
-- **Conxian Nexus (`orange-paper-76209725`)**: Region `aws-eu-central-1`, PG17.
-- **Business Operating System (`noisy-flower-17484435`)**: Region `aws-us-east-2`, PG18.
-- **Market (`small-math-44741750`)**: Region `aws-eu-central-1`, PG18.
-- **Gateway (`noisy-cloud-41146057`)**: Region `aws-ap-southeast-1`, PG18.
-- **Conxian Core (`sparkling-sunset-69236559`)**: Region `aws-us-east-2`, PG18.
+- **Conxian Nexus (`neon-project-<redacted>`)**: Region `aws-eu-central-1`, PG17.
+- **Business Operating System (`neon-project-<redacted>`)**: Region `aws-us-east-2`, PG18.
+- **Market (`neon-project-<redacted>`)**: Region `aws-eu-central-1`, PG18.
+- **Gateway (`neon-project-<redacted>`)**: Region `aws-ap-southeast-1`, PG18.
+- **Conxian Core (`neon-project-<redacted>`)**: Region `aws-us-east-2`, PG18.
 
 ### Render Cloud Services (`Conxian-Business` Workspace)
-- `conxian-ui-prod` (`srv-d96fl2mq1p3s73c2e8k0`): Web UI.
-- `conxian-ui` (`srv-d7b0el3uibrs73b2qjg0`): Dev UI.
-- `conxian-business` (`srv-d9gam3m1a83c73bmrfc0`): Microservices.
+- `conxian-ui-prod` (`srv-<redacted>`): Web UI.
+- `conxian-ui` (`srv-<redacted>`): Dev UI.
+- `conxian-business` (`srv-<redacted>`): Microservices.
 
 ---
 
