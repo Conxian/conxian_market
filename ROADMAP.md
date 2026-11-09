@@ -24,7 +24,7 @@ The Conxian Market SDK serves as the value, settlement, SLA enforcement, and tru
 - [x] Implemented `SlaEngine` in `src/sla_engine.ts`.
 
 ### Session 50 — Telemetry & Treasury Health Watcher
-- [x] Full ecosystem audit across Neon DBs (`orange-paper-76209725`, etc.), Supabase instances (`yauldfcpswnufgwfvnlr`), and Render deployments.
+- [x] Full ecosystem audit across Neon DBs (`neon-project-<redacted>`, etc.), Supabase instances (`supabase-ref-<redacted>`), and Render deployments.
 - [x] Research expansion and candidate scoring matrix (`SESSION_50_RESEARCH_EXPANSION_AND_GAP_MATRIX.md`).
 - [x] Implemented `MonitoringWatcher` in `src/monitoring_watcher.ts`.
 
