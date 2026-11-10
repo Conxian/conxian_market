@@ -21,15 +21,15 @@ In Session 54, a comprehensive ecosystem audit and research expansion was conduc
 
 ### A. Managed Database Infrastructure
 - **Neon Cloud Postgres**:
-  - `orange-paper-76209725` (*Conxian Nexus* - PG17): Primary production metadata database. Schemas: `cnx_bos`, `erp_mock`, `affiliate`, `neon_auth`.
-  - `noisy-flower-17484435` (*Business Operating System* - PG18): Active BOS analytical store.
-  - `small-math-44741750` (*market* - PG18): Marketplace event & settlement log store.
+  - `neon-project-<redacted>` (*Conxian Nexus* - PG17): Primary production metadata database. Schemas: `cnx_bos`, `erp_mock`, `affiliate`, `neon_auth`.
+  - `neon-project-<redacted>` (*Business Operating System* - PG18): Active BOS analytical store.
+  - `neon-project-<redacted>` (*market* - PG18): Marketplace event & settlement log store.
 - **Supabase Cloud Postgres**:
-  - `yauldfcpswnufgwfvnlr` (*Conxian BOS* - PG17): Active health status. Tables: `ma_milestones`, `exit_velocity`, `deployment_efficiency`, `runway_metrics`, `deai_requests`, `ip_audit_logs`, `ats_violations`.
-  - `iczqutrbbfudfzfplymc` (*Conxian-platform* - PG17): Telemetry & audit mirror store.
+  - `supabase-ref-<redacted>` (*Conxian BOS* - PG17): Active health status. Tables: `internal-table-<redacted>`, `internal-table-<redacted>`, `internal-table-<redacted>`, `internal-table-<redacted>`, `internal-table-<redacted>`, `internal-table-<redacted>`, `internal-table-<redacted>`.
+  - `supabase-ref-<redacted>` (*Conxian-platform* - PG17): Telemetry & audit mirror store.
 
 ### B. Render Cloud Deployments
-- **Service**: `conxian-labs-site` (`srv-d9ndhr2jnfac73as7te0`)
+- **Service**: `conxian-labs-site` (`srv-<redacted>`)
   - **URL**: `https://conxian-labs-site-xhqq.onrender.com`
   - **Status**: Active deployment on `main`.
 

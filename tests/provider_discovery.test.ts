@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { readRegistrationDiagnostic, validateRegistrationManifest, REGISTRATION_MAX_BYTES } from "../src/provider_discovery.js";
+import { readRegistrationDiagnostic, validateRegistrationManifest, REGISTRATION_MAX_BYTES, dlcCetAvailableFrom } from "../src/provider_discovery.js";
 
 const row = { adapter_id: "bitcoin", runtime_state: "registered", health: "not-observed",
   production_support: "not-evidenced", qualified_operations: [] };
@@ -100,5 +100,18 @@ describe("diagnostic provider registration contract", () => {
       init?.signal?.addEventListener("abort", () => reject(new Error(config.apiToken)));
     }));
     expect((await readRegistrationDiagnostic({ ...config, timeoutMs: 10 }, fetchImpl)).code).toBe("request_timeout");
+  });
+
+  describe("dlcCetAvailableFrom", () => {
+    it("is true only when the manifest is registered and advertises dlc", () => {
+      const registered = (adapterIds: string[]) =>
+        ({ owner: "gateway", state: "registered", code: "registration_observed", adapterIds,
+           qualifiedOperationCount: 0, productionQualified: false }) as const;
+      expect(dlcCetAvailableFrom(registered(["bitcoin", "dlc"]))).toBe(true);
+      expect(dlcCetAvailableFrom(registered(["bitcoin"]))).toBe(false);
+      // An unavailable manifest never infers support.
+      expect(dlcCetAvailableFrom({ owner: "gateway", state: "unavailable", code: "request_failed",
+        adapterIds: ["dlc"], qualifiedOperationCount: 0, productionQualified: false })).toBe(false);
+    });
   });
 });

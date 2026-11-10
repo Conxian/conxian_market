@@ -17,16 +17,16 @@ The strategic directive remains **Hardening the Core**: driving functional settl
 
 ### A. Managed Database Infrastructure
 - **Neon Cloud Postgres**:
-  - `orange-paper-76209725` (*Conxian Nexus* - PG17): Primary production database on `br-fancy-poetry-aghwta0o`. Contains `cnx_bos`, `erp_mock`, `affiliate`, `neon_auth` schemas.
-  - `noisy-flower-17484435` (*Business Operating System* - PG18): Active BOS analytical store.
-  - `small-math-44741750` (*market* - PG18): Marketplace event store.
-  - `sparkling-sunset-69236559` (*corelibs* - PG18), `weathered-night-98492579` (*Software dev kit* - PG18), `noisy-cloud-41146057` (*Gateway* - PG18).
+  - `neon-project-<redacted>` (*Conxian Nexus* - PG17): Primary production database on `br-fancy-poetry-aghwta0o`. Contains `cnx_bos`, `erp_mock`, `affiliate`, `neon_auth` schemas.
+  - `neon-project-<redacted>` (*Business Operating System* - PG18): Active BOS analytical store.
+  - `neon-project-<redacted>` (*market* - PG18): Marketplace event store.
+  - `neon-project-<redacted>` (*corelibs* - PG18), `neon-project-<redacted>` (*Software dev kit* - PG18), `neon-project-<redacted>` (*Gateway* - PG18).
 - **Supabase Cloud Postgres**:
-  - `yauldfcpswnufgwfvnlr` (*Conxian BOS* - PG17): Active health status. Tables: `ma_milestones` (26 rows), `exit_velocity` (14 rows), `deployment_efficiency` (11 rows), `runway_metrics` (4 rows), `deai_requests` (3 rows), `ip_audit_logs` (8 rows), `ats_violations` (3 rows).
-  - `iczqutrbbfudfzfplymc` (*Conxian-platform* - PG17): Active health status. Mirror schemas for telemetry and audit.
+  - `supabase-ref-<redacted>` (*Conxian BOS* - PG17): Active health status. Tables: `internal-table-<redacted>` (26 rows), `internal-table-<redacted>` (14 rows), `internal-table-<redacted>` (11 rows), `internal-table-<redacted>` (4 rows), `internal-table-<redacted>` (3 rows), `internal-table-<redacted>` (8 rows), `internal-table-<redacted>` (3 rows).
+  - `supabase-ref-<redacted>` (*Conxian-platform* - PG17): Active health status. Mirror schemas for telemetry and audit.
 
 ### B. Render Cloud Deployments
-- **Service**: `conxian-labs-site` (`srv-d9ndhr2jnfac73as7te0`)
+- **Service**: `conxian-labs-site` (`srv-<redacted>`)
   - **URL**: `https://conxian-labs-site-xhqq.onrender.com`
   - **Status**: Suspended / Not suspended active, Branch: `main`.
 

@@ -10,13 +10,13 @@ describe("Multi-Cloud Telemetry & Yield Validation", () => {
 
   const healthyInput: MultiCloudTelemetryInput = {
     supabase: {
-      databaseId: "yauldfcpswnufgwfvnlr",
+      databaseId: "supabase-ref-<redacted>",
       connectionHealth: "HEALTHY",
       activeQueryLatencyMs: 45,
       bosStatechainSyncStatus: "IN_SYNC",
     },
     neon: {
-      projectId: "orange-paper-76209725",
+      projectId: "neon-project-<redacted>",
       branchId: "br-main",
       computeState: "ACTIVE",
       cpuUsagePct: 25,

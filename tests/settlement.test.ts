@@ -138,4 +138,81 @@ describe("settlement", () => {
       expect(mockGateway.settleJobCard).not.toHaveBeenCalled();
     });
   });
+
+  describe("DLC CET path", () => {
+    it("createDlcCet fails closed when the gateway does not advertise DLC support", async () => {
+      const mockGateway = { createDlcCet: vi.fn() } as unknown as GatewayClient;
+      const mockVerifier = {} as GatewayVerifier;
+      const orchestrator = new SettlementOrchestrator(mockGateway, mockVerifier, {
+        ...DEFAULT_FEATURE_FLAGS,
+        dlcCetAvailable: false,
+      });
+
+      await expect(
+        orchestrator.createDlcCet({
+          contractId: "dlc-1",
+          outcome: "up",
+          oracleNonce: "02".repeat(33),
+          signerSecret: "11".repeat(32),
+          signerNonce: "22".repeat(32),
+          spec: {
+            partyAPubkey: "a",
+            partyBPubkey: "b",
+            partyAPayoutAddress: "bc1qa",
+            partyBPayoutAddress: "bc1qb",
+            totalCollateralSats: 100_000,
+            oraclePubkey: "02".repeat(33),
+            eventId: "evt",
+            refundLocktime: 1,
+            fundingInputs: [],
+            outcomes: [{ outcome: "up", partyAPayoutSats: 1, partyBPayoutSats: 1 }],
+          },
+        }),
+      ).rejects.toThrow(/does not advertise DLC support/);
+      expect(mockGateway.createDlcCet).not.toHaveBeenCalled();
+    });
+
+    it("createDlcCet delegates to the gateway when DLC support is enabled", async () => {
+      const expected = {
+        contractId: "dlc-1",
+        outcome: "up",
+        cetTxid: "tx",
+        cetSighash: "sh",
+        adaptedNonce: "02".repeat(33),
+        adaptorScalar: "33".repeat(32),
+        completedSignature: null,
+        broadcastReady: false,
+      };
+      const mockGateway = {
+        createDlcCet: vi.fn().mockResolvedValue(expected),
+      } as unknown as GatewayClient;
+      const orchestrator = new SettlementOrchestrator(mockGateway, {} as GatewayVerifier, {
+        ...DEFAULT_FEATURE_FLAGS,
+        dlcCetAvailable: true,
+      });
+
+      const res = await orchestrator.createDlcCet({
+        contractId: "dlc-1",
+        outcome: "up",
+        oracleNonce: "02".repeat(33),
+        signerSecret: "11".repeat(32),
+        signerNonce: "22".repeat(32),
+        spec: {
+          partyAPubkey: "a",
+          partyBPubkey: "b",
+          partyAPayoutAddress: "bc1qa",
+          partyBPayoutAddress: "bc1qb",
+          totalCollateralSats: 100_000,
+          oraclePubkey: "02".repeat(33),
+          eventId: "evt",
+          refundLocktime: 1,
+          fundingInputs: [],
+          outcomes: [{ outcome: "up", partyAPayoutSats: 1, partyBPayoutSats: 1 }],
+        },
+      });
+
+      expect(res.broadcastReady).toBe(false);
+      expect(mockGateway.createDlcCet).toHaveBeenCalledTimes(1);
+    });
+  });
 });

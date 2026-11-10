@@ -20,16 +20,16 @@ Session 59 executes a complete end-to-end audit and research synthesis across al
 ## 2. Infrastructure & Cloud Resource Audit
 
 ### Managed Neon PostgreSQL Instances
-- **Conxian Nexus (`orange-paper-76209725`)**: Region `aws-eu-central-1`, PG17. Metadata & Auth.
-- **Business Operating System (`noisy-flower-17484435`)**: Region `aws-us-east-2`, PG18. BOS Analytics.
-- **Market (`small-math-44741750`)**: Region `aws-eu-central-1`, PG18. Settlement & Order Logs.
-- **Gateway (`noisy-cloud-41146057`)**: Region `aws-ap-southeast-1`, PG18. Ingress Logs.
-- **Conxian Core (`sparkling-sunset-69236559`)**: Region `aws-us-east-2`, PG18. Core Orchestration.
+- **Conxian Nexus (`neon-project-<redacted>`)**: Region `aws-eu-central-1`, PG17. Metadata & Auth.
+- **Business Operating System (`neon-project-<redacted>`)**: Region `aws-us-east-2`, PG18. BOS Analytics.
+- **Market (`neon-project-<redacted>`)**: Region `aws-eu-central-1`, PG18. Settlement & Order Logs.
+- **Gateway (`neon-project-<redacted>`)**: Region `aws-ap-southeast-1`, PG18. Ingress Logs.
+- **Conxian Core (`neon-project-<redacted>`)**: Region `aws-us-east-2`, PG18. Core Orchestration.
 
 ### Render Cloud Services (`Conxian-Business` Workspace)
-- `conxian-ui-prod` (`srv-d96fl2mq1p3s73c2e8k0`): Node runtime on `main`.
-- `conxian-ui` (`srv-d7b0el3uibrs73b2qjg0`): Node runtime on `main`.
-- `conxian-business` (`srv-d9gam3m1a83c73bmrfc0`): Docker runtime.
+- `conxian-ui-prod` (`srv-<redacted>`): Node runtime on `main`.
+- `conxian-ui` (`srv-<redacted>`): Node runtime on `main`.
+- `conxian-business` (`srv-<redacted>`): Docker runtime.
 - Static sites: `conxian-business-static-docs` and `conxian-labs-static-v1`.
 
 ---
