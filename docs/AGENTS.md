@@ -72,7 +72,7 @@ discovery, escrow, and treasury automation. **Now wired through `ConxianMarketSD
 |------------|----------------|:----------:|
 | **statechain** (Spark VTXO) | Off-chain BTC settlement with 1-of-n trust | 🔒 `ProtocolUnsupported` gate |
 | **frost** | Threshold signing for SAB multisig treasury | ⚠️ `sdk.aggregateKeys()` → MuSig2 (not FROST DKG) |
-| **dlc** | Discreet Log Contracts for prediction-market settlement | ⚠️ `sdk.createDlcBond()` — CET stub |
+| **dlc** | Discreet Log Contracts for prediction-market settlement | ⚠️ `sdk.createDlcCet()` → gateway `POST /v1/dlc/cet` (real adaptor-signature CET); on-chain broadcast pending |
 | **ark** | Ark VTXO-based payment pools for agent-to-agent settlement | 🔒 `ProtocolUnsupported` gate |
 | **swap_router** | Cross-rail yield optimization (ALEX ↔ Uniswap ↔ Fedimint) | ✅ `sdk.executeAlexSwap()` |
 | **settlement_service** | Multi-rail settlement orchestration | ✅ `sdk.executeSettlement()` |
