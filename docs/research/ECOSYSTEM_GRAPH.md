@@ -173,7 +173,7 @@ conxian_market (fee_calculator.ts)
 | rgb | ✅ core | ⚠️ #228 | — | ⚠️ stub | — | — |
 | babylon | ✅ core | ✅ adapter | — | ✅ bridge | — | — |
 | fedimint | ✅ core | ✅ adapter | — | ✅ bridge | — | — |
-| dlc | ✅ core | 🟡 stub | — | ⚠️ CET stub | — | — |
+| dlc | ✅ core | ⚠️ adaptor CET | — | ⚠️ adaptor CET (no broadcast) | — | — |
 | frost/musig2 | ✅ core | ✅ muSig2 | — | ⚠️ muSig2-only | ✅ | — |
 | statechain | ✅ sdk | 🔒 gate | — | 🔒 gate | — | — |
 | ark | ✅ sdk | 🔒 gate | — | 🔒 gate | — | — |
