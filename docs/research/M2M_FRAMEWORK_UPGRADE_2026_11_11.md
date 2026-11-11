@@ -91,18 +91,31 @@ and replay.
 - **No secrets in git** (ZSE): signing keys are injected by the caller from a
   secret store.
 
-## 6. Follow-ups (not done here)
+## 6. Follow-ups — now implemented (Session 77, second pass)
 
-1. Bind `AgentCard.agentId` → M2M `clientId` so identity and credential are one
-   registration (currently separate).
-2. Add an asymmetric (EdDSA/ES256) mode so verifiers need no shared secret —
-   closer to JWKS and to zero-trust.
-3. Wire `verify()` into `trust_tier_middleware.ts` as the authentication step
-   *before* tier authorization.
-4. Expose `jwks()` at a `.well-known/jwks.json` route when the market gains an
-   HTTP surface.
-5. Evaluate **dynamic client registration** for agent fleets (one client per
-   agent) once `agent_registry` is persisted.
+All four were implemented and tested (see `src/m2m_auth.ts`, `src/trust_tier_middleware.ts`):
+
+1. **`AgentCard.agentId` → M2M `clientId` binding — done.** `registerClient()`
+   accepts an optional `agentId`; issued tokens carry an `agent` claim, and
+   `verify({ requiredAgent })` fails closed with `agent_mismatch` when the
+   credential and the required agent identity disagree. `agentForClient()` reads
+   the binding back.
+2. **Asymmetric EdDSA mode — done.** `SigningKey.alg` selects `"HS256"` or
+   `"EdDSA"`; `generateEd25519SigningKey()` mints an Ed25519 pair. A verifier
+   needs only the public key. `jwksDocument()` emits an RFC 7517 JWK Set of the
+   **public** keys only — symmetric keys are omitted so no secret is published.
+   The header `alg` must match the key's `alg`, which refuses **alg-confusion**
+   (an `EdDSA` header against an `HS256` key).
+3. **Authn before tier authz — done.** `TrustTierMiddleware.authenticate(headers,
+   options)` verifies the bearer token and returns the caller's `clientId` /
+   `agent` / scopes. It is deliberately separate from `executePipeline`, so
+   authentication (who) precedes the pricing/routing pipeline (what). Callers
+   refuse the request before pricing when it fails.
+4. **JWKS document — done.** `jwksDocument()` returns the `.well-known/jwks.json`
+   shape, ready to serve; it is safe to expose.
+
+Rotation now also spans algorithms (HS256 → EdDSA) with the same retire-grace
+property, so in-flight tokens stay valid across the change.
 
 ## Sources
 

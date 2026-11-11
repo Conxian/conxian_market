@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MachineTokenAuthority, M2M_TOKEN_ALG } from "../src/m2m_auth.js";
+import { MachineTokenAuthority, M2M_TOKEN_ALG, generateEd25519SigningKey, bearerFromHeader } from "../src/m2m_auth.js";
 
 function authority(overrides: { now?: () => number; keys?: any[] } = {}) {
   const auth = new MachineTokenAuthority({
@@ -122,5 +122,92 @@ describe("MachineTokenAuthority", () => {
     const token = auth.issue({ clientId: "svc-settlement", clientSecret: "s", audience: AUD });
     expect(auth.verify(token.accessToken, { audience: AUD }).ok).toBe(true);
     expect(auth.verify(token.accessToken, { audience: AUD })).toEqual({ ok: false, reason: "replayed" });
+  });
+});
+
+describe("MachineTokenAuthority — EdDSA (asymmetric) mode", () => {
+  it("signs with EdDSA and verifies with the public key only", () => {
+    const signer = new MachineTokenAuthority({
+      issuer: "https://market.conxian.example",
+      keys: [generateEd25519SigningKey("ed1", 0)],
+    });
+    signer.registerClient({ clientId: "svc", secret: "s", allowedScopes: ["settle:write"], allowedAudiences: [AUD] });
+    const token = signer.issue({ clientId: "svc", clientSecret: "s", audience: AUD });
+
+    const [h] = token.accessToken.split(".");
+    expect(JSON.parse(Buffer.from(h, "base64url").toString("utf8")).alg).toBe("EdDSA");
+
+    // A separate verifier holding only the public key (no shared secret).
+    const publicOnly = signer.jwksDocument();
+    expect(publicOnly.keys.length).toBe(1);
+    expect(publicOnly.keys[0]).toMatchObject({ kid: "ed1", alg: "EdDSA", use: "sig" });
+    // The public JWK must not carry the private 'd' component.
+    expect(publicOnly.keys[0]).not.toHaveProperty("d");
+
+    expect(signer.verify(token.accessToken, { audience: AUD, requiredScopes: ["settle:write"] }).ok).toBe(true);
+  });
+
+  it("omits symmetric keys from the JWKS document", () => {
+    const auth = authority();
+    expect(auth.jwksDocument()).toEqual({ keys: [] });
+  });
+
+  it("rejects an alg-confusion token (EdDSA header against an HS256 key)", () => {
+    const auth = new MachineTokenAuthority({
+      issuer: "https://market.conxian.example",
+      keys: [{ kid: "hs1", secret: Buffer.from("k"), status: "active", createdAt: 0 }],
+    });
+    auth.registerClient({ clientId: "svc", secret: "s", allowedScopes: ["a"], allowedAudiences: [AUD] });
+    const token = auth.issue({ clientId: "svc", clientSecret: "s", audience: AUD });
+    const [, p, s] = token.accessToken.split(".");
+    const forgedHeader = Buffer.from(JSON.stringify({ alg: "EdDSA", typ: "JWT", kid: "hs1" })).toString("base64url");
+    expect(auth.verify(`${forgedHeader}.${p}.${s}`, { audience: AUD })).toEqual({ ok: false, reason: "unsupported_alg" });
+  });
+
+  it("rotates from HS256 to EdDSA, keeping in-flight tokens valid", () => {
+    let now = 0;
+    const auth = new MachineTokenAuthority({
+      issuer: "https://market.conxian.example",
+      keys: [{ kid: "hs1", secret: Buffer.from("k"), status: "active", createdAt: 0 }],
+      now: () => now,
+    });
+    auth.registerClient({ clientId: "svc", secret: "s", allowedScopes: ["a"], allowedAudiences: [AUD] });
+    const before = auth.issue({ clientId: "svc", clientSecret: "s", audience: AUD });
+    auth.rotate(generateEd25519SigningKey("ed2", 1000), 60_000);
+    expect(auth.verify(before.accessToken, { audience: AUD }).ok).toBe(true);
+    const after = auth.issue({ clientId: "svc", clientSecret: "s", audience: AUD });
+    expect(JSON.parse(Buffer.from(after.accessToken.split(".")[0], "base64url").toString("utf8")).kid).toBe("ed2");
+  });
+});
+
+describe("MachineTokenAuthority — agent identity binding", () => {
+  it("carries the bound agent and enforces requiredAgent", () => {
+    const auth = authority();
+    auth.registerClient({
+      clientId: "svc-agent",
+      secret: "s",
+      allowedScopes: ["jobs:read"],
+      allowedAudiences: [AUD],
+      agentId: "agent-42",
+    });
+    const token = auth.issue({ clientId: "svc-agent", clientSecret: "s", audience: AUD });
+    const ok = auth.verify(token.accessToken, { audience: AUD, requiredAgent: "agent-42" });
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.claims.agent).toBe("agent-42");
+    expect(auth.verify(token.accessToken, { audience: AUD, requiredAgent: "agent-99" })).toEqual({
+      ok: false,
+      reason: "agent_mismatch",
+    });
+    expect(auth.agentForClient("svc-agent")).toBe("agent-42");
+    expect(auth.agentForClient("svc-settlement")).toBeUndefined();
+  });
+});
+
+describe("bearerFromHeader", () => {
+  it("extracts a case-insensitive bearer token and rejects malformed headers", () => {
+    expect(bearerFromHeader("Bearer abc.def.ghi")).toBe("abc.def.ghi");
+    expect(bearerFromHeader("bearer xyz")).toBe("xyz");
+    expect(bearerFromHeader("Basic abc")).toBeUndefined();
+    expect(bearerFromHeader(undefined)).toBeUndefined();
   });
 });

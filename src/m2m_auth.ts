@@ -19,9 +19,22 @@
  * `settlement.ts`.
  */
 
-import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import {
+  createHmac,
+  createPublicKey,
+  generateKeyPairSync,
+  randomUUID,
+  sign as cryptoSign,
+  timingSafeEqual,
+  verify as cryptoVerify,
+  type KeyObject,
+} from "node:crypto";
+
+/** HS256 (shared secret) or EdDSA (Ed25519, asymmetric). */
+export type M2MAlg = "HS256" | "EdDSA";
 
 export const M2M_TOKEN_ALG = "HS256" as const;
+export const M2M_EDDSA_ALG = "EdDSA" as const;
 
 export interface MachineClient {
   clientId: string;
@@ -31,14 +44,27 @@ export interface MachineClient {
   allowedScopes: string[];
   /** Audiences this client may address. */
   allowedAudiences: string[];
+  /**
+   * Optional ERC-8004 agent identity this client is bound to. When set, tokens
+   * issued for the client carry `agent`, and a verifier can require that the
+   * credential and the agent identity agree — closing the gap where identity
+   * (`agent_registry.ts`) and credential (here) were separate registrations.
+   */
+  agentId?: string;
 }
 
 export type SigningKeyStatus = "active" | "retired";
 
 export interface SigningKey {
   kid: string;
-  /** HMAC key material. Supplied by the caller from a secret store; never committed. */
-  secret: Buffer;
+  /** Defaults to `HS256` when omitted (backward compatible). */
+  alg?: M2MAlg;
+  /** HS256: HMAC key material. Supplied by the caller; never committed. */
+  secret?: Buffer;
+  /** EdDSA: signing key (issuer). Never leaves the issuer. */
+  privateKey?: KeyObject;
+  /** EdDSA: verify-only key. A verifier needs only this — no shared secret. */
+  publicKey?: KeyObject;
   status: SigningKeyStatus;
   createdAt: number;
   /**
@@ -57,6 +83,8 @@ export interface TokenClaims {
   iat: number;
   exp: number;
   jti: string;
+  /** ERC-8004 agent id bound to the client, when the client is bound. */
+  agent?: string;
 }
 
 export interface IssuedToken {
@@ -77,6 +105,7 @@ export type VerifyFailure =
   | "expired"
   | "wrong_audience"
   | "insufficient_scope"
+  | "agent_mismatch"
   | "replayed";
 
 export type VerifyResult =
@@ -104,9 +133,34 @@ function fromB64url(input: string): Buffer {
   return Buffer.from(input.replace(/-/gu, "+").replace(/_/gu, "/") + pad, "base64");
 }
 
-function sign(kid: string, payloadSegment: string, secret: Buffer): string {
-  const header = b64url(JSON.stringify({ alg: M2M_TOKEN_ALG, typ: "JWT", kid }));
-  return `${header}.${payloadSegment}.${b64url(createHmac("sha256", secret).update(`${header}.${payloadSegment}`).digest())}`;
+function sign(kid: string, payloadSegment: string, alg: M2MAlg, key: SigningKey): string {
+  const header = b64url(JSON.stringify({ alg, typ: "JWT", kid }));
+  const signingInput = `${header}.${payloadSegment}`;
+  let signature: Buffer;
+  if (alg === "EdDSA") {
+    if (!key.privateKey) throw new Error("EdDSA signing requires a private key");
+    signature = cryptoSign(null, Buffer.from(signingInput, "utf8"), key.privateKey);
+  } else {
+    if (!key.secret) throw new Error("HS256 signing requires a secret");
+    signature = createHmac("sha256", key.secret).update(signingInput).digest();
+  }
+  return `${signingInput}.${b64url(signature)}`;
+}
+
+function verifySignature(alg: M2MAlg, key: SigningKey, signingInput: string, signatureB64: string): boolean {
+  const signature = fromB64url(signatureB64);
+  if (alg === "EdDSA") {
+    const publicKey = key.publicKey ?? (key.privateKey ? createPublicKey(key.privateKey) : undefined);
+    if (!publicKey) return false;
+    return cryptoVerify(null, Buffer.from(signingInput, "utf8"), publicKey, signature);
+  }
+  if (!key.secret) return false;
+  const expected = createHmac("sha256", key.secret).update(signingInput).digest();
+  return signature.length === expected.length && timingSafeEqual(signature, expected);
+}
+
+function keyAlg(key: SigningKey): M2MAlg {
+  return key.alg ?? M2M_TOKEN_ALG;
 }
 
 /**
@@ -140,7 +194,13 @@ export class MachineTokenAuthority {
       secretHash,
       allowedScopes: [...client.allowedScopes],
       allowedAudiences: [...client.allowedAudiences],
+      ...(client.agentId !== undefined ? { agentId: client.agentId } : {}),
     });
+  }
+
+  /** The ERC-8004 agent identity bound to a client, if any. */
+  agentForClient(clientId: string): string | undefined {
+    return this.clients.get(clientId)?.agentId;
   }
 
   /**
@@ -169,12 +229,13 @@ export class MachineTokenAuthority {
       iat,
       exp: iat + ttl,
       jti: randomUUID(),
+      ...(client.agentId !== undefined ? { agent: client.agentId } : {}),
     };
 
     const active = this.activeKey();
     const payload = b64url(JSON.stringify(claims));
     return {
-      accessToken: sign(active.kid, payload, active.secret),
+      accessToken: sign(active.kid, payload, keyAlg(active), active),
       tokenType: "Bearer",
       expiresIn: ttl,
       scope: claims.scope.join(" "),
@@ -182,7 +243,10 @@ export class MachineTokenAuthority {
   }
 
   /** Verify a bearer token. Every failure path returns `{ ok: false }`. */
-  verify(token: string, requirements: { audience: string; requiredScopes?: string[] }): VerifyResult {
+  verify(
+    token: string,
+    requirements: { audience: string; requiredScopes?: string[]; requiredAgent?: string },
+  ): VerifyResult {
     const parts = token.split(".");
     if (parts.length !== 3) return { ok: false, reason: "malformed" };
 
@@ -192,16 +256,20 @@ export class MachineTokenAuthority {
     } catch {
       return { ok: false, reason: "malformed" };
     }
-    if (header.alg !== M2M_TOKEN_ALG) return { ok: false, reason: "unsupported_alg" };
+    if (header.alg !== "HS256" && header.alg !== "EdDSA") return { ok: false, reason: "unsupported_alg" };
 
     const key = this.keys.find((candidate) => candidate.kid === header.kid);
     if (!key) return { ok: false, reason: "unknown_key" };
+    // The header algorithm must match the key's algorithm: a token cannot
+    // downgrade an asymmetric key to a shared-secret check (alg confusion).
+    if (keyAlg(key) !== header.alg) return { ok: false, reason: "unsupported_alg" };
     if (key.status === "retired" && key.notAfter !== undefined && this.now() >= key.notAfter) {
       return { ok: false, reason: "expired_key" };
     }
 
-    const expected = sign(key.kid, parts[1], key.secret).split(".")[2];
-    if (!safeEqualString(expected, parts[2])) return { ok: false, reason: "bad_signature" };
+    if (!verifySignature(header.alg as M2MAlg, key, `${parts[0]}.${parts[1]}`, parts[2])) {
+      return { ok: false, reason: "bad_signature" };
+    }
 
     let claims: TokenClaims;
     try {
@@ -222,6 +290,11 @@ export class MachineTokenAuthority {
         return { ok: false, reason: "insufficient_scope" };
       }
     }
+    // Credential/identity binding: when the caller requires an agent identity,
+    // the token must carry exactly that agent. Fail closed otherwise.
+    if (requirements.requiredAgent !== undefined && claims.agent !== requirements.requiredAgent) {
+      return { ok: false, reason: "agent_mismatch" };
+    }
     if (this.replayGuard && !this.replayGuard.claim(claims.jti)) {
       return { ok: false, reason: "replayed" };
     }
@@ -233,6 +306,8 @@ export class MachineTokenAuthority {
    * Rotate the signing keyset: the new key becomes active and the previous
    * active key is retired but kept verifying until `retireAfter` (ms). This is
    * the JWK-rotation step — tokens signed just before rotation stay valid.
+   * Rotation may change the algorithm (e.g. HS256 → EdDSA): old tokens verify
+   * against the retired key until the grace window closes.
    */
   rotate(newKey: SigningKey, retireAfterMs: number): void {
     if (this.keys.some((k) => k.kid === newKey.kid)) throw new Error("signing key id already present");
@@ -247,13 +322,31 @@ export class MachineTokenAuthority {
   }
 
   /** Public keyset metadata (JWKS shape). Never includes secret material. */
-  jwks(): Array<{ kid: string; alg: string; status: SigningKeyStatus; notAfter?: number }> {
+  jwks(): Array<{ kid: string; alg: M2MAlg; status: SigningKeyStatus; notAfter?: number }> {
     return this.keys.map((key) => ({
       kid: key.kid,
-      alg: M2M_TOKEN_ALG,
+      alg: keyAlg(key),
       status: key.status,
       ...(key.notAfter !== undefined ? { notAfter: key.notAfter } : {}),
     }));
+  }
+
+  /**
+   * An RFC 7517 JWK Set containing only the **public** keys, so a separate
+   * verifier needs no shared secret. HS256 keys are symmetric and are therefore
+   * omitted — publishing them would disclose the signing secret. Serve this at
+   * `/.well-known/jwks.json`; it is safe to expose.
+   */
+  jwksDocument(): { keys: Record<string, unknown>[] } {
+    const keys: Record<string, unknown>[] = [];
+    for (const key of this.keys) {
+      if (keyAlg(key) !== M2M_EDDSA_ALG) continue;
+      const publicKey = key.publicKey ?? (key.privateKey ? createPublicKey(key.privateKey) : undefined);
+      if (!publicKey) continue;
+      const jwk = publicKey.export({ format: "jwk" }) as Record<string, unknown>;
+      keys.push({ ...jwk, kid: key.kid, alg: M2M_EDDSA_ALG, use: "sig" });
+    }
+    return { keys };
   }
 
   private activeKey(): SigningKey {
@@ -261,6 +354,19 @@ export class MachineTokenAuthority {
     if (!active) throw new Error("no active signing key");
     return active;
   }
+}
+
+/** Generate an Ed25519 keypair for asymmetric (EdDSA) M2M tokens. */
+export function generateEd25519SigningKey(kid: string, createdAt: number, status: SigningKeyStatus = "active"): SigningKey {
+  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  return { kid, alg: M2M_EDDSA_ALG, privateKey, publicKey, status, createdAt };
+}
+
+/** Extract a bearer token from an `authorization` header value, or undefined. */
+export function bearerFromHeader(header: string | undefined | null): string | undefined {
+  if (typeof header !== "string") return undefined;
+  const match = /^Bearer\s+(.+)$/iu.exec(header.trim());
+  return match?.[1];
 }
 
 /** Constant-time comparison of two strings (utf8). */
