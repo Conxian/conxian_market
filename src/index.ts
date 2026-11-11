@@ -91,6 +91,8 @@ export type {
   TierDowngradeRequest,
   TierDowngradeResult,
   TierTransitionStatus,
+  AuthenticateOptions,
+  AuthenticateResult,
 } from "./trust_tier_middleware.js";
 export { BosYieldSplitter, FEE_DECAY_TIMELINE } from "./bos_yield_splitter.js";
 export type {
@@ -226,11 +228,18 @@ export type {
 } from "./core_types.js";
 
 // Session 77: M2M (machine-to-machine) service authentication
-export { MachineTokenAuthority, M2M_TOKEN_ALG } from "./m2m_auth.js";
+export {
+  MachineTokenAuthority,
+  M2M_TOKEN_ALG,
+  M2M_EDDSA_ALG,
+  generateEd25519SigningKey,
+  bearerFromHeader,
+} from "./m2m_auth.js";
 export type {
   MachineClient,
   SigningKey,
   SigningKeyStatus,
+  M2MAlg,
   TokenClaims,
   IssuedToken,
   VerifyFailure,
