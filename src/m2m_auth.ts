@@ -1,10 +1,18 @@
 /**
- * Conxian Market: Machine-to-Machine (M2M) authentication.
+ * Conxian Market: Machine-to-Machine (M2M) authentication — **market-internal**.
  *
- * Gives the SDK a standards-shaped service-to-service credential so a machine
- * (agent, provider adapter, settlement worker) can authenticate *to* the market
- * surface without a human session, following the OAuth2 client-credentials
- * pattern and JWK-style signing-key rotation.
+ * NOTE ON SCOPE: this module is a market-internal issuer with its own client
+ * registry. It is **not** the organization M2M standard. The org contract is
+ * defined by `conxius-platform` (`docs/M2M_AUTHENTICATION.md`) and verified by
+ * the Gateway (`conxian-gateway` `internal/api/src/m2m_auth.rs`). To accept the
+ * organization's service JWTs, use `org_m2m.ts` in this package. This module
+ * remains for market-internal service credentials and for the EdDSA/JWKS
+ * research that informed the org work.
+ *
+ * Gives the SDK a service-to-service credential so a machine (agent, provider
+ * adapter, settlement worker) can authenticate *to* the market surface without
+ * a human session, following the OAuth2 client-credentials pattern and
+ * JWK-style signing-key rotation.
  *
  * Design constraints (matches the repository posture):
  *   - No new runtime dependency: uses `node:crypto` only.
