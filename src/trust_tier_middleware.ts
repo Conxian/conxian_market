@@ -13,6 +13,7 @@ import type { FeatureFlags, SettlementRail, TrustTier } from "./core_types.js";
 import { DEFAULT_FEATURE_FLAGS, TrustTier as Tier, SettlementRail as Rail } from "./core_types.js";
 import { calculateRailFee, FeeResult, selectRail, RailPreference } from "./fee_calculator.js";
 import { degradeTierForP0Gaps, detectTrustTierStatic } from "./verification.js";
+import { bearerFromHeader, type MachineTokenAuthority, type VerifyFailure } from "./m2m_auth.js";
 
 // ── Pipeline Interfaces ──
 
@@ -21,6 +22,8 @@ export interface TrustTierHeaders {
   "x-conxian-zk-proof"?: string;
   "x-conxian-enclave-attestation"?: string;
   "x-conxian-light-proof"?: string;
+  /** Bearer token for the M2M authentication stage (see `authenticate`). */
+  authorization?: string;
 }
 
 export interface TrustTierPipelineRequest {
@@ -29,6 +32,24 @@ export interface TrustTierPipelineRequest {
   preferredRail?: SettlementRail;
   preference?: RailPreference;
 }
+
+/** Options for the authentication stage that precedes tier authorization. */
+export interface AuthenticateOptions {
+  /** M2M token authority that issues/verifies machine credentials. */
+  authority: MachineTokenAuthority;
+  /** Audience the token must be addressed to (e.g. the market API origin). */
+  audience: string;
+  /** Scopes the operation requires. */
+  requiredScopes?: string[];
+  /** When set, the token's bound agent identity must equal this value. */
+  requiredAgent?: string;
+  /** Header carrying the bearer token. Defaults to `authorization`. */
+  header?: string;
+}
+
+export type AuthenticateResult =
+  | { authenticated: true; clientId: string; agent?: string; scopes: string[] }
+  | { authenticated: false; reason: "missing_token" | VerifyFailure };
 
 export interface SlaTemplate {
   tier: TrustTier;
@@ -435,6 +456,35 @@ export class TrustTierMiddleware {
 
   constructor(private readonly flags: FeatureFlags = DEFAULT_FEATURE_FLAGS) {
     this.lifecycleEngine = new TrustTierLifecycleEngine(flags);
+  }
+
+  /**
+   * Authentication stage (runs *before* tier authorization). Verifies the M2M
+   * bearer token against the configured authority and returns the caller's
+   * client identity. Fail-closed: any failure returns `authenticated: false`.
+   *
+   * This is deliberately separate from `executePipeline`: authentication
+   * establishes *who* the caller is; the pipeline decides *what* they may do at
+   * their trust tier. Callers should run `authenticate` first and refuse the
+   * request before pricing/routing when it fails.
+   */
+  authenticate(headers: TrustTierHeaders, options: AuthenticateOptions): AuthenticateResult {
+    const headerName = options.header ?? "authorization";
+    const token = bearerFromHeader(headers[headerName as keyof TrustTierHeaders]);
+    if (!token) return { authenticated: false, reason: "missing_token" };
+
+    const result = options.authority.verify(token, {
+      audience: options.audience,
+      ...(options.requiredScopes !== undefined ? { requiredScopes: options.requiredScopes } : {}),
+      ...(options.requiredAgent !== undefined ? { requiredAgent: options.requiredAgent } : {}),
+    });
+    if (!result.ok) return { authenticated: false, reason: result.reason };
+    return {
+      authenticated: true,
+      clientId: result.claims.sub,
+      ...(result.claims.agent !== undefined ? { agent: result.claims.agent } : {}),
+      scopes: [...result.claims.scope],
+    };
   }
 
   /**
