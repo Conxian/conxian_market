@@ -224,3 +224,16 @@ export type {
   BusinessOpportunityInput,
   BusinessOpportunityScorecard,
 } from "./core_types.js";
+
+// Session 77: M2M (machine-to-machine) service authentication
+export { MachineTokenAuthority, M2M_TOKEN_ALG } from "./m2m_auth.js";
+export type {
+  MachineClient,
+  SigningKey,
+  SigningKeyStatus,
+  TokenClaims,
+  IssuedToken,
+  VerifyFailure,
+  VerifyResult,
+  AuthorityOptions,
+} from "./m2m_auth.js";
