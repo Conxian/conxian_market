@@ -246,3 +246,15 @@ export type {
   VerifyResult,
   AuthorityOptions,
 } from "./m2m_auth.js";
+
+// Session 77: verification of the ORGANIZATION M2M service JWTs (conxius-platform contract)
+export {
+  verifyOrgM2mJwt,
+  parseOrgBearer,
+  ORG_M2M_ALG,
+  ORG_M2M_TYP,
+  ORG_JWT_SERVICE_IDS,
+  ORG_KNOWN_SCOPES,
+  ORG_SERVICE_PERMISSIONS,
+} from "./org_m2m.js";
+export type { OrgM2mConfig, OrgM2mResult, OrgM2mFailure } from "./org_m2m.js";
