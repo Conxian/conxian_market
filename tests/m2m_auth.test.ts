@@ -209,5 +209,14 @@ describe("bearerFromHeader", () => {
     expect(bearerFromHeader("bearer xyz")).toBe("xyz");
     expect(bearerFromHeader("Basic abc")).toBeUndefined();
     expect(bearerFromHeader(undefined)).toBeUndefined();
+    expect(bearerFromHeader("Bearer   ")).toBeUndefined();
+  });
+
+  it("stays linear on pathological input (no ReDoS)", () => {
+    // A backtracking regex would take exponential time here.
+    const pathological = "bearer " + " ".repeat(100_000) + "x";
+    const started = Date.now();
+    bearerFromHeader(pathological);
+    expect(Date.now() - started).toBeLessThan(100);
   });
 });
