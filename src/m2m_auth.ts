@@ -125,7 +125,11 @@ const DEFAULT_TTL_SECONDS = 300;
 
 function b64url(input: Buffer | string): string {
   const buf = Buffer.isBuffer(input) ? input : Buffer.from(input, "utf8");
-  return buf.toString("base64").replace(/\+/gu, "-").replace(/\//gu, "_").replace(/=+$/u, "");
+  const encoded = buf.toString("base64").replace(/\+/gu, "-").replace(/\//gu, "_");
+  // Strip trailing '=' padding with a linear scan (avoids a backtracking regex).
+  let end = encoded.length;
+  while (end > 0 && encoded.charCodeAt(end - 1) === 61 /* "=" */) end -= 1;
+  return encoded.slice(0, end);
 }
 
 function fromB64url(input: string): Buffer {
@@ -365,8 +369,13 @@ export function generateEd25519SigningKey(kid: string, createdAt: number, status
 /** Extract a bearer token from an `authorization` header value, or undefined. */
 export function bearerFromHeader(header: string | undefined | null): string | undefined {
   if (typeof header !== "string") return undefined;
-  const match = /^Bearer\s+(.+)$/iu.exec(header.trim());
-  return match?.[1];
+  const trimmed = header.trim();
+  // Linear, case-insensitive "Bearer " prefix check — avoids a backtracking regex
+  // over attacker-controlled header input.
+  const prefix = trimmed.slice(0, 7);
+  if (prefix.toLowerCase() !== "bearer ") return undefined;
+  const token = trimmed.slice(7).trim();
+  return token.length > 0 ? token : undefined;
 }
 
 /** Constant-time comparison of two strings (utf8). */
