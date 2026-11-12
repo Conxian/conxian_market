@@ -121,7 +121,31 @@ export function x402V2McpRequired(value: X402V2Required) {
     content: [{ type: "text" as const, text: jsonText(structuredContent) }] };
 }
 
-/** Request metadata only. A facilitator must verify its exact resource and payment terms. */
+/**
+ * Structural binding check for x402 v2 (Market #176).
+ *
+ * A facilitator must confirm a client's `accepted` terms are exactly one of the
+ * server's advertised `accepts`, and that the payload targets the same resource.
+ * This is a **structural** comparison only: it does not verify a signature, an
+ * amount transfer, settlement, or entitlement — a `true` result is a necessary
+ * precondition for verification, never proof of payment.
+ */
+export function x402V2BindsToRequired(required: X402V2Required, payload: X402V2Payload): boolean {
+  const terms = payload.accepted;
+  const matchesTerms = required.accepts.some((candidate) =>
+    candidate.scheme === terms.scheme &&
+    candidate.network === terms.network &&
+    candidate.amount === terms.amount &&
+    candidate.asset === terms.asset &&
+    candidate.payTo === terms.payTo &&
+    candidate.maxTimeoutSeconds === terms.maxTimeoutSeconds);
+  if (!matchesTerms) return false;
+  // When the client echoes a resource, it must be the advertised resource URL.
+  if (payload.resource !== undefined && payload.resource.url !== required.resource.url) return false;
+  return true;
+}
+
+/** MCP payment tool result, not a JSON-RPC protocol error or execution grant. */
 export function x402V2McpPayment(value: X402V2Payload) {
   return { "x402/payment": parseX402V2("signature", value) };
 }
