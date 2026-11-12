@@ -66,6 +66,8 @@ The following catalog describes source interfaces. It is not a count of qualifie
 13. **Client Installation Engine (`client_onboarding.ts`)**: configuration validation and local plans; provisioning remains incomplete without independent evidence.
 14. **Provider Discovery (`provider_discovery.ts`)**: bounded read-only Gateway/Nexus registration contracts.
 15. **x402 v2 Wire Profile (`x402_v2_wire.ts`)**: explicit HTTP/MCP codecs and structural schemas; payment and signature verification are separate.
+16. **Organization M2M Verifier (`org_m2m.ts`)**: verifies the organization's short-lived scoped service JWTs (the same contract `conxius-platform` issues and `conxian-gateway` verifies) — exact `alg`/`typ`/`kid`, required claims, bounded TTL/skew, per-service scope ceiling; fail-closed. This is the org standard; it does not issue tokens.
+17. **Market-internal M2M issuer (`m2m_auth.ts`)**: market-internal service credential (OAuth2 client-credentials, HS256 + EdDSA, keyset rotation, JWKS document). **Not** the org standard — use `org_m2m.ts` to accept the organization's tokens.
 
 ---
 
