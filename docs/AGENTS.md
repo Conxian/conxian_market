@@ -2,7 +2,7 @@
 
 > **Purpose:** Permanent operational memory for AI agents working on the Conxian ecosystem.  
 > **Scope:** This file defines the canonical ethos, patterns, and boundaries for all agentic sessions.  
-> **Owner:** Conxian Labs | **Version:** 1.3 | **Last Updated:** 2026-08-01 (Session 48 — Enhancement Complete)
+> **Owner:** Conxian Labs | **Version:** 1.4 | **Last Updated:** 2026-11-12 (evidence-boundary correction, conxian_market#263)
 
 ---
 
@@ -24,10 +24,17 @@ A_S → Maximize (System Autonomy)
 
 ## 1. IDENTITY SPLIT (AUTHORITATIVE)
 
-### Conxian = Protocol / DeFi / DAO-facing
-- **Conxian/Conxian:** Protocol core, 218 Clarity smart contracts, mainnet-ready
-- **lib-conxian-core:** Shared Rust primitives for chain adapters
-- **conxian_market:** Settlement core, marketplace (THIS REPO)
+> **Evidence boundary (2026-11-12):** This repository is a published
+> `@conxian/market-sdk` **client library**, not a hosted runtime or an
+> on-chain protocol deployment. Claims below are scoped to that boundary.
+> Conxian is Bitcoin-rooted and universal-chain; it does **not** launch a native
+> protocol token, and "mainnet" means qualified operation on supported external
+> networks, not an own-protocol launch. See conxian_market#263.
+
+### Conxian = protocol / infrastructure layer
+- **Conxian/Conxian:** archived Clarity protocol reference (frozen; not the market's runtime)
+- **lib-conxian-core:** shared Rust primitives for chain adapters (canonical chain/fee/capability contracts)
+- **conxian_market:** `@conxian/market-sdk` settlement/escrow client library (THIS REPO)
 
 ### Conxian-Labs = Builder / Operator / Company
 - **conxian-business:** BOS (Business Operations System) - private governance
@@ -49,6 +56,13 @@ A_S → Maximize (System Autonomy)
 Every Conxian SDK capability that the market layer can leverage for settlement,
 discovery, escrow, and treasury automation. **Now wired through `ConxianMarketSDK`**
 (`src/sdk_bridge.ts`) which connects to the Gateway REST API.
+
+> **Boundary (2026-11-12, conxian_market#263):** the ✅ marks in this table record
+> that an SDK bridge *method exists and is callable* — they are **not** proof of a
+> live provider, a qualified runtime, an on-chain settlement, or activated yield.
+> Any treasury/yield/staking row is **proposed or conditional** until the owning
+> provider supplies runtime evidence and independent acceptance. No custody,
+> signing, protocol execution, or fabricated availability is implied.
 
 ### Core Module → Market Enhancement
 
