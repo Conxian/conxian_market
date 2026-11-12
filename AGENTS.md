@@ -18,6 +18,7 @@
 | Wallet Custody | SAB multisigs (3-of-5 deployer, 3-of-5 payout, 2-of-3 emergency) |
 | Key Package | `src/sdk_bridge.ts` — ConxianMarketSDK: 32 capabilities, gateway client, verification, settlement, SLA penalty engine |
 | Auth Docs | `docs/AGENTS.md` (canonical), `docs/adr/` (decisions), `docs/research/` (economic decisions) |
+| M2M Auth | `src/org_m2m.ts` verifies the **organization** service JWT contract (`conxius-platform` issues, `conxian-gateway` verifies). `src/m2m_auth.ts` is a market-internal issuer (HS256/EdDSA, JWKS) — **not** the org standard. |
 | Governance | Issue #9 — repository disposition pending |
 
 ## Authoritative Documents
