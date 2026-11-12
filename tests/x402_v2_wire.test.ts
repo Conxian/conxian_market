@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { X402_V2_MAX_BYTES, X402_V2_HEADERS, parseX402V2, encodeX402V2Header, decodeX402V2Header,
-  x402V2McpRequired, x402V2McpPayment } from "../src/x402_v2_wire.js";
+  x402V2McpRequired, x402V2McpPayment, x402V2BindsToRequired } from "../src/x402_v2_wire.js";
 import type { X402V2Required, X402V2Payload } from "../src/x402_v2_wire.js";
 
 // Synthetic wire fixtures follow the Foundation's v2 core/HTTP/MCP field contracts.
@@ -146,5 +146,29 @@ describe("explicit x402 v2 wire profile", () => {
     const cyclic: Record<string, unknown> = {};
     cyclic.self = cyclic;
     expect(() => parseX402V2("required", { ...required, extensions: cyclic })).toThrow();
+  });
+  describe("structural binding to the advertised requirements (#176)", () => {
+    it("accepts a payload whose accepted terms equal an advertised requirement", () => {
+      expect(x402V2BindsToRequired(required, payload)).toBe(true);
+    });
+    it("accepts a payload without an echoed resource", () => {
+      const { resource: _resource, ...withoutResource } = payload;
+      expect(x402V2BindsToRequired(required, withoutResource)).toBe(true);
+    });
+    for (const change of [{ amount: "1" }, { payTo: "someone-else" }, { network: "eip155:1" },
+      { asset: "other-asset" }, { scheme: "other" }, { maxTimeoutSeconds: 1 }]) {
+      it(`rejects accepted terms that drift from the advertised requirements ${JSON.stringify(change)}`, () => {
+        expect(x402V2BindsToRequired(required, { ...payload, accepted: { ...requirements, ...change } })).toBe(false);
+      });
+    }
+    it("rejects a payload that echoes a different resource URL", () => {
+      expect(x402V2BindsToRequired(required, { ...payload, resource: { url: "https://example.invalid/other" } })).toBe(false);
+    });
+    it("does not assert payment verification or authorization", () => {
+      // A structural binding is a precondition, not proof of payment.
+      expect(x402V2BindsToRequired(required, payload)).toBe(true);
+      expect(payload).not.toHaveProperty("authorized");
+      expect(payload).not.toHaveProperty("paymentVerified");
+    });
   });
 });
