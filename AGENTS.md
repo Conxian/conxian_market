@@ -67,6 +67,10 @@ until `attestationAvailable` flips (enclave-sdk#240/#241 still open).
 
 ## Key Rules
 
+- **Always push and open a PR**: every completed work item MUST be pushed to the
+  remote and opened as a pull request. Committing locally and stopping is
+  unacceptable — a local-only commit is not delivered work. Push the branch and
+  open the PR against the correct base (`dev`) before reporting done.
 - **ZSE**: No secrets, keys, or financial strategy in Git
 - **SAB Custody**: All production wallets are SAB multisigs — no personal key dependency
 - **Contract Principals**: Use `.conxian-access` roles, never hardcode addresses

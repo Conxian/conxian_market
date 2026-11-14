@@ -353,6 +353,9 @@ module that owns the capability. Capability counts come from
 
 ### DO
 - Read AGENTS.md first at session start
+- **Always push and open a PR**: every completed work item MUST be pushed to the
+  remote and opened as a pull request against `dev`. Committing locally and
+  stopping is unacceptable — a local-only commit is not delivered work.
 - Check FUNDING_AND_ECONOMICS.md for economic decisions
 - Verify all wallet references against SAB architecture
 - Follow ZSE compliance (no secrets in Git)
