@@ -11,7 +11,7 @@
 | Item | Value |
 |------|-------|
 | Role | Primary value capture — AI labor marketplace |
-| Protocol Fee | 2% (50% Ops / 30% Founders / 20% Ecosystem) |
+| Protocol Fee | dynamic hybrid (ADR-005): volume-decay 0.50%→0.10% + per-rail floor; splits 50% Ops / 30% Founders / 20% Ecosystem. **Destination not deployed; collection off.** |
 | Escrow | ERC-8183 programmable settlement |
 | Settlement Rails | Lightning, Fedimint, Stacks/ALEX, Babylon, RGB, sBTC, Statechain (Spark), EVM/ERC-8183 |
 | Trust Tiers | Strict (TEE+ZK) / Managed (Enclave) / Expedient (Light) / ObserverOnly (Free) |
@@ -27,7 +27,7 @@ Research chain (in order):
 0. `docs/adr/ADR_001_FEE_MODEL.md` — **AUTHORITATIVE** — Fee basis, percentages, custody, exposure caps, pause/exit
 0a. `docs/research/ECOSYSTEM_GRAPH.md` — **Full ecosystem map** — 16 repos, 55 issues, 5-phase roadmap
 1. `docs/research/FUNDING_AND_ECONOMICS.md` — Fee model, revenue streams, break-even
-2. `docs/research/SETTLEMENT_RAILS.md` — 6 rails, bridge status
+2. `docs/research/SETTLEMENT_RAILS.md` — 8 rails defined, 6 ready (`RAIL_CAPABILITIES[].ready`)
 3. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` — Integration map, 17 modules
 4. `docs/research/MARKET_UNIFIED_POSITIONING.md` — Enhancement matrix, gap closure
 5. `docs/research/CROSS_REPO_GAP_ANALYSIS_SESSION_48.md` — 60 open issues, 23 code gaps

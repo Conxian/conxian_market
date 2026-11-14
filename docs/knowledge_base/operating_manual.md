@@ -1,9 +1,11 @@
 # Conxian Operating Manual: The Business Operating System (BOS)
 
-> **Implementation:** the fee split, decay timeline and founder-vesting rules in §3
-> are implemented in `src/bos_yield_splitter.ts` and `src/treasury_report.ts`
-> (AGPL-3.0-or-later moat files), surfaced as `sdk.calculateYieldSplit()`,
-> `sdk.distributeProtocolFee()` and `sdk.evaluateFounderVesting()`.
+> **Implementation:** the 80/10/10 split, founder-vesting and treasury-timelock
+> rules in §3 are implemented in `src/bos_yield_splitter.ts` and
+> `src/treasury_report.ts` (AGPL-3.0-or-later moat files), surfaced as
+> `sdk.calculateYieldSplit()`, `sdk.distributeProtocolFee()` (splits a fee; does
+> not compute a rate) and `sdk.evaluateFounderVesting()`. The fee **rate** is
+> **not** in this file — it is the ADR-005 dynamic model in `src/fee_calculator.ts`.
 
 ## 1. Introduction
 This manual documents the standard operating procedures (SOPs) for the Conxian Ecosystem, aligning **Business Doctrine** with **Technical Execution**.
@@ -29,17 +31,22 @@ Agents should be packaged in three tiers:
 ### A. Protocol Fee Structure
 | Fee Component | Rate | Allocation |
 |:--------------|:----:|:-----------|
-| **Total Protocol Fee** | 2% | Launch rate (scales down) |
+| **Total Protocol Fee** | ADR-005 dynamic | Single volume-decay rate (0.50%→0.10%) + per-rail flat floor |
 | **Operations Treasury** | 50% | CI/CD, SDKs, Nexus, Audits |
 | **Founder Compensation** | 30% | 4-year vesting schedule |
 | **Ecosystem Growth** | 20% | Grants, Liquidity Mining, Bug Bounties |
 
-### B. Fee Decay Timeline
-| Phase | Duration | Rate |
-|:------|:--------:|:----:|
-| Launch Stabilization | 0-12 months | 2.0% |
-| Growth Phase | 12-36 months | 1.5% |
-| Mature Ecosystem | 36+ months | 1.0% |
+### B. Fee Rate Schedule (ADR-005)
+| Volume tier (30-day) | Rate |
+|:---------------------|:----:|
+| TIER_1 | 0.50% |
+| TIER_2 | 0.25% |
+| TIER_3 | 0.15% |
+| TIER_4 | 0.10% |
+
+> The retired static 2.0/1.5/1.0% time-based decay is superseded by ADR-005.
+> The fee also carries a per-rail flat floor (`cost × 1.25`) so it never rounds
+> to zero on micro-settlements.
 
 ### C. Treasury Management Standards
 - **Minimum Runway:** 12-month stablecoin reserve

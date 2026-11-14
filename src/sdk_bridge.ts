@@ -390,11 +390,24 @@ export class ConxianMarketSDK {
     return BosYieldSplitter.calculateYieldSplit(grossAmountSat);
   }
 
-  distributeProtocolFee(
-    grossAmountSat: bigint,
-    monthsElapsed: number
-  ): ProtocolFeeDistribution {
-    return BosYieldSplitter.distributeProtocolFee(grossAmountSat, monthsElapsed);
+  /**
+   * Distribute a protocol fee 50% Ops / 30% Founders / 20% Ecosystem.
+   *
+   * `feeSat` is the fee produced by the canonical dynamic model
+   * (`calculateDynamicFee`, ADR-004/ADR-005) — this method only splits it, it
+   * does not compute a rate. Use `calculateDynamicFee`/`calculateFee` for the
+   * amount.
+   */
+  distributeProtocolFee(feeSat: bigint): ProtocolFeeDistribution {
+    const operationsTreasurySat = (feeSat * 50n) / 100n;
+    const founderCompensationSat = (feeSat * 30n) / 100n;
+    const ecosystemGrowthSat = feeSat - operationsTreasurySat - founderCompensationSat;
+    return {
+      feeSat,
+      operationsTreasurySat,
+      founderCompensationSat,
+      ecosystemGrowthSat,
+    };
   }
 
   evaluateFounderVesting(input: FounderVestingInput): FounderVestingResult {

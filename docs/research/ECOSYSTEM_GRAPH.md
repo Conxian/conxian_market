@@ -206,7 +206,7 @@ conxian_market (fee_calculator.ts)
 | Task | Status |
 |------|:------:|
 | lib-conxian-core re-exports all 50 SDK modules | ✅ PR #241 |
-| conxian_market SDK bridge (27 capabilities) | ✅ PR #22 |
+| conxian_market SDK bridge (38 capabilities) | ✅ PR #22 |
 | ADR-001 fee model resolution | ✅ PR #21 |
 | Gateway billing.rs + REST API | ✅ |
 | FUNDING_AND_ECONOMICS.md complete | ✅ |

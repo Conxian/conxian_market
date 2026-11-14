@@ -60,8 +60,11 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
     const split = sdk.calculateYieldSplit(100_000n);
     expect(split.builderSat).toBe(80_000n);
 
-    const feeDist = sdk.distributeProtocolFee(1_000_000n, 18); // 18m = Growth Phase (150 bps)
-    expect(feeDist.feeSat).toBe(15_000n);
+    // The fee comes from the canonical dynamic model, then splits 50/30/20.
+    const fee = sdk.calculateDynamicFee({ tier: TrustTier.Expedient, rail: SettlementRail.AlexStacks, amountSat: 1_000_000n });
+    const feeDist = sdk.distributeProtocolFee(fee.effectiveFeeSat);
+    expect(feeDist.feeSat).toBe(fee.effectiveFeeSat);
+    expect(feeDist.operationsTreasurySat + feeDist.founderCompensationSat + feeDist.ecosystemGrowthSat).toBe(fee.effectiveFeeSat);
 
     const policy = sdk.verifyInferencePolicy({
       isCentralizedInference: false,

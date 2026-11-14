@@ -43,7 +43,7 @@ The Marketplace SDK is intentionally designed to consume the Conxian org stack a
 | **conxian-nexus** | **Registration diagnostic contract** | [src/provider_discovery.ts](src/provider_discovery.ts) | Read-only registrations; no qualified operation or provider health inferred. |
 | **conxius-enclave-sdk** | **External security boundary** | [src/verification.ts](src/verification.ts) & [src/x402_facade.ts](src/x402_facade.ts) | Cryptographic/provider verification belongs to qualified services; this JavaScript package does not load the Rust SDK. |
 | **conxius-platform** | **Control Plane** | Org docs & roadmap | CI/CD automation and release rulesets. |
-| **conxian-business** | **Governance Boundary** | [src/bos_yield_splitter.ts](src/bos_yield_splitter.ts) | Commercial packaging doctrine (80/10/10 split, fee decay, founder vesting). |
+| **conxian-business** | **Governance Boundary** | [src/bos_yield_splitter.ts](src/bos_yield_splitter.ts) | Commercial packaging doctrine (80/10/10 split, founder vesting, treasury timelock). Fee *rate* lives in `fee_calculator.ts`. |
 
 ---
 
@@ -59,7 +59,7 @@ The following catalog describes source interfaces. It is not a count of qualifie
 6. **Autonomous SLA Engine (`sla_engine.ts`)**: Automated job card evaluation, delay penalties, gap cards & builder reputation.
 7. **Telemetry & Treasury Watcher (`monitoring_watcher.ts`)**: sBTC peg health, Fedimint mints, Babylon staking & 12-month runway calculator.
 8. **TrustTier Middleware (`trust_tier_middleware.ts`)**: 4-stage pricing pipeline, SLA template resolution & wire headers.
-9. **BOS Yield Splitter (`bos_yield_splitter.ts`)**: 80/10/10 yield split, fee decay timeline, founder vesting & Thin Orchestrator BYOK guard.
+9. **BOS Yield Splitter (`bos_yield_splitter.ts`)**: 80/10/10 yield split, founder vesting, treasury multi-sig timelock & Thin Orchestrator BYOK guard. (Protocol fee *rate* is not here — it is in `fee_calculator.ts`, ADR-005.)
 10. **Market-Agnostic Router (`market_agnostic_router.ts`)**: Zero-custody validation, BYO DeFi protocol adapter resolution, M2M MCP routing & deprecation advisory.
 11. **Job Card Escrow Engine (`job_card_escrow.ts`)**: in-memory escrow creation, submission, release, dispute/refund and reconciliation models.
 12. **Legacy payment facade (`x402_facade.ts`)**: sats/payment-pointer correlation and attestation client calls; local hashes and bookkeeping are not payment or locked-funds evidence.
@@ -73,9 +73,9 @@ The following catalog describes source interfaces. It is not a count of qualifie
 
 ## 📊 Economic & Governance Framework
 
-- **Yield Matrix (80/10/10)**: 80% Builder, 10% Platform Treasury, 10% Ecosystem Stakeholders.
-- **Protocol Fee Structure**: 2.0% launch rate (50% Operations, 30% Founder Vesting, 20% Ecosystem Growth).
-- **Fee Decay Timeline**: 2.0% (0–12m), 1.5% (12–36m), 1.0% (36m+).
+- **Yield Matrix (80/10/10)**: 80% Builder, 10% Platform Treasury, 10% Ecosystem Stakeholders — applied to the **net** (gross − protocol fee).
+- **Protocol Fee (ADR-005)**: dynamic hybrid model — a single volume-decay percentage (0.50%/0.25%/0.15%/0.10%) composed with a per-rail flat floor, so the fee never falls below settlement cost. Splits 50% Operations / 30% Founder Vesting / 20% Ecosystem Growth. (The retired static 2.0/1.5/1.0% decay is superseded.)
+- **Fee Destination**: fees are destined for a passive `TREASURY-VAULT` (not deployed; collection is off) — see [Fee Destination & Custody](docs/research/FEE_DESTINATION_AND_CUSTODY.md).
 - **Zero-Custody Mandate**: Conxian never touches or custodies client funds or private data.
 - **Thin Orchestrator & BYOK**: Centralized heavy AI inference is prohibited; compute runs at the edge or via user-provided keys.
 

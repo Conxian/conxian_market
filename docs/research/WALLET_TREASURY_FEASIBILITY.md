@@ -251,7 +251,7 @@ CONXIUS TREASURY CONFIGURATION
 - [ ] Execute SAB_DAO_HANDOFF_PROTOCOL
 - [ ] Verify bootstrap removed
 - [ ] Enable operational treasury
-- [ ] Begin 2% protocol fee collection
+- [ ] Begin protocol fee collection (ADR-005 dynamic)
 
 ### Phase 4: Production (Week 7+)
 - [ ] Full treasury automation

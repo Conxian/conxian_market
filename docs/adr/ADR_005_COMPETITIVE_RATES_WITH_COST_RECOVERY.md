@@ -1,12 +1,19 @@
 # ADR 005: Competitive Rates with a Non-Negotiable Cost-Recovery Floor
 
-> **Status:** Proposed (final numbers for sign-off)
-> **Date:** 2026-10-10
+> **Status:** Accepted (2026-11-14 — reconciled with implementation; supersedes the
+> static 2.0/1.5/1.0% percentage model of ADR-001 §1)
+> **Date:** 2026-10-10 | **Accepted:** 2026-11-14
 > **Author:** Conxian KB maintenance agent (botshelomokoka)
 > **Deciders:** Conxian Core Maintainers
 > **Owner directives (2026-10-10):** price from top-tier competitors and learn
 > dynamic patterns; EVM settles on **L2** (low cost); expand research to cover
 > G8 costs; fold the legacy-path migration into the same PR.
+> **Reconciliation note (2026-11-14):** the market code already implemented this
+> ADR (`VOLUME_DECAY_BPS`, `calculateDynamicFee`), but a second, conflicting fee
+> regime (the static 2.0/1.5/1.0% decay in `bos_yield_splitter.ts`) still existed
+> and the docs still quoted 2%. That duplicate was removed and the docs were
+> cascaded to this ADR. See `docs/research/FEE_DESTINATION_AND_CUSTODY.md` for
+> where the collected fee physically lands.
 
 ---
 

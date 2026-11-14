@@ -135,7 +135,7 @@ module that owns the capability. Capability counts come from
 |------------|-------------|---------------|----------|
 | **Strict** | TEE + ZK proof | Premium (negotiated) | Institutional settlement, treasury |
 | **Managed** | Enclave attestation | Standard (0.5% premium) | Professional builders, SAB operations |
-| **Expedient** | Light client verification | Basic (2% protocol fee) | Standard agent settlement |
+| **Expedient** | Light client verification | Basic (dynamic fee, ADR-005) | Standard agent settlement |
 | **ObserverOnly** | No verification | Free tier | Discovery, reputation browsing |
 
 ### Research Coverage (BTC L2 Ecosystem)
@@ -243,19 +243,30 @@ module that owns the capability. Capability counts come from
 
 ## 6. ECONOMIC MODEL
 
-### Protocol Fee: 2%
+### Protocol Fee: dynamic hybrid (ADR-005)
 ```
+Rate: single volume-decay percentage (0.50% → 0.10%) composed with a
+      per-rail flat floor (cost × 1.25) — NEVER a flat 2% (retired).
+      effective_fee_sat = max(amount × decayed_bps/10000, rail_floor) × load_factor
+Split of the collected fee:
 50% → Operations (CI/CD, SDKs, Nexus, Audits)
 30% → Founders (4-year vesting)
 20% → Ecosystem (Grants, Liquidity Mining)
 ```
 
-### Fee Decay Timeline
-| Phase | Duration | Rate |
-|:------|:--------:|:----:|
-| Launch | 0-12 months | 2.0% |
-| Growth | 12-36 months | 1.5% |
-| Mature | 36+ months | 1.0% |
+### Fee Rate Schedule (ADR-005)
+| Volume tier (30-day) | Rate |
+|:---------------------|:----:|
+| TIER_1 | 0.50% |
+| TIER_2 | 0.25% |
+| TIER_3 | 0.15% |
+| TIER_4 | 0.10% |
+
+### Fee Destination
+Fees are destined for a passive `TREASURY-VAULT` (no outbound transfers),
+then `SAB-TREASURY-MS` (3-of-5) / `DAO-TREASURY-MS` (5-of-7). **Not deployed;
+collection is off** (`protocolFeeActive === false`). See
+`docs/research/FEE_DESTINATION_AND_CUSTODY.md`.
 
 ### Treasury Allocation
 - 40% Stablecoins (USDC, USDT, sBTC)
@@ -310,8 +321,8 @@ module that owns the capability. Capability counts come from
 ### conxian_market (THIS REPO)
 - **Role:** The Value Layer - PRIMARY revenue mechanism
 - **Ethos:** Settlement core, marketplace, treasury
-- **Standards:** MCP-native, ERC-8183, 2% protocol fee, 4-tier TrustTier pricing
-- **Enhancement:** Phase 1–3 complete — 6 settlement rails, SLA bounty system, tiered pricing middleware
+- **Standards:** MCP-native, ERC-8183, dynamic protocol fee (ADR-005), 4-tier TrustTier pricing
+- **Enhancement:** Phase 1–3 docs complete — 8 settlement rails defined (6 `ready:true`), SLA bounty system, tiered pricing middleware
 - **Guided by:** FUNDING_AND_ECONOMICS.md, SETTLEMENT_RAILS.md, FULL_SYSTEM_ARCHITECTURE.md
 
 ### conxian-business (PRIVATE)
@@ -382,10 +393,12 @@ module that owns the capability. Capability counts come from
 ## 12. RESEARCH DOCUMENT CHAIN
 
 For economic decisions, ALWAYS reference in order:
-0. `docs/adr/ADR_001_FEE_MODEL.md` — **AUTHORITATIVE** — Fee basis, percentages, custody, exposure caps, pause/exit (resolves Gateway #247 conflict)
+0. `docs/adr/ADR_001_FEE_MODEL.md` — **AUTHORITATIVE for recipients/split** — fee custody, exposure caps, pause/exit (resolves Gateway #247 conflict). Fee *rate* = ADR-005.
+0b. `docs/adr/ADR_005_COMPETITIVE_RATES_WITH_COST_RECOVERY.md` — **AUTHORITATIVE for the fee rate** (dynamic hybrid, Accepted 2026-11-14)
+0c. `docs/research/FEE_DESTINATION_AND_CUSTODY.md` — where the collected fee lands
 0a. `docs/research/ECOSYSTEM_GRAPH.md` — **Full ecosystem map** — 16 repos, 55 issues, cross-repo dependencies, 5-phase roadmap
 1. `docs/research/FUNDING_AND_ECONOMICS.md` — Fee model, revenue streams, break-even (§3.4 Session 48)
-2. `docs/research/SETTLEMENT_RAILS.md` — 6 rails: Statechain, sBTC, RGB, Babylon, Fedimint, Lightning
+2. `docs/research/SETTLEMENT_RAILS.md` — 8 rails (6 ready): Statechain*, sBTC, RGB*, Babylon, Fedimint, Lightning, ALEX/Stacks, EVM/ERC-8183 (* = `ready:false`)
 3. `docs/research/FULL_SYSTEM_ARCHITECTURE.md` — Integration map, 17 modules, 4-tier TrustTier
 4. `docs/research/MARKET_UNIFIED_POSITIONING.md` — Enhancement matrix, 13 rows, gap closure log
 5. `docs/research/market_enhancement_strategy.md` — Phase 1-3 complete report, 5-stream revenue, before/after
@@ -428,15 +441,17 @@ For economic decisions, ALWAYS reference in order:
 | Component | Status | File |
 |-----------|:------:|------|
 | Implementation plan | ✅ Done | `docs/research/CON1427_IMPLEMENTATION_PLAN.md` |
-| Market FeeCalculator | ✅ Done | `src/fee_calculator.ts` — tier detection, rail routing, fee report |
-| Gateway ProtocolFee bridge | ✅ Done | `conxian-gateway:billing.rs` (+247 lines) — `ProtocolFeeRecord`, `ProtocolFeeReport`, 5 tests |
-| Clarity contract activation | ⬜ Phase C | `contracts/vaults/fee-manager.clar` (stub → production) |
-| Contract-bridge wire-up | ⬜ Phase C | Gateway → `protocol-fee-collector.clar` integration |
+| Market FeeCalculator | ✅ Done | `src/fee_calculator.ts` — dynamic hybrid model (ADR-005): tier detection, rail routing, fee report |
+| Gateway ProtocolFee bridge | ✅ Done | `conxian-gateway:billing.rs` — `ProtocolFeeRecord`, `ProtocolFeeReport`, 5 tests |
+| Fee destination (vault) | ⬜ Not deployed | `TREASURY-VAULT` — see `docs/research/FEE_DESTINATION_AND_CUSTODY.md` |
+| Clarity contract activation | ⬜ Phase C | fee-collector contract (source repo gone; not in this repo) |
+| Contract-bridge wire-up | ⬜ Phase C | Gateway → fee-collector integration |
 | Treasury auto-staking | ⬜ Phase D | Babylon staking of collected fees |
 
 > **Phase A+B shipped.** Fee calculation + gateway bridge implemented with tests.
-> **Phase C** (contract activation) requires Stacks testnet deployment keys.
-> **Revenue unlock:** $15,000/mo → $20,600/mo when Phases A-C complete.
+> **Phase C** (contract activation) is blocked — the plan's source repo
+> (`Conxian/Conxian`) no longer exists (root `AGENTS.md` P0-7). No fee has been
+> physically collected and no destination contract exists.
 
 ---
 
@@ -444,15 +459,16 @@ For economic decisions, ALWAYS reference in order:
 
 ### Economic Model
 ```
-Protocol Fee: 2%
-├── 50% → Operations ($X/year based on volume)
+Protocol Fee: dynamic hybrid (ADR-005)
+├── 50% → Operations
 ├── 30% → Founders (4-year vesting)
 └── 20% → Ecosystem (Grants, Liquidity)
 ```
 
 ### Break-Even
 ```
-$240K/year ÷ 0.02 = $12M/year = $33K/day
+$240K/year ÷ 0.005 = $48M/year = $131.5K/day   (ADR-005 @0.50% launch rate)
+(was $12M/year = $33K/day under the retired 2% rate)
 ```
 
 ### Treasury Targets

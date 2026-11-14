@@ -1,6 +1,13 @@
 # Conxian Full System Architecture & Integration Map
 
-> **Status:** Living Document | **Last Updated:** 2026-07-15  
+> **Status:** Historical snapshot | **Last Updated:** 2026-07-15
+>
+> **Fee-model note (2026-11-14):** this document predates ADR-005 and quotes the
+> retired **2%** static protocol fee and the `Protocol 2% / Ecosystem 18%` split.
+> The live fee rate is the ADR-005 dynamic hybrid model (0.50%→0.10% + per-rail
+> floor); the recipient split is 80/10/10 on the net and 50/30/20 on the fee.
+> See `docs/adr/ADR_005_COMPETITIVE_RATES_WITH_COST_RECOVERY.md` and
+> `docs/research/FEE_DESTINATION_AND_CUSTODY.md`. Retained for historical context.  
 > **Version:** 1.0 | **Owner:** Conxian Labs
 
 ---

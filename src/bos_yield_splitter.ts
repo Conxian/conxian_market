@@ -11,7 +11,11 @@
  *
  * Implements the commercial packaging and economic rules specified in docs/knowledge_base/operating_manual.md:
  * 1. Commercial Yield Matrix (80/10/10): 80% Builder, 10% Platform Treasury, 10% Ecosystem Stakeholders.
- * 2. Economic Fee Decay: 2.0% (0-12m), 1.5% (12-36m), 1.0% (36m+), allocated 50% Ops, 30% Founders, 20% Ecosystem.
+ * 2. Protocol fee: the ONLY protocol fee model is the dynamic hybrid model in
+ *    `fee_calculator.ts` (ADR-004/ADR-005) — a single volume-decay percentage
+ *    (0.50%/0.25%/0.15%/0.10%) composed with a per-rail flat floor, distributed
+ *    50% Ops / 30% Founders / 20% Ecosystem. The former static 2.0/1.5/1.0%
+ *    decay here was a second, conflicting regime and has been removed (ADR-005).
  * 3. Founder Compensation & Vesting: 4-year vesting with cliff, 50/50 base/bonus cap, 6-month emergency escrow limit.
  * 4. Sovereign OS Thin Orchestrator & BYOK Guard: Prohibits centralized AI inference and mandates enclave key security.
  * 5. Treasury Multi-Sig Governance Timelock & Founder Compensation Escrow Controller (Session 60):
@@ -43,22 +47,13 @@ export interface RealtimeYieldSplitValidation {
   warnings: string[];
 }
 
-export interface FeeDecayTier {
-  phase: "Launch Stabilization" | "Growth Phase" | "Mature Ecosystem";
-  minMonths: number;
-  maxMonths: number | null;
-  rateBps: number;              // 200 bps (2.0%), 150 bps (1.5%), 100 bps (1.0%)
-}
-
-export const FEE_DECAY_TIMELINE: FeeDecayTier[] = [
-  { phase: "Launch Stabilization", minMonths: 0, maxMonths: 12, rateBps: 200 },
-  { phase: "Growth Phase", minMonths: 12, maxMonths: 36, rateBps: 150 },
-  { phase: "Mature Ecosystem", minMonths: 36, maxMonths: null, rateBps: 100 },
-];
-
+/**
+ * 50/30/20 split of a protocol fee that was already computed by the canonical
+ * dynamic fee model (`fee_calculator.ts`). This type carries no rate: the rate
+ * lives only in `VOLUME_DECAY_BPS` + the per-rail floor.
+ */
 export interface ProtocolFeeDistribution {
   feeSat: bigint;
-  rateBps: number;
   operationsTreasurySat: bigint; // 50%
   founderCompensationSat: bigint; // 30%
   ecosystemGrowthSat: bigint;    // 20%
@@ -151,38 +146,6 @@ export class BosYieldSplitter {
       telemetryStatus: input.telemetry.overallStatus,
       authorized,
       warnings,
-    };
-  }
-
-  /**
-   * Get effective protocol fee rate based on months elapsed since launch.
-   */
-  static getEffectiveFeeRateBps(monthsElapsed: number): FeeDecayTier {
-    if (monthsElapsed < 12) return FEE_DECAY_TIMELINE[0];
-    if (monthsElapsed < 36) return FEE_DECAY_TIMELINE[1];
-    return FEE_DECAY_TIMELINE[2];
-  }
-
-  /**
-   * Calculate protocol fee and distribute 50% Ops / 30% Founders / 20% Ecosystem.
-   */
-  static distributeProtocolFee(
-    grossAmountSat: bigint,
-    monthsElapsed: number
-  ): ProtocolFeeDistribution {
-    const tier = BosYieldSplitter.getEffectiveFeeRateBps(monthsElapsed);
-    const feeSat = (grossAmountSat * BigInt(tier.rateBps)) / 10_000n;
-
-    const operationsTreasurySat = (feeSat * 50n) / 100n;
-    const founderCompensationSat = (feeSat * 30n) / 100n;
-    const ecosystemGrowthSat = feeSat - operationsTreasurySat - founderCompensationSat;
-
-    return {
-      feeSat,
-      rateBps: tier.rateBps,
-      operationsTreasurySat,
-      founderCompensationSat,
-      ecosystemGrowthSat,
     };
   }
 

@@ -76,7 +76,7 @@ Supporting diverse decentralized systems unlocks specific, measurable revenue st
 
 1. **Cross-Chain x402 Value Routing Fees**:
    - *Target Market*: Autonomous agents executing cross-chain tool calls (Bitcoin, Stacks, EVM, Lightning).
-   - *Revenue Model*: Dynamic protocol fee (0.5%–2.0%) on x402 payment volume.
+   - *Revenue Model*: Dynamic protocol fee (ADR-005: 0.50%→0.10% by volume + per-rail floor) on x402 payment volume.
    - *Target TAM*: $50M+ annual agent payment volume.
 
 2. **ERC-8183 Programmable Escrow Yield Split (80/10/10)**:

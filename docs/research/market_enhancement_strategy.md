@@ -1,7 +1,12 @@
 # Strategic Enhancement Strategy: Conxian Market
 
-> **Status:** Complete (Phase 1-3) | **Version:** 3.0 | **Last Updated:** 2026-08-01 (Session 48)
-> **All 7 enhancement issues closed. All 5 deliverables deployed.**
+> **Status:** Historical snapshot | **Version:** 3.0 | **Last Updated:** 2026-08-01 (Session 48)
+>
+> **Fee-model note (2026-11-14):** this document quotes the retired **2%** static
+> protocol fee. The live rate is the ADR-005 dynamic hybrid model
+> (0.50%→0.10% + per-rail floor). See
+> `docs/adr/ADR_005_COMPETITIVE_RATES_WITH_COST_RECOVERY.md`. Retained for
+> historical context.
 
 ---
 

@@ -1,6 +1,11 @@
 # Treasury Deployment Implementation Guide
 
-> **Status:** Implementation Ready | **Date:** 2026-07-15  
+> **Status:** Runbook — **nothing here is deployed** | **Date:** 2026-07-15
+>
+> **Deployment status (2026-11-14):** no vault, multisig, or fee-collector
+> contract in this guide exists on any network. Fee collection is off
+> (`DEFAULT_FEATURE_FLAGS.protocolFeeActive === false`). The fee destination and
+> custody model are specified in `docs/research/FEE_DESTINATION_AND_CUSTODY.md`.  
 > **Phase:** Phase 0 - Pre-Launch | **Owner:** Conxian Labs
 
 ---
@@ -152,10 +157,11 @@ conxius-orbit verify --contract treasury-vault --network mainnet
 ;; treasury-vault.clar configuration
 (impl-trait 'SP3...treasury-trait)
 
-;; Set protocol fee recipient
-(set-protocol-fee-recipient .sab-treasury-ms)
+;; Set protocol fee recipient — the passive vault is the fee destination,
+;; NOT the operational multisig (which receives from the vault, §3 below).
+(set-protocol-fee-recipient .treasury-vault)
 
-;; Configure fee allocation
+;; Configure fee allocation (split of the collected fee)
 (set-fee-allocation
   {
     operations: u50,
@@ -370,7 +376,7 @@ conxius-orbit configure \
 ;; Configure fee parameters
 (set-protocol-fee
   {
-    rate: u200,      ;; 2% (200 basis points)
+    rate: u50,       ;; ADR-005: 0.50% launch rate (50 bps), NOT the retired 2%
     min-volume: u1000000,  ;; Minimum $1 volume
     recipient: .treasury-vault
   }
