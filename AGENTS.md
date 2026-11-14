@@ -13,13 +13,13 @@
 | Role | Primary value capture — AI labor marketplace |
 | Protocol Fee | 2% (50% Ops / 30% Founders / 20% Ecosystem) |
 | Escrow | ERC-8183 programmable settlement |
-| Settlement Rails | Lightning, Fedimint, Stacks/ALEX, Citrea, RGB, Statechain (Spark) |
+| Settlement Rails | Lightning, Fedimint, Stacks/ALEX, Babylon, RGB, sBTC, Statechain (Spark), EVM/ERC-8183 |
 | Trust Tiers | Strict (TEE+ZK) / Managed (Enclave) / Expedient (Light) / ObserverOnly (Free) |
 | Wallet Custody | SAB multisigs (3-of-5 deployer, 3-of-5 payout, 2-of-3 emergency) |
-| Key Package | `src/sdk_bridge.ts` — ConxianMarketSDK: 32 capabilities, gateway client, verification, settlement, SLA penalty engine |
+| Key Package | `src/sdk_bridge.ts` — ConxianMarketSDK: 18 capability groups / 38 wired capabilities (`getCapabilitySummary()`), gateway client, verification, settlement, SLA penalty engine |
 | Auth Docs | `docs/AGENTS.md` (canonical), `docs/adr/` (decisions), `docs/research/` (economic decisions) |
 | M2M Auth | `src/org_m2m.ts` verifies the **organization** service JWT contract (`conxius-platform` issues, `conxian-gateway` verifies). `src/m2m_auth.ts` is a market-internal issuer (HS256/EdDSA, JWKS) — **not** the org standard. |
-| Governance | Issue #9 — repository disposition pending |
+| Governance | Issue #9 (repository disposition) — CLOSED; open governance work is #252 (org evidence contract) and #278 (MIT/AGPL split) |
 
 ## Authoritative Documents
 
@@ -38,12 +38,12 @@ Research chain (in order):
 | Component | Status |
 |-----------|--------|
 | Implementation plan | ✅ `docs/research/CON1427_IMPLEMENTATION_PLAN.md` |
-| FeeCalculator (src) | ✅ 366 lines — tier detection, rail routing, fee report |
-| SDK Bridge (src) | ✅ 1,600+ lines across modules — `ConxianMarketSDK` wires all 32 capabilities + SLA penalty settlement |
-| Core Types (src) | ✅ 281 lines — TypeScript mirror of lib-conxian-core + enclave-sdk |
-| Gateway Client (src) | ✅ 202 lines — typed HTTP client for 50+ gateway endpoints |
-| Verification (src) | ✅ 117 lines — Gateway-backed verifier, P0-aware degradation |
-| Settlement (src) | ✅ 211 lines — Multi-rail settlement orchestrator (8 rails) |
+| FeeCalculator (src) | ✅ `src/fee_calculator.ts` — tier detection, rail routing, dynamic fee report |
+| SDK Bridge (src) | ✅ `src/sdk_bridge.ts` — `ConxianMarketSDK` wires 18 capability groups / 38 capabilities + SLA penalty settlement |
+| Core Types (src) | ✅ `src/core_types.ts` — TypeScript mirror of lib-conxian-core + enclave-sdk |
+| Gateway Client (src) | ✅ `src/gateway_client.ts` — typed HTTP client over the gateway REST contract |
+| Verification (src) | ✅ `src/verification.ts` — Gateway-backed verifier, P0-aware degradation |
+| Settlement (src) | ✅ `src/settlement.ts` — Multi-rail settlement orchestrator (8 rails) |
 | Gateway bridge | ✅ `conxian-gateway:billing.rs` — ProtocolFeeRecord + 5 tests |
 | Clarity contract | ⬜ Phase C — needs testnet deploy keys |
 | Contract-bridge wire-up | ⬜ Phase C |
@@ -51,16 +51,19 @@ Research chain (in order):
 
 ## P0 Gaps (from cross-repo analysis)
 
-| # | Gap | Repo | Blocks |
-|---|-----|------|--------|
-| P0-1 | AWS Nitro attestation (#242) | enclave-sdk | Managed/Strict tiers |
-| P0-2 | Android KeyMint (#241) | enclave-sdk | Mobile attestation |
-| P0-3 | Attestation roots (#240) | enclave-sdk | Trust chain |
-| P0-4 | CCTP fail-closed (#198) | enclave-sdk | Cross-chain security |
-| P0-5 | Dev sandbox (#480) | Conxian | Builder onboarding |
-| P0-6 | Value-op gate (#444) | wallet | Settlement verification |
-| P0-7 | Protocol fee (#488) | Conxian | 5-stream revenue |
-| P0-8 | CI validation (#1082) | platform | Green CI (BOS Gate 1) |
+State verified 2026-11-14 against the GitHub API. Market degrades to Expedient
+until `attestationAvailable` flips (enclave-sdk#240/#241 still open).
+
+| # | Gap | Repo | Blocks | State (2026-11-14) |
+|---|-----|------|--------|--------------------|
+| P0-1 | AWS Nitro attestation (#242) | enclave-sdk | Managed/Strict tiers | CLOSED |
+| P0-2 | Android KeyMint (#241) | enclave-sdk | Mobile attestation | OPEN |
+| P0-3 | Attestation roots (#240) | enclave-sdk | Trust chain | OPEN |
+| P0-4 | CCTP fail-closed (#198) | enclave-sdk | Cross-chain security | CLOSED |
+| P0-5 | Dev sandbox (#480) | Conxian | Builder onboarding | unresolvable — `Conxian/Conxian` no longer exists |
+| P0-6 | Value-op gate (#444) | wallet | Settlement verification | CLOSED |
+| P0-7 | Protocol fee (#488) | Conxian | 5-stream revenue | unresolvable — `Conxian/Conxian` no longer exists |
+| P0-8 | CI validation (#1082) | platform | Green CI (BOS Gate 1) | CLOSED |
 
 ## Key Rules
 

@@ -2,6 +2,12 @@
 
 > **Status:** Active | **Version:** 1.0 | **Last Updated:** 2026-08-01 (Session 48)
 > **Purpose:** Autonomous SLA enforcement via CJCS gap card generation.
+>
+> **Implementation:** `src/sla_engine.ts` (`SlaEngine.evaluateJobCard`,
+> `autoResolveGapCard`, `settleSLAPenalty`), surfaced on the SDK as
+> `sdk.evaluateSla()`, `sdk.autoResolveGapCard()`, `sdk.settleSLAPenalty()`. The
+> `governance/sla-enforcer.ts` path in the snippets is illustrative, not a file in
+> this repository.
 
 ---
 

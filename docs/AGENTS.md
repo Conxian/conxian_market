@@ -43,11 +43,11 @@ A_S → Maximize (System Autonomy)
 
 ### Product Naming (Conxius)
 - **conxius-wallet:** Sovereign non-custodial wallet (Android-first, v1.9.5)
-- **conxius-enclave-sdk:** Hardware enclave SDK (v2.0.12 - Production)
+- **conxius-enclave-sdk:** Hardware enclave SDK (v2.1.0 - Production)
 
 ### Infrastructure
-- **conxian-gateway:** Rust middleware, ISO 20022, industrial bridge (v0.1.5+, 17 commits ahead)
-- **conxian-nexus:** Glass Node, MMR proofs, multi-chain verification (v0.4.0, all 13 core modules)
+- **conxian-gateway:** Rust middleware, ISO 20022, industrial bridge (v0.1.5)
+- **conxian-nexus:** Glass Node, MMR proofs, multi-chain verification (v0.4.23)
 
 ---
 
@@ -57,69 +57,77 @@ Every Conxian SDK capability that the market layer can leverage for settlement,
 discovery, escrow, and treasury automation. **Now wired through `ConxianMarketSDK`**
 (`src/sdk_bridge.ts`) which connects to the Gateway REST API.
 
-> **Boundary (2026-11-12, conxian_market#263):** the ✅ marks in this table record
-> that an SDK bridge *method exists and is callable* — they are **not** proof of a
-> live provider, a qualified runtime, an on-chain settlement, or activated yield.
-> Any treasury/yield/staking row is **proposed or conditional** until the owning
-> provider supplies runtime evidence and independent acceptance. No custody,
-> signing, protocol execution, or fabricated availability is implied.
+> **Boundary (2026-11-12, conxian_market#263; method audit 2026-11-14):** the ✅
+> marks in this table record that a real SDK bridge method exists and is callable —
+> they are **not** proof of a live provider, a qualified runtime, an on-chain
+> settlement, or activated yield. Any treasury/yield/staking row is **proposed or
+> conditional** until the owning provider supplies runtime evidence and independent
+> acceptance. No custody, signing, protocol execution, or fabricated availability is
+> implied. Method names below were checked against `src/sdk_bridge.ts` and
+> `src/gateway_client.ts` on 2026-11-14; rows naming a capability the bridge does
+> **not** expose are marked ⛔ (not wired) rather than ✅.
 
 ### Core Module → Market Enhancement
 
 | Core Module | Market Use Case | SDK Bridge | Gateway |
 |-------------|----------------|:----------:|:-------:|
 | **control_model** (TrustTier) | Tiered settlement: ObserverOnly (free) → Expedient → Managed → Strict (premium) | ✅ `sdk.detectTrustTier()` | ✅ |
-| **cjcs** (JobCard, WorkIntent) | Autonomous bounty creation, SLA enforcement, gap job card generation | ✅ `sdk.toggleBountyPayouts()` | ✅ |
-| **verifier** | ZK-verified settlement proofs for premium tier escrow (ERC-8183) | ⚠️ P0-gated `sdk.verifyAttestation()` | 🔒 P0-1..3 |
-| **stacks** (SBTCBridge) | sBTC peg lifecycle monitoring for settlement liquidity tracking | ✅ `sdk.getStacksHeight()` | ✅ |
-| **rgb** (RGBAdapter) | Contract-backed asset settlement, RGB-20/21 token registry | ⚠️ Gateway #228 pending | ⚠️ |
-| **babylon** (StakingIntent) | BTC staking yield → market treasury diversification | ✅ `sdk.getYieldOpportunities()` | ✅ |
-| **fedimint** (FedimintMint) | Federation-based community settlement pools | ✅ `sdk.availableRails()` | ✅ |
-| **enclave** (AttestationCertificate) | Hardware-attested settlement for institutional clients | ⚠️ P0-gated `sdk.verifyCbtcAttestation()` | 🔒 P0-1..3 |
-| **deployment** (DeploymentPlan) | Contract rollout tracking, Nakamoto integrity hash | ✅ `sdk.requestReleaseApproval()` | ✅ |
-| **lightning** (LightningAdapter) | SRL-1 Lightning resilience for micro-settlement | ✅ Rail routing | ✅ |
-| **bitcoin** (taproot, bip322) | Silent payments, PSBT, Taproot settlement scripts | ✅ `sdk.getMempoolTelemetry()` | ✅ |
+| **cjcs** (JobCard, WorkIntent) | Autonomous bounty creation, SLA enforcement, gap job card generation | ✅ `sdk.settleJobCard()`, `sdk.evaluateSla()` | ✅ |
+| **verifier** | ZK-verified settlement proofs for premium tier escrow (ERC-8183) | ⚠️ P0-gated `sdk.verifyAttestation()` | 🔒 P0-2..3 |
+| **stacks** (SBTCBridge) | sBTC peg lifecycle monitoring for settlement liquidity tracking | ✅ `sdk.getHealthSnapshot()` (sBTC health) | ✅ |
+| **rgb** (RGBAdapter) | Contract-backed asset settlement, RGB-20/21 token registry | ⚠️ rail advertised, `ready:false` in `RAIL_CAPABILITIES` | ⚠️ |
+| **babylon** (StakingIntent) | BTC staking yield → market treasury diversification | ✅ `sdk.getHealthSnapshot()` (Babylon staking) | ✅ |
+| **fedimint** (FedimintMint) | Federation-based community settlement pools | ✅ `sdk.getHealthSnapshot()`, `sdk.getAvailableRails()` | ✅ |
+| **enclave** (AttestationCertificate) | Hardware-attested settlement for institutional clients | ⚠️ P0-gated `sdk.verifyAttestation()` | 🔒 P0-2..3 |
+| **deployment** (DeploymentPlan) | Contract rollout tracking, Nakamoto integrity hash | ✅ `gateway.requestReleaseApproval()` | ✅ |
+| **lightning** (LightningAdapter) | SRL-1 Lightning resilience for micro-settlement | ✅ rail routing (`SettlementRail.Lightning`) | ✅ |
+| **bitcoin** (taproot, bip322) | Silent payments, PSBT, Taproot settlement scripts | ✅ `gateway.verifyStateProof()` / `gateway.prepareChainTx()` | ✅ |
 
 ### Enclave-SDK Protocol → Market Enhancement
 
 | SDK Module | Market Use Case | SDK Bridge |
 |------------|----------------|:----------:|
 | **statechain** (Spark VTXO) | Off-chain BTC settlement with 1-of-n trust | 🔒 `ProtocolUnsupported` gate |
-| **frost** | Threshold signing for SAB multisig treasury | ⚠️ `sdk.aggregateKeys()` → MuSig2 (not FROST DKG) |
-| **dlc** | Discreet Log Contracts for prediction-market settlement | ⚠️ `sdk.createDlcCet()` → gateway `POST /v1/dlc/cet` (real adaptor-signature CET); on-chain broadcast pending |
+| **frost** | Threshold signing for SAB multisig treasury | ⚠️ `sdk.settlement.aggregateKeys()` → MuSig2 (not FROST DKG) |
+| **dlc** | Discreet Log Contracts for prediction-market settlement | ⚠️ `sdk.settlement.createDlcCet()` → gateway `POST /v1/dlc/cet` (real adaptor-signature CET); on-chain broadcast pending |
 | **ark** | Ark VTXO-based payment pools for agent-to-agent settlement | 🔒 `ProtocolUnsupported` gate |
-| **swap_router** | Cross-rail yield optimization (ALEX ↔ Uniswap ↔ Fedimint) | ✅ `sdk.executeAlexSwap()` |
+| **swap_router** | Cross-rail yield optimization (ALEX ↔ Uniswap ↔ Fedimint) | ✅ `sdk.settlement.alexSwap()` |
 | **settlement_service** | Multi-rail settlement orchestration | ✅ `sdk.executeSettlement()` |
-| **stablecoin_orchestrator** | USDC/USDT/sBTC yield routing for treasury | ✅ `sdk.getStablecoinRoute()` |
-| **solver** | Fill-or-Kill solver network for best-execution settlement | ✅ `sdk.findBestRoute()` |
-| **economy** | M2M machine economy settlement — AI agent payments | ✅ `sdk.settleM2M()` |
-| **job_card** | CJCS integration with SLA enforcement | ✅ `sdk.toggleBountyPayouts()` |
-| **identity** | DID-based builder reputation and discovery | ✅ `sdk.resolveIdentity()` |
-| **zkml** | ZK-ML proof verification for AI labor quality attestation | ✅ `sdk.verifyStateProof()` |
-| **opportunity** | Yield opportunity discovery for treasury yield optimization | ✅ `sdk.getYieldOpportunities()` |
-| **credit** | Agent credit scoring for escrow risk assessment | ✅ `sdk.computeCreditScore()` |
-| **intent** | Intent-based settlement (user declares intent, solver executes) | ✅ `sdk.routeIntent()` + `sdk.findBestRoute()` |
-| **sidl** | Sovereign IDL for cross-protocol contract interoperability | ✅ `sdk.prepareCrossChainTx()` |
+| **stablecoin_orchestrator** | USDC/USDT/sBTC yield routing for treasury | ⛔ not wired — no bridge method |
+| **solver** | Fill-or-Kill solver network for best-execution settlement | ⛔ not wired — no bridge method |
+| **economy** | M2M machine economy settlement — AI agent payments | ✅ `sdk.settlement.settleM2M()` |
+| **job_card** | CJCS integration with SLA enforcement | ✅ `sdk.settleJobCard()`, `sdk.evaluateSla()` |
+| **identity** | DID-based builder reputation and discovery | ✅ `gateway.resolveIdentity()` (type-only; no bridge method) |
+| **zkml** | ZK-ML proof verification for AI labor quality attestation | ⚠️ `gateway.verifyStateProof()` (generic state proof, not ZK-ML) |
+| **opportunity** | Yield opportunity discovery for treasury yield optimization | ⛔ not wired — no bridge method |
+| **credit** | Agent credit scoring for escrow risk assessment | ⛔ not wired — no bridge method |
+| **intent** | Intent-based settlement (user declares intent, solver executes) | ⛔ not wired — no bridge method |
+| **sidl** | Sovereign IDL for cross-protocol contract interoperability | ⚠️ `gateway.prepareChainTx()` / `gateway.routeCcipMessage()` |
 
 ### Legend
 
 | Symbol | Meaning |
 |:------:|---------|
 | ✅ | Wired through SDK bridge → Gateway REST API |
-| ⚠️ | Partially wired — blocked by P0 gap or gateway stub |
+| ⚠️ | Partially wired — blocked by P0 gap, gateway stub, or a non-specific underlying call |
 | 🔒 | Blocked — requires P0 resolution in enclave-sdk or gateway |
+| ⛔ | Not wired — no SDK bridge method exists for this capability |
 
-### Implementation Status (Session 52)
+### Implementation Status (verified 2026-11-14)
 
-| Component | Lines | Status |
-|-----------|------:|:------:|
-| `src/fee_calculator.ts` | 366 | ✅ Tier detection, fee calc, rail routing, revenue projection |
-| `src/core_types.ts` | 281 | ✅ TypeScript mirror of all lib-conxian-core + enclave-sdk types |
-| `src/gateway_client.ts` | 202 | ✅ Typed HTTP client for all 50+ gateway REST endpoints |
-| `src/verification.ts` | 117 | ✅ Gateway-backed verifier + P0-aware tier degradation |
-| `src/settlement.ts` | 211 | ✅ Multi-rail settlement orchestrator (8 rails) |
-| `src/sdk_bridge.ts` | 347 | ✅ Comprehensive bridge: 27 capabilities, `connect()` + `offline()` |
-| `src/index.ts` | 71 | ✅ Barrel export with full type surface |
+Line counts were removed because they drift on every commit; each row names the
+module that owns the capability. Capability counts come from
+`sdk.getCapabilitySummary()`.
+
+| Component | Status |
+|-----------|:------:|
+| `src/fee_calculator.ts` | ✅ Tier detection, fee calc, rail routing, revenue projection |
+| `src/core_types.ts` | ✅ TypeScript mirror of lib-conxian-core + enclave-sdk types |
+| `src/gateway_client.ts` | ✅ Typed HTTP client over the gateway REST contract |
+| `src/verification.ts` | ✅ Gateway-backed verifier + P0-aware tier degradation |
+| `src/settlement.ts` | ✅ Multi-rail settlement orchestrator (8 rails) |
+| `src/sdk_bridge.ts` | ✅ `ConxianMarketSDK`: 18 capability groups / 38 capabilities, `connect()` |
+| `src/index.ts` | ✅ Barrel export with full type surface |
 
 ### Trust Tier → Market Pricing Model
 
@@ -311,15 +319,15 @@ discovery, escrow, and treasury automation. **Now wired through `ConxianMarketSD
 - **Ethos:** Zero Secret Egress, BOS state machine
 - **Contains:** AGENTS.md, wallet architecture, handoff protocols
 
-### conxius-enclave-sdk (Production v2.0.12)
+### conxius-enclave-sdk (Production v2.1.0)
 - **Role:** Hardware security primitives
 - **Features:** TEE, FROST DKG, BitVM2, MuSig2, Statechain (Spark), BYOK, 46 modules
 
-### conxian-gateway (Active v0.1.5+)
+### conxian-gateway (Active v0.1.5)
 - **Role:** Industrial middleware
 - **Features:** ISO 20022, Fedimint, Babylon, sBTC Monitoring, RGB Adapter, Persistence (SovereignBackend)
 
-### conxian-nexus (Active v0.4.0+)
+### conxian-nexus (Active v0.4.23)
 - **Role:** Glass Node, verification layer
 - **Features:** MMR proofs, multi-chain, SRL-1, Enclave Attestation (PR #196 merged), 13/17 core modules
 
@@ -395,28 +403,29 @@ For economic decisions, ALWAYS reference in order:
 
 > All 7 enhancement issues implemented in conxian_market@39136c0 (1,097 lines across 5 docs).
 
-### Current P0 Gap Status (from CROSS_REPO_GAP_ANALYSIS)
+### Current P0 Gap Status (verified 2026-11-14)
 
-| # | Gap | Repo | Blocks |
-|---|-----|------|--------|
-| P0-1 | AWS Nitro attestation (#242) | enclave-sdk | Managed/Strict tiers |
-| P0-2 | Android KeyMint (#241) | enclave-sdk | Mobile attestation |
-| P0-3 | Attestation roots (#240) | enclave-sdk | Trust chain verification |
-| P0-4 | CCTP fail-closed (#198) | enclave-sdk | Cross-chain security |
-| P0-5 | Dev sandbox (#480) | Conxian | Builder onboarding |
-| P0-6 | Value-op gate (#444) | wallet | Settlement verification |
-| P0-7 | Protocol fee (#488) | Conxian | 5-stream revenue |
-| P0-8 | CI validation (#1082) | platform | Green CI (BOS Gate 1) |
+| # | Gap | Repo | Blocks | State (2026-11-14) |
+|---|-----|------|--------|--------------------|
+| P0-1 | AWS Nitro attestation (#242) | enclave-sdk | Managed/Strict tiers | CLOSED |
+| P0-2 | Android KeyMint (#241) | enclave-sdk | Mobile attestation | OPEN |
+| P0-3 | Attestation roots (#240) | enclave-sdk | Trust chain verification | OPEN |
+| P0-4 | CCTP fail-closed (#198) | enclave-sdk | Cross-chain security | CLOSED |
+| P0-5 | Dev sandbox (#480) | Conxian | Builder onboarding | unresolvable — `Conxian/Conxian` no longer exists |
+| P0-6 | Value-op gate (#444) | wallet | Settlement verification | CLOSED |
+| P0-7 | Protocol fee (#488) | Conxian | 5-stream revenue | unresolvable — `Conxian/Conxian` no longer exists |
+| P0-8 | CI validation (#1082) | platform | Green CI (BOS Gate 1) | CLOSED |
 
-> Market operates at **Expedient tier only** (Lightning + Fedimint, flat 2%) until P0-1 through P0-4 resolve.
-> Revenue model is **theoretical** until P0-7 (CON-1427) ships.
+> `attestationAvailable` in `DEFAULT_FEATURE_FLAGS` is still `false`, so the SDK
+> degrades to **ObserverOnly + Expedient** until P0-2 and P0-3 close. Revenue model
+> remains **theoretical** until the CON-1427 contract phases ship.
 
 ### CON-1427 Status (Protocol Fee Collection)
 
 | Component | Status | File |
 |-----------|:------:|------|
 | Implementation plan | ✅ Done | `docs/research/CON1427_IMPLEMENTATION_PLAN.md` |
-| Market FeeCalculator | ✅ Done | `src/fee_calculator.ts` (280 lines) — tier detection, rail routing, fee report |
+| Market FeeCalculator | ✅ Done | `src/fee_calculator.ts` — tier detection, rail routing, fee report |
 | Gateway ProtocolFee bridge | ✅ Done | `conxian-gateway:billing.rs` (+247 lines) — `ProtocolFeeRecord`, `ProtocolFeeReport`, 5 tests |
 | Clarity contract activation | ⬜ Phase C | `contracts/vaults/fee-manager.clar` (stub → production) |
 | Contract-bridge wire-up | ⬜ Phase C | Gateway → `protocol-fee-collector.clar` integration |

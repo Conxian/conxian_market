@@ -2,6 +2,12 @@
 
 > **Status:** Active | **Version:** 1.0 | **Last Updated:** 2026-08-01 (Session 48)
 > **Purpose:** Tier detection, fee middleware, and SLA templates for 4-tier pricing model.
+>
+> **Implementation:** `src/trust_tier_middleware.ts` (`TrustTierMiddleware`,
+> `TrustTierLifecycleEngine`), `src/fee_calculator.ts` (`detectTrustTier`,
+> `calculateRailFee`), surfaced as `sdk.runTrustTierPipeline()` and
+> `sdk.detectTrustTier()`. The `src/middleware/trust-tier.ts` path in the snippets
+> is illustrative, not a file in this repository.
 
 ---
 

@@ -1,6 +1,10 @@
 # Implementation Tracker — Session 76 Update
 
 > **Updated:** 2026-10-17 | **Session:** 76 | **Scope:** Decentralized Systems Production Readiness, Resilient Issue Fallback & Opportunity Engine
+>
+> **Status note (2026-11-14):** the "current org issue reality" list below is a
+> Session 76 snapshot and several entries have since closed (enclave-sdk #242/#198,
+> wallet #444, platform #1082). See `AGENTS.md` for the verified P0 gap state.
 
 ---
 

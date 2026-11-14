@@ -7,16 +7,20 @@
 
 ## 1. Rail Overview
 
+Status mirrors `RAIL_CAPABILITIES[].ready` in `src/settlement.ts` (verified
+2026-11-14): a rail is only "ready" when its adapter is wired. Statechain and RGB
+are advertised but `ready:false`, so the orchestrator fails closed on them.
+
 | # | Rail | Protocol | Trust Tier | Settlement Type | Fee Model | Status |
 |---|------|----------|:----------:|----------------|-----------|:------:|
-| 1 | **Statechain (Spark)** | Spark VTXO | T2 Managed | Off-chain BTC transfer | VTXO transfer fee + L1 withdrawal | ✅ v2.0.12 |
-| 2 | **sBTC (Stacks)** | Stacks L2 | T2 Managed | BTC peg-in/peg-out | 0% rail fee (protocol 2% only) | ✅ Wired |
-| 3 | **RGB** | RGB L2/L3 | T2 Managed | Contract-backed asset | 2% protocol fee | ✅ Wired |
-| 4 | **Babylon** | BTC staking | T2 Managed | Staking yield | Babylon protocol fee + market 0.5% | ✅ Wired |
-| 5 | **Fedimint** | Federation | T1 Expedient | E-cash settlement | Mint fee (community-set) + market 1% | ✅ Wired |
-| 6 | **Lightning** | LN (SRL-1) | T1 Expedient | Instant micropayments | LN routing fee + market 1% | ✅ Wired |
-| 7 | **ALEX/Stacks** | Stacks L2 | T1 Expedient | AMM swap settlement | ALEX pool fee + protocol 2% | ✅ Active |
-| 8 | **EVM (ERC-8183)** | Ethereum/L2s | T1 Expedient | Programmable escrow | Gas + protocol 2% | ✅ Active |
+| 1 | **Statechain (Spark)** | Spark VTXO | T2 Managed | Off-chain BTC transfer | VTXO transfer fee + L1 withdrawal | ⚠️ `ready:false` (ProtocolUnsupported gate) |
+| 2 | **sBTC (Stacks)** | Stacks L2 | T2 Managed | BTC peg-in/peg-out | 0% rail fee (protocol 2% only) | ✅ `ready:true` |
+| 3 | **RGB** | RGB L2/L3 | T2 Managed | Contract-backed asset | 2% protocol fee | ⚠️ `ready:false` (rgb-std stash resolver not wired) |
+| 4 | **Babylon** | BTC staking | T2 Managed | Staking yield | Babylon protocol fee + market 0.5% | ✅ `ready:true` |
+| 5 | **Fedimint** | Federation | T1 Expedient | E-cash settlement | Mint fee (community-set) + market 1% | ✅ `ready:true` |
+| 6 | **Lightning** | LN (SRL-1) | T1 Expedient | Instant micropayments | LN routing fee + market 1% | ✅ `ready:true` |
+| 7 | **ALEX/Stacks** | Stacks L2 | T1 Expedient | AMM swap settlement | ALEX pool fee + protocol 2% | ✅ `ready:true` |
+| 8 | **EVM (ERC-8183)** | Ethereum/L2s | T1 Expedient | Programmable escrow | Gas + protocol 2% | ✅ `ready:true` |
 
 ---
 

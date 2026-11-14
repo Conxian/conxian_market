@@ -1,5 +1,10 @@
 # Conxian Operating Manual: The Business Operating System (BOS)
 
+> **Implementation:** the fee split, decay timeline and founder-vesting rules in §3
+> are implemented in `src/bos_yield_splitter.ts` and `src/treasury_report.ts`
+> (AGPL-3.0-or-later moat files), surfaced as `sdk.calculateYieldSplit()`,
+> `sdk.distributeProtocolFee()` and `sdk.evaluateFounderVesting()`.
+
 ## 1. Introduction
 This manual documents the standard operating procedures (SOPs) for the Conxian Ecosystem, aligning **Business Doctrine** with **Technical Execution**.
 
