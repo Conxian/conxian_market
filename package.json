@@ -1,7 +1,7 @@
 {
   "name": "@conxian/market-sdk",
   "version": "0.2.4",
-  "description": "Conxian Market SDK \u2014 full integration bridge: fee calculator, gateway client, verification, settlement, and SDK capability wiring for all 27 enclave-sdk + lib-conxian-core modules.",
+  "description": "Conxian Market SDK — full integration bridge: fee calculator, gateway client, verification, settlement, and SDK capability wiring for all 27 enclave-sdk + lib-conxian-core modules.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
@@ -29,7 +29,7 @@
     "test:cli": "npm run build && node --test scripts/tests/cli-conformance.mjs"
   },
   "dependencies": {
-    "zod": "^4.6.6"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
