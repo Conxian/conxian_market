@@ -429,7 +429,7 @@ For economic decisions, ALWAYS reference in order:
 | P0-4 | CCTP fail-closed (#198) | enclave-sdk | Cross-chain security | CLOSED |
 | P0-5 | Dev sandbox (#480) | Conxian | Builder onboarding | unresolvable — `Conxian/Conxian` no longer exists |
 | P0-6 | Value-op gate (#444) | wallet | Settlement verification | CLOSED |
-| P0-7 | Protocol fee (#488) | Conxian | 5-stream revenue | unresolvable — `Conxian/Conxian` no longer exists |
+| P0-7 | Protocol fee (#488) | conxian_market | 5-stream revenue | **re-homed** — destination now `contracts/protocol-fee-vault.clar` (ADR-006); not deployed |
 | P0-8 | CI validation (#1082) | platform | Green CI (BOS Gate 1) | CLOSED |
 
 > `attestationAvailable` in `DEFAULT_FEATURE_FLAGS` is still `false`, so the SDK
@@ -443,15 +443,17 @@ For economic decisions, ALWAYS reference in order:
 | Implementation plan | ✅ Done | `docs/research/CON1427_IMPLEMENTATION_PLAN.md` |
 | Market FeeCalculator | ✅ Done | `src/fee_calculator.ts` — dynamic hybrid model (ADR-005): tier detection, rail routing, fee report |
 | Gateway ProtocolFee bridge | ✅ Done | `conxian-gateway:billing.rs` — `ProtocolFeeRecord`, `ProtocolFeeReport`, 5 tests |
-| Fee destination (vault) | ⬜ Not deployed | `TREASURY-VAULT` — see `docs/research/FEE_DESTINATION_AND_CUSTODY.md` |
-| Clarity contract activation | ⬜ Phase C | fee-collector contract (source repo gone; not in this repo) |
-| Contract-bridge wire-up | ⬜ Phase C | Gateway → fee-collector integration |
+| Fee destination contract | ✅ Implemented (not deployed) | `contracts/protocol-fee-vault.clar` — TREASURY-VAULT intake + gated 50/30/20 sweep (ADR-006) |
+| Settlement planner | ✅ Implemented | `src/protocol_fee_settlement.ts` — builder/vault/ecosystem routing, fail-closed |
+| Contract tests (simnet) | ✅ Passing | `tests/contracts/protocol_fee_vault.contract.test.ts` |
+| Contract-bridge wire-up | ⬜ Phase C | Gateway → fee-collector integration (gateway #974/#975) |
+| Testnet deployment | ⬜ Needs SAB deploy keys | ADR-006; `protocolFeeActive` stays false |
 | Treasury auto-staking | ⬜ Phase D | Babylon staking of collected fees |
 
-> **Phase A+B shipped.** Fee calculation + gateway bridge implemented with tests.
-> **Phase C** (contract activation) is blocked — the plan's source repo
-> (`Conxian/Conxian`) no longer exists (root `AGENTS.md` P0-7). No fee has been
-> physically collected and no destination contract exists.
+> **Phase A+B shipped.** Fee calculation is implemented and tested. The destination
+> contract is now implemented in this repo (`contracts/protocol-fee-vault.clar`,
+> ADR-006) but is **not deployed**, so no fee has been physically collected.
+> **Phase C** (deployment + gateway bridge) needs SAB deploy keys.
 
 ---
 

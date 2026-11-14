@@ -153,6 +153,15 @@ import {
   type X402TrustProofArtifact,
   type X402AttestationVerificationResult,
 } from "./x402_facade.js";
+import {
+  buildProtocolFeeSettlement,
+  planTreasuryUtilisation,
+  type FeeSettlementConfig,
+  type FeeSettlementInput,
+  type ProtocolFeeSettlementPlan,
+  type TreasuryUtilisationPlan,
+  type VaultSweepPlan,
+} from "./protocol_fee_settlement.js";
 
 export class ConxianMarketSDK {
   readonly gateway: GatewayClient;
@@ -412,6 +421,26 @@ export class ConxianMarketSDK {
 
   evaluateFounderVesting(input: FounderVestingInput): FounderVestingResult {
     return BosYieldSplitter.evaluateFounderVesting(input);
+  }
+
+  /**
+   * Build the complete recipient instruction set for a released settlement:
+   * builder payout, TREASURY-VAULT intake, ecosystem payout, and the vault's
+   * 50/30/20 sweep. Fails closed while any role principal is unconfigured.
+   */
+  planProtocolFeeSettlement(
+    input: FeeSettlementInput,
+    config: FeeSettlementConfig
+  ): ProtocolFeeSettlementPlan {
+    return buildProtocolFeeSettlement(input, config);
+  }
+
+  /**
+   * Map a vault sweep to the documented treasury purposes and target asset mix.
+   * Descriptive only: it grants no spend authority.
+   */
+  planTreasuryUtilisation(sweep: VaultSweepPlan): TreasuryUtilisationPlan {
+    return planTreasuryUtilisation(sweep);
   }
 
   verifyInferencePolicy(input: InferencePolicyInput): InferencePolicyResult {

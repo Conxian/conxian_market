@@ -1,5 +1,13 @@
 # CON-1427: Protocol Fee Collection — Implementation Plan
 
+> **Re-homed (2026-11-14):** the Clarity destination contracts previously planned
+> for `Conxian/Conxian` now live in this repository —
+> `contracts/protocol-fee-vault.clar` (TREASURY-VAULT intake + gated 50/30/20
+> sweep) with the planner in `src/protocol_fee_settlement.ts`. See
+> `docs/adr/ADR_006_PROTOCOL_FEE_DESTINATION_AND_SWEEP.md`. Contract
+> implementation and tests are done; testnet deployment remains gated on SAB
+> deploy keys.
+
 > **Issue:** [#488](https://github.com/Conxian/Conxian/issues/488) — Implement 2% Protocol Fee Collection
 > **Status:** Research Complete → Implementation Phase | **Repo Map:** 4 affected | **Revenue Impact:** 71% of $21.1K/mo target
 >

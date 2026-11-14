@@ -203,7 +203,7 @@ Per `FUNDING_AND_ECONOMICS.md` §3.3:
 |-----------|:------:|----------|
 | Fee calculator (Market) | ✅ Shipped | `src/fee_calculator.ts` |
 | Gateway billing bridge | ✅ Shipped | `conxian-gateway:billing.rs` |
-| Clarity contract activation | ⬜ Phase C | `fee-manager.clar` (stub) |
+| Clarity contract activation | ✅ Re-homed to `conxian_market` | `contracts/protocol-fee-vault.clar` (ADR-006) |
 | Treasury auto-staking | ⬜ Phase D | Babylon integration |
 | Gateway #247 diagram fix | ⬜ | See action items |
 

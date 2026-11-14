@@ -257,3 +257,17 @@ export {
   ORG_SERVICE_PERMISSIONS,
 } from "./org_m2m.js";
 export type { OrgM2mConfig, OrgM2mResult, OrgM2mFailure } from "./org_m2m.js";
+
+// Protocol fee settlement planning (TREASURY-VAULT routing + 50/30/20 sweep)
+export { buildProtocolFeeSettlement, planTreasuryUtilisation, TREASURY_PURPOSES } from "./protocol_fee_settlement.js";
+export type {
+  FeeSettlementConfig,
+  FeeSettlementInput,
+  ProtocolFeeSettlementPlan,
+  RolePrincipal,
+  SettlementInstruction,
+  SettlementRole,
+  TreasuryUtilisationLine,
+  TreasuryUtilisationPlan,
+  VaultSweepPlan,
+} from "./protocol_fee_settlement.js";
