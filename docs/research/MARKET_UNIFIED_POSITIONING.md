@@ -1,7 +1,13 @@
 # Conxian Market: Unified Ecosystem Positioning & Enhancement Blueprint
 
-> **Status:** Unified Research | **Last Updated:** 2026-08-01 (Session 48)  
+> **Status:** Historical snapshot | **Last Updated:** 2026-08-01 (Session 48)  
 > **Version:** 1.0 | **Purpose:** Synthesis of all ecosystem research
+>
+> **Fee-model note (2026-11-14):** this document quotes the retired **2%** static
+> protocol fee. The live rate is the ADR-005 dynamic hybrid model
+> (0.50%→0.10% + per-rail floor) in `src/fee_calculator.ts`; the 80/10/10 split
+> applies to the net and the fee splits 50/30/20. See
+> `docs/research/FEE_DESTINATION_AND_CUSTODY.md`. Retained for historical context.
 
 ---
 
