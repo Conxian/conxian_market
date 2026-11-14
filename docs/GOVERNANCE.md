@@ -21,7 +21,7 @@ Conxian implements a default **80/10/10** yield matrix:
 ### 3.1 Protocol Fee Structure (Revenue Standards)
 | Fee Component | Rate | Allocation |
 |:--------------|:----:|:-----------|
-| **Total Protocol Fee** | 2% | Launch rate (governance-adjustable) |
+| **Total Protocol Fee** | ADR-005 dynamic | Volume-decay 0.50%→0.10% + per-rail floor (governance-adjustable) |
 | **Operations Treasury** | 50% | CI/CD, SDKs, Nexus, Audits |
 | **Founder Compensation** | 30% | 4-year vesting schedule |
 | **Ecosystem Growth** | 20% | Grants, Liquidity Mining, Bug Bounties |
@@ -29,7 +29,7 @@ Conxian implements a default **80/10/10** yield matrix:
 ### 3.2 Fee Adjustment Governance
 - **Rate Changes:** Require 60% DAO approval with 7-day voting period
 - **Emergency Pause:** Multisig can pause fees with 48-hour notice
-- **Automatic Decay:** After 36-month stabilization, 1% floor minimum
+- **Automatic Decay:** Volume-based (ADR-005 `VOLUME_DECAY_BPS`), floor 0.10% + per-rail flat cost
 
 ## 4. Treasury Management Governance
 ### 4.1 Asset Standards
