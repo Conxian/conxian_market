@@ -57,8 +57,11 @@ describe("ConxianMarketSDK Bridge - Capability Summary & TrustTier Middleware", 
   it("exposes BOS yield splitting, fee decay, vesting, and inference verification directly", async () => {
     const sdk = await ConxianMarketSDK.connect(dummyConfig);
 
-    const split = sdk.calculateYieldSplit(100_000n);
-    expect(split.builderSat).toBe(80_000n);
+    const split = sdk.calculateYieldSplit(100_000n, {
+      product: "matched_job",
+    });
+    expect(split.builderSat).toBe(90_000n);
+    expect(split.takeSat).toBe(10_000n);
 
     // The fee comes from the canonical dynamic model, then splits 50/30/20.
     const fee = sdk.calculateDynamicFee({ tier: TrustTier.Expedient, rail: SettlementRail.AlexStacks, amountSat: 1_000_000n });
@@ -139,7 +142,7 @@ describe("ConxianMarketSDK Bridge - Multi-Dimensional Scoring, Telemetry & BitVM
     const realtimeValidation = sdk.validateYieldSplitRealtime(500_000n, healthyTelemetry);
 
     expect(realtimeValidation.authorized).toBe(true);
-    expect(realtimeValidation.yieldSplit.builderSat).toBe(400_000n);
+    expect(realtimeValidation.yieldSplit.builderSat).toBe(450_000n); // 90% of 500k (matched job)
   });
 
   it("exposes UniversalVerificationAdapter and BitVM3 fraud proof verification via SDK bridge", async () => {
@@ -245,7 +248,12 @@ describe("ConxianMarketSDK Bridge - Market-Agnostic Router & Job Card Escrow Int
 
     const release = sdk.evaluateAndReleaseJobCardEscrow("bridge-job-1", new Date().toISOString());
     expect(release.grossBudgetSat).toBe(2_000_000n);
-    expect(release.yieldSplit.builderSat).toBe(1_592_000n); // 80% of net payout (1,990,000 Sat)
+    expect(release.product).toBe("matched_job");
+    expect(release.feeSat).toBe(200_000n);            // 10% take
+    expect(release.yieldSplit.builderSat).toBe(1_800_000n); // builder keeps 90%
+    expect(release.settlementPlan.vaultSweep.intakeSat).toBe(200_000n);
+    expect(release.settlementPlan.instructions.length).toBe(2); // builder + vault intake
+    expect(release.settlementPlan.isSettleable).toBe(false); // fail-closed: no principals
   });
 
   it("exposes gap card auto-resolution and reputation recovery via SDK bridge", async () => {

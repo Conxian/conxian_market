@@ -22,49 +22,69 @@ const FULL_CONFIG: FeeSettlementConfig = {
   founders: { role: "FOUNDERS", principal: PRINCIPALS.founders },
 };
 
-const input = (gross: bigint, fee: bigint) => ({
+const input = (gross: bigint) => ({
   settlementId: "s-1",
   rail: SettlementRail.Lightning,
   tier: TrustTier.Expedient,
   grossAmountSat: gross,
-  feeSat: fee,
+  product: "matched_job" as const,
 });
 
-describe("buildProtocolFeeSettlement", () => {
-  it("routes all three legs and the vault sweep for a 100k/2k settlement", () => {
-    const plan = buildProtocolFeeSettlement(input(100_000n, 2_000n), FULL_CONFIG);
+describe("buildProtocolFeeSettlement (ADR-007)", () => {
+  it("routes the builder and the vault take for a 100k matched job (no dropped legs)", () => {
+    const plan = buildProtocolFeeSettlement(input(100_000n), FULL_CONFIG);
 
     expect(plan.isSettleable).toBe(true);
     expect(plan.blockers).toEqual([]);
-    expect(plan.netPayoutSat).toBe(98_000n);
+    expect(plan.product).toBe("matched_job");
+    expect(plan.protocolTakeSat).toBe(10_000n); // 10% take
+    expect(plan.builderSat).toBe(90_000n);      // builder keeps 90%
 
-    // 80/10/10 of the 98,000 net payout
     expect(plan.instructions.map((i) => [i.leg, i.amountSat, i.destination])).toEqual([
-      ["builder", 78_400n, "direct"],
-      ["treasury", 9_800n, "vault-intake"],
-      ["ecosystem", 9_800n, "direct"],
+      ["builder", 90_000n, "direct"],
+      ["treasury", 10_000n, "vault-intake"],
     ]);
 
-    // Vault sweep 50/30/20 of the 9,800 intake
+    // Vault sweep 50/30/20 of the 10,000 take
     expect(plan.vaultSweep).toEqual({
-      intakeSat: 9_800n,
-      operationsSat: 4_900n,
-      foundersSat: 2_940n,
-      ecosystemSat: 1_960n,
+      intakeSat: 10_000n,
+      operationsSat: 5_000n,
+      foundersSat: 3_000n,
+      ecosystemSat: 2_000n,
       operationsBps: 5000,
       foundersBps: 3000,
       ecosystemBps: 2000,
     });
   });
 
-  it("makes the total protocol take visible (2160 bps, not the documented 200 bps)", () => {
-    const plan = buildProtocolFeeSettlement(input(100_000n, 2_000n), FULL_CONFIG);
-    // 2,000 fee + 9,800 treasury + 9,800 ecosystem = 21,600 of 100,000 = 2160 bps (21.6%)
-    expect(plan.effectiveProtocolTakeBps).toBe(2160);
+  it("makes the platform take visible (1000 bps, not the retired 80/10/10)", () => {
+    const plan = buildProtocolFeeSettlement(input(100_000n), FULL_CONFIG);
+    expect(plan.effectiveProtocolTakeBps).toBe(1000); // 10%
+  });
+
+  it("prices a raw rail call with the ADR-005 dynamic fee", () => {
+    const plan = buildProtocolFeeSettlement(
+      { ...input(1_000_000n), product: "rail" },
+      FULL_CONFIG,
+    );
+    expect(plan.product).toBe("rail");
+    expect(plan.protocolTakeSat).toBe(5_000n); // 50 bps
+    expect(plan.builderSat).toBe(995_000n);
+    expect(plan.vaultSweep.intakeSat).toBe(5_000n);
+  });
+
+  it("fails closed to the matched-job rate when the product is unknown", () => {
+    const plan = buildProtocolFeeSettlement(
+      { settlementId: "s-2", rail: SettlementRail.Lightning, tier: TrustTier.Expedient, grossAmountSat: 1_000_000n },
+      FULL_CONFIG,
+    );
+    // No product/signals => classified as a matched job (the higher rate).
+    expect(plan.product).toBe("matched_job");
+    expect(plan.protocolTakeSat).toBe(100_000n);
   });
 
   it("fails closed when the vault principal is unconfigured", () => {
-    const plan = buildProtocolFeeSettlement(input(100_000n, 2_000n), {
+    const plan = buildProtocolFeeSettlement(input(100_000n), {
       ...FULL_CONFIG,
       vault: { role: "TREASURY_VAULT" },
     });
@@ -73,7 +93,7 @@ describe("buildProtocolFeeSettlement", () => {
   });
 
   it("fails closed when a sweep recipient is unconfigured", () => {
-    const plan = buildProtocolFeeSettlement(input(100_000n, 2_000n), {
+    const plan = buildProtocolFeeSettlement(input(100_000n), {
       ...FULL_CONFIG,
       operations: { role: "OPERATIONS" },
     });
@@ -82,7 +102,7 @@ describe("buildProtocolFeeSettlement", () => {
   });
 
   it("fails closed when every principal is unconfigured", () => {
-    const plan = buildProtocolFeeSettlement(input(100_000n, 2_000n), {
+    const plan = buildProtocolFeeSettlement(input(100_000n), {
       builder: { role: "BUILDER" },
       vault: { role: "TREASURY_VAULT" },
       ecosystem: { role: "ECOSYSTEM" },
@@ -94,7 +114,7 @@ describe("buildProtocolFeeSettlement", () => {
   });
 
   it("rejects a vault split that does not sum to 10000 bps", () => {
-    const plan = buildProtocolFeeSettlement(input(100_000n, 2_000n), {
+    const plan = buildProtocolFeeSettlement(input(100_000n), {
       ...FULL_CONFIG,
       vaultSplit: { operationsBps: 5000, foundersBps: 3000, ecosystemBps: 1000 },
     });
@@ -105,29 +125,23 @@ describe("buildProtocolFeeSettlement", () => {
   });
 
   it("keeps the sweep split lossless (no satoshi is dropped)", () => {
-    // 9,801 intake does not divide evenly; the ecosystem bucket absorbs dust.
-    const plan = buildProtocolFeeSettlement(input(100_000n, 1_999n), FULL_CONFIG);
+    // A take that does not divide evenly; the ecosystem bucket absorbs dust.
+    const plan = buildProtocolFeeSettlement(input(100_033n), FULL_CONFIG);
     const s = plan.vaultSweep;
     expect(s.operationsSat + s.foundersSat + s.ecosystemSat).toBe(s.intakeSat);
-  });
-
-  it("rejects a fee larger than the gross amount", () => {
-    const plan = buildProtocolFeeSettlement(input(1_000n, 2_000n), FULL_CONFIG);
-    expect(plan.isSettleable).toBe(false);
-    expect(plan.blockers).toContain("feeSat exceeds grossAmountSat");
   });
 });
 
 describe("planTreasuryUtilisation", () => {
-  const sweep = buildProtocolFeeSettlement(input(100_000n, 2_000n), FULL_CONFIG).vaultSweep;
+  const sweep = buildProtocolFeeSettlement(input(100_000n), FULL_CONFIG).vaultSweep;
 
   it("maps each bucket to its documented purposes and release target", () => {
     const plan = planTreasuryUtilisation(sweep);
-    expect(plan.totalSweptSat).toBe(9_800n);
+    expect(plan.totalSweptSat).toBe(10_000n);
     expect(plan.lines.map((l) => [l.bucket, l.amountSat, l.releaseTarget])).toEqual([
-      ["OPERATIONS", 4_900n, "SAB-TREASURY-MS"],
-      ["FOUNDERS", 2_940n, "SAB-TREASURY-MS"],
-      ["ECOSYSTEM", 1_960n, "DAO-TREASURY-MS"],
+      ["OPERATIONS", 5_000n, "SAB-TREASURY-MS"],
+      ["FOUNDERS", 3_000n, "SAB-TREASURY-MS"],
+      ["ECOSYSTEM", 2_000n, "DAO-TREASURY-MS"],
     ]);
     expect(plan.lines[0].purposes).toContain("Security audits (quarterly)");
     expect(plan.lines[2].purposes).toContain("Builder grants");

@@ -7,29 +7,34 @@
 // source to your users (AGPL-3.0 section 13), or to obtain a commercial
 // licence from Conxian Labs.
 /**
- * Protocol fee settlement planning.
+ * Protocol fee settlement planning (ADR-007).
  *
- * Closes the gap between "fee computed" and "fee routed": `job_card_escrow`
- * computes the 80/10/10 yield split and then drops the treasury and ecosystem
- * legs, routing only the builder leg. This module turns a released escrow into
- * the complete, deterministic recipient instruction set:
+ * Closes the gap between "fee computed" and "fee routed". Under the two-product
+ * model the platform's take (10% of gross on a matched job; the ADR-005 dynamic
+ * fee on a rail) is the single source that funds the treasury, and the vault's
+ * `sweep-treasury` applies the single 50/30/20 split rule. This module turns a
+ * released settlement into the complete, deterministic recipient instruction set:
  *
- *   builder            -> direct payout to the builder principal
- *   platform treasury  -> TREASURY-VAULT intake (contracts/protocol-fee-vault.clar)
- *   ecosystem          -> ecosystem principal
- *   vault sweep        -> 50/30/20 of the vault intake to Operations / Founders / Ecosystem
+ *   builder            -> direct payout to the builder principal (gross − take)
+ *   platform take      -> TREASURY-VAULT intake (contracts/protocol-fee-vault.clar)
+ *   vault sweep        -> 50/30/20 of the take to Operations / Founders / Ecosystem
  *
- * Recipients are role principals, never hardcoded addresses (docs/AGENTS.md).
- * The plan fails closed: while any required principal is unconfigured, no
- * instruction is emitted and `isSettleable` is false.
+ * The ecosystem is funded from the platform's 50/30/20 — NOT a second deduction
+ * on the builder (ADR-007 §2.2). Recipients are role principals, never hardcoded
+ * addresses (docs/AGENTS.md). The plan fails closed: while any required principal
+ * is unconfigured, `isSettleable` is false.
  *
- * The vault is passive intake. Value leaves it only through the vault
- * contract's `sweep-treasury`, which the plan's `vaultSweep` mirrors so the
- * on-chain split and the off-chain plan cannot drift.
+ * The vault is passive intake. Value leaves it only through the vault contract's
+ * `sweep-treasury`, which the plan's `vaultSweep` mirrors so the on-chain split
+ * and the off-chain plan cannot drift.
  */
 
-import { BosYieldSplitter } from "./bos_yield_splitter.js";
 import { SettlementRail, TrustTier } from "./core_types.js";
+import {
+  computeProductTake,
+  type FeeProduct,
+  type ProductSignals,
+} from "./fee_product.js";
 
 /** Canonical wallet/role principals (docs/AGENTS.md §3). */
 export type SettlementRole =
@@ -47,13 +52,13 @@ export interface RolePrincipal {
 
 export interface FeeSettlementConfig {
   builder: RolePrincipal;
-  /** TREASURY-VAULT — passive intake for the platform-treasury leg. */
+  /** TREASURY-VAULT — passive intake for the platform take. */
   vault: RolePrincipal;
-  ecosystem: RolePrincipal;
   /** Vault sweep recipients (SAB-TREASURY-MS release targets). */
   operations: RolePrincipal;
   founders: RolePrincipal;
-  /** Vault sweep split in basis points. Defaults to the ADR-001 50/30/20. */
+  ecosystem: RolePrincipal;
+  /** Vault sweep split in basis points. Defaults to the ADR-007 50/30/20. */
   vaultSplit?: {
     operationsBps: number;
     foundersBps: number;
@@ -66,12 +71,16 @@ export interface FeeSettlementInput {
   rail: SettlementRail;
   tier: TrustTier;
   grossAmountSat: bigint;
-  /** Protocol fee already computed by `fee_calculator` (feeSat). */
-  feeSat: bigint;
+  /** Explicit product. Omit to classify from `signals` (fail-closed). */
+  product?: FeeProduct;
+  signals?: ProductSignals;
+  volumeDecayTier?: import("./core_types.js").VolumeDecayTier;
+  systemLoadFactor?: number;
+  matchedJobTakeBps?: number;
 }
 
 export interface SettlementInstruction {
-  leg: "builder" | "treasury" | "ecosystem";
+  leg: "builder" | "treasury";
   recipientRole: SettlementRole;
   recipientPrincipal?: string;
   amountSat: bigint;
@@ -94,14 +103,12 @@ export interface ProtocolFeeSettlementPlan {
   settlementId: string;
   rail: SettlementRail;
   tier: TrustTier;
+  product: FeeProduct;
   grossAmountSat: bigint;
-  protocolFeeSat: bigint;
-  netPayoutSat: bigint;
-  /**
-   * Total protocol take across all legs (fee + treasury slice + ecosystem
-   * slice), in basis points of gross. Surfaced so the ADR-001 §1 (2%) versus
-   * §1.1 (80/10/10) divergence is visible rather than silent.
-   */
+  /** The platform's take (10% matched job; ADR-005 dynamic fee on a rail). */
+  protocolTakeSat: bigint;
+  builderSat: bigint;
+  /** Effective platform take in basis points of gross. */
   effectiveProtocolTakeBps: number;
   instructions: SettlementInstruction[];
   vaultSweep: VaultSweepPlan;
@@ -223,9 +230,9 @@ function requirePrincipal(
 /**
  * Build the complete recipient instruction set for a released settlement.
  *
- * Pure and deterministic; performs no I/O. Mirrors the arithmetic already used
- * by `job_card_escrow.evaluateAndRelease`: the protocol fee is taken off the
- * gross, then 80/10/10 applies to the net payout.
+ * Pure and deterministic; performs no I/O. The platform's take (10% of gross on
+ * a matched job; the ADR-005 dynamic fee on a rail) routes into TREASURY-VAULT,
+ * which sweeps it 50/30/20. The builder receives `gross − take` directly.
  */
 export function buildProtocolFeeSettlement(
   input: FeeSettlementInput,
@@ -236,18 +243,12 @@ export function buildProtocolFeeSettlement(
   if (input.grossAmountSat <= 0n) {
     blockers.push("grossAmountSat must be greater than zero");
   }
-  if (input.feeSat < 0n) {
-    blockers.push("feeSat must not be negative");
-  }
-  if (input.feeSat > input.grossAmountSat) {
-    blockers.push("feeSat exceeds grossAmountSat");
-  }
 
   const builderPrincipal = requirePrincipal("BUILDER", config.builder.principal, blockers);
   const vaultPrincipal = requirePrincipal("TREASURY_VAULT", config.vault.principal, blockers);
-  const ecosystemPrincipal = requirePrincipal("ECOSYSTEM", config.ecosystem.principal, blockers);
   const operationsPrincipal = requirePrincipal("OPERATIONS", config.operations.principal, blockers);
   const foundersPrincipal = requirePrincipal("FOUNDERS", config.founders.principal, blockers);
+  const ecosystemPrincipal = requirePrincipal("ECOSYSTEM", config.ecosystem.principal, blockers);
 
   const split = config.vaultSplit ?? DEFAULT_VAULT_SPLIT;
   if (
@@ -259,18 +260,27 @@ export function buildProtocolFeeSettlement(
     blockers.push("vaultSplit basis points must be non-negative and sum to 10000");
   }
 
-  const netPayoutSat = input.grossAmountSat > input.feeSat
-    ? input.grossAmountSat - input.feeSat
-    : 0n;
-  const yieldSplit = BosYieldSplitter.calculateYieldSplit(netPayoutSat);
+  const take = computeProductTake({
+    product: input.product,
+    signals: input.signals,
+    grossAmountSat: input.grossAmountSat,
+    tier: input.tier,
+    rail: input.rail,
+    volumeDecayTier: input.volumeDecayTier,
+    systemLoadFactor: input.systemLoadFactor,
+    matchedJobTakeBps: input.matchedJobTakeBps,
+  });
 
-  const operationsSat = (yieldSplit.platformTreasurySat * BigInt(split.operationsBps)) / 10_000n;
-  const foundersSat = (yieldSplit.platformTreasurySat * BigInt(split.foundersBps)) / 10_000n;
-  // Remainder bucket absorbs integer-division dust, matching the vault contract.
-  const ecosystemSweepSat = yieldSplit.platformTreasurySat - operationsSat - foundersSat;
+  // The vault sweep mirrors the contract's arithmetic: 50/30/20 of the take,
+  // ecosystem absorbing integer-division dust. Under the single split rule the
+  // vault split and the take split agree by construction; the config override
+  // lets an operator retune the vault without changing the take.
+  const operationsSat = (take.takeSat * BigInt(split.operationsBps)) / 10_000n;
+  const foundersSat = (take.takeSat * BigInt(split.foundersBps)) / 10_000n;
+  const ecosystemSweepSat = take.takeSat - operationsSat - foundersSat;
 
   const vaultSweep: VaultSweepPlan = {
-    intakeSat: yieldSplit.platformTreasurySat,
+    intakeSat: take.takeSat,
     operationsSat,
     foundersSat,
     ecosystemSat: ecosystemSweepSat,
@@ -284,7 +294,7 @@ export function buildProtocolFeeSettlement(
       leg: "builder",
       recipientRole: "BUILDER",
       recipientPrincipal: builderPrincipal,
-      amountSat: yieldSplit.builderSat,
+      amountSat: take.builderSat,
       destination: "direct",
       rail: input.rail,
     },
@@ -292,40 +302,27 @@ export function buildProtocolFeeSettlement(
       leg: "treasury",
       recipientRole: "TREASURY_VAULT",
       recipientPrincipal: vaultPrincipal,
-      amountSat: yieldSplit.platformTreasurySat,
+      amountSat: take.takeSat,
       destination: "vault-intake",
       rail: input.rail,
     },
-    {
-      leg: "ecosystem",
-      recipientRole: "ECOSYSTEM",
-      recipientPrincipal: ecosystemPrincipal,
-      amountSat: yieldSplit.ecosystemStakeholdersSat,
-      destination: "direct",
-      rail: input.rail,
-    },
   ];
-
-  const totalProtocolTakeSat =
-    input.feeSat + yieldSplit.platformTreasurySat + yieldSplit.ecosystemStakeholdersSat;
-  const effectiveProtocolTakeBps =
-    input.grossAmountSat > 0n
-      ? Number((totalProtocolTakeSat * 10_000n) / input.grossAmountSat)
-      : 0;
 
   // Sweep recipients are required to settle even though they are not payees of
   // this settlement: an unconfigured sweep target would strand the intake.
   void operationsPrincipal;
   void foundersPrincipal;
+  void ecosystemPrincipal;
 
   return {
     settlementId: input.settlementId,
     rail: input.rail,
     tier: input.tier,
+    product: take.product,
     grossAmountSat: input.grossAmountSat,
-    protocolFeeSat: input.feeSat,
-    netPayoutSat,
-    effectiveProtocolTakeBps,
+    protocolTakeSat: take.takeSat,
+    builderSat: take.builderSat,
+    effectiveProtocolTakeBps: take.takeBps,
     instructions,
     vaultSweep,
     isSettleable: blockers.length === 0,

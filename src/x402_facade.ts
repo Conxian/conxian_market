@@ -12,7 +12,7 @@
 
 import { createHash } from "node:crypto";
 import type { AttestationCertificate, JobCard, SettlementRail, TrustTier } from "./core_types.js";
-import { TrustTier as Tier } from "./core_types.js";
+import { SettlementRail as Rail, TrustTier as Tier } from "./core_types.js";
 import type { EscrowCreationParams, EscrowRecord } from "./job_card_escrow.js";
 import { JobCardEscrowEngine } from "./job_card_escrow.js";
 import { BosYieldSplitter } from "./bos_yield_splitter.js";
@@ -304,9 +304,13 @@ export class X402EscrowGateway {
     };
   }
 
-  /** Preview 80/10/10 commercial yield split for an x402 demand amount. */
-  previewYieldSplit(demand: X402PaymentDemand) {
+  /** Preview the take split for an x402 demand (a rail call by default). */
+  previewYieldSplit(demand: X402PaymentDemand, product: "rail" | "matched_job" = "rail") {
     const grossAmount = BigInt(demand.amount);
-    return BosYieldSplitter.calculateYieldSplit(grossAmount);
+    return BosYieldSplitter.calculateYieldSplit(grossAmount, {
+      product,
+      tier: Tier.Managed,
+      rail: demand.rail ?? Rail.Lightning,
+    });
   }
 }

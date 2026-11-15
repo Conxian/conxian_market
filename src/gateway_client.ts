@@ -17,24 +17,35 @@ import type {
   M2MSettlement,
   MrrReport,
   Musig2KeyAggregation,
+  ProtocolFeeRecord,
   ProtocolFeeReport,
   SettlementRail,
   SettlementResult,
   UsageMetrics,
 } from "./core_types.js";
+import { TrustTier } from "./core_types.js";
 import { z } from "zod";
+import { calculateRailFee, toWireHeaders } from "./fee_calculator.js";
 import { M2MSettlementResponseSchema, SettlementResultSchema } from "./wire_contract.js";
 
 export interface GatewayConfig {
   baseUrl: string;
   apiToken?: string;
   timeoutMs?: number;
+  /**
+   * #359: when enabled, the settlement path submits the priced fee to
+   * `/v1/billing/fee-report` after each settlement. Opt-in and fail-closed: a
+   * failed report rejects the settlement rather than letting it settle untracked.
+   * Defaults to disabled (protocolFeeActive is still false).
+   */
+  feeReporting?: { enabled: boolean };
 }
 
 export class GatewayClient {
   private readonly baseUrl: string;
   private readonly apiToken?: string;
   private readonly timeoutMs: number;
+  private readonly feeReportingEnabled: boolean;
 
   constructor(config: GatewayConfig) {
     // Strip trailing slashes without a quantifier regex (avoids polynomial ReDoS on hostile URLs).
@@ -43,6 +54,7 @@ export class GatewayClient {
     this.baseUrl = baseUrl;
     this.apiToken = config.apiToken;
     this.timeoutMs = config.timeoutMs ?? 10_000;
+    this.feeReportingEnabled = config.feeReporting?.enabled ?? false;
   }
 
   private serializeBody(value: unknown): string {
@@ -127,28 +139,75 @@ export class GatewayClient {
 
   // ── Settlement & Job Cards ──
 
+  /**
+   * #359: submit the priced fee for a single settlement to the billing meter.
+   * Opt-in (constructor `feeReporting.enabled`) and fail-closed: a rejection
+   * propagates so the caller does not treat an untracked settlement as settled.
+   */
+  private async reportSettlementFee(record: ProtocolFeeRecord): Promise<void> {
+    if (!this.feeReportingEnabled) return;
+    const report: ProtocolFeeReport = {
+      periodStart: record.timestamp,
+      periodEnd: record.timestamp,
+      totalSettledSat: record.amountSat,
+      totalFeesSat: record.feeSat,
+      effectiveFeeBps: record.feeBps,
+      byRail: [
+        {
+          rail: record.rail,
+          count: 1,
+          totalAmountSat: record.amountSat,
+          totalFeeSat: record.feeSat,
+          avgFeeBps: record.feeBps,
+        },
+      ],
+      byTier: [{ tier: record.tier, count: 1, totalFeeSat: record.feeSat }],
+      eventCount: 1,
+    };
+    await this.submitFeeReport(report);
+  }
+
   async settleJobCard(
     card: JobCard,
     opts: { idempotencyKey?: string; correlationId?: string } = {},
   ): Promise<SettlementResult> {
-    return this.fetchJsonValidated<SettlementResult>(
+    // #361: emit the fee the market priced for this settlement so the gateway
+    // meter agrees with the client. Fail-closed: an ObserverOnly tier throws
+    // rather than silently omitting the headers.
+    const fee = calculateRailFee(card.bountySat, card.tier, card.rail);
+    const result = await this.fetchJsonValidated<SettlementResult>(
       SettlementResultSchema,
       "/v1/settlement/job-card",
-      { method: "POST", body: this.serializeBody(card) },
+      { method: "POST", body: this.serializeBody(card), headers: toWireHeaders(fee) },
       { idempotencyKey: opts.idempotencyKey ?? this.newToken(), correlationId: opts.correlationId },
     );
+    await this.reportSettlementFee(result.fee);
+    return result;
   }
 
   async settleM2M(
     settlement: M2MSettlement,
     opts: { idempotencyKey?: string; correlationId?: string } = {},
   ): Promise<{ txId: string }> {
-    return this.fetchJsonValidated<{ txId: string }>(
+    // #361: a raw M2M settlement is a rail call — emit the dynamic fee headers.
+    const fee = calculateRailFee(settlement.amountSat, TrustTier.Expedient, settlement.rail);
+    const result = await this.fetchJsonValidated<{ txId: string }>(
       M2MSettlementResponseSchema,
       "/v1/settlement/m2m",
-      { method: "POST", body: this.serializeBody(settlement) },
+      { method: "POST", body: this.serializeBody(settlement), headers: toWireHeaders(fee) },
       { idempotencyKey: opts.idempotencyKey ?? this.newToken(), correlationId: opts.correlationId },
     );
+    await this.reportSettlementFee({
+      settlementId: settlement.id,
+      rail: settlement.rail,
+      tier: TrustTier.Expedient,
+      amountSat: settlement.amountSat,
+      feeSat: fee.feeSat,
+      feeBps: fee.feeBps,
+      timestamp: settlement.timestamp,
+      builderId: settlement.fromAgent,
+    });
+    return result;
   }
 
   async getExternalSettlements(params?: {
@@ -323,7 +382,7 @@ export class GatewayClient {
   async submitFeeReport(report: ProtocolFeeReport): Promise<{ received: boolean }> {
     return this.fetchJson<{ received: boolean }>("/v1/billing/fee-report", {
       method: "POST",
-      body: JSON.stringify(report),
+      body: this.serializeBody(report),
     });
   }
 

@@ -343,15 +343,32 @@ export interface RevenueScenario {
   name: string;
   monthlyVolumeUsd: number;
   btcPriceUsd: number;
+  /** Matched-job volume (10% take). Defaults to the whole `monthlyVolumeUsd`. */
+  matchedJobVolumeUsd?: number;
+  /** Raw rail volume (dynamic rate). Defaults to 0. */
+  railVolumeUsd?: number;
+  /** Rail rate in basis points. Defaults to the TIER_1 launch rate (50 bps). */
+  railRateBps?: number;
+  /** Matched-job take in basis points. Defaults to 10%. */
+  matchedJobTakeBps?: number;
 }
 
 export interface RevenueProjection {
   scenario: string;
   byStream: {
+    /** Total platform take: matched-job take + rail take (ADR-007). */
     protocolFee: number;
+    /** Matched-job take alone (10% of matched-job volume). */
+    matchedJobTake: number;
+    /** Rail take alone (dynamic rate × rail volume). */
+    railTake: number;
+    /** Retired — not collected. */
     premiumSurcharge: number;
+    /** Retired — not collected. */
     institutional: number;
+    /** Retired — not collected. */
     communityPools: number;
+    /** Retired — not collected. */
     stakingYield: number;
   };
   totalMonthlyUsd: number;

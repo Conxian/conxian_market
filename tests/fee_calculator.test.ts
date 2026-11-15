@@ -141,7 +141,8 @@ describe("fee_calculator", () => {
   });
 
   describe("projectRevenue", () => {
-    it("projects revenue based on volume scenario", () => {
+    it("projects the two-product take, not the retired 2%", () => {
+      // All volume is matched jobs by default: 10% take.
       const projection = projectRevenue({
         name: "Base Scenario",
         monthlyVolumeUsd: 1_000_000,
@@ -149,9 +150,35 @@ describe("fee_calculator", () => {
       });
 
       expect(projection.scenario).toBe("Base Scenario");
-      expect(projection.byStream.protocolFee).toBe(20_000); // 2% of $1M
-      expect(projection.totalMonthlyUsd).toBe(30_000); // sum of streams (3%)
-      expect(projection.pctOfTarget).toBe(12.0); // 30k / 250k = 12%
+      expect(projection.byStream.matchedJobTake).toBe(100_000); // 10% of $1M
+      expect(projection.byStream.protocolFee).toBe(100_000);
+      expect(projection.totalMonthlyUsd).toBe(100_000);
+      expect(projection.pctOfTarget).toBe(40.0); // 100k / 250k = 40%
+    });
+
+    it("splits matched-job and rail volume across the two products", () => {
+      const projection = projectRevenue({
+        name: "Split",
+        monthlyVolumeUsd: 1_000_000,
+        btcPriceUsd: 65_000,
+        matchedJobVolumeUsd: 500_000,
+        railVolumeUsd: 500_000,
+      });
+      expect(projection.byStream.matchedJobTake).toBe(50_000); // 10% of 500k
+      expect(projection.byStream.railTake).toBe(2_500);        // 50 bps of 500k
+      expect(projection.byStream.protocolFee).toBe(52_500);
+    });
+
+    it("reports the retired streams as zero (no collection path)", () => {
+      const projection = projectRevenue({
+        name: "Base Scenario",
+        monthlyVolumeUsd: 1_000_000,
+        btcPriceUsd: 65_000,
+      });
+      expect(projection.byStream.premiumSurcharge).toBe(0);
+      expect(projection.byStream.institutional).toBe(0);
+      expect(projection.byStream.communityPools).toBe(0);
+      expect(projection.byStream.stakingYield).toBe(0);
     });
   });
 });

@@ -395,8 +395,11 @@ export class ConxianMarketSDK {
 
   // ── Capability 9: BOS Yield Splitter & Treasury Multi-Sig Timelock ──
 
-  calculateYieldSplit(grossAmountSat: bigint): YieldSplit {
-    return BosYieldSplitter.calculateYieldSplit(grossAmountSat);
+  calculateYieldSplit(
+    grossAmountSat: bigint,
+    options?: Parameters<typeof BosYieldSplitter.calculateYieldSplit>[1],
+  ): YieldSplit {
+    return BosYieldSplitter.calculateYieldSplit(grossAmountSat, options);
   }
 
   /**
@@ -738,9 +741,13 @@ export class ConxianMarketSDK {
     return this.slaEngine.evaluateMultiCloudSlaHealth(scorecard, baseSla);
   }
 
-  validateYieldSplitRealtime(grossAmountSat: bigint, telemetryInput: MultiCloudTelemetryInput): RealtimeYieldSplitValidation {
+  validateYieldSplitRealtime(
+    grossAmountSat: bigint,
+    telemetryInput: MultiCloudTelemetryInput,
+    options?: Omit<Parameters<typeof BosYieldSplitter.validateYieldSplitRealtime>[0], "grossAmountSat" | "telemetry">,
+  ): RealtimeYieldSplitValidation {
     const scorecard = this.aggregateMultiCloudTelemetry(telemetryInput);
-    return this.bosYieldSplitter.validateYieldSplitRealtime({ grossAmountSat, telemetry: scorecard });
+    return this.bosYieldSplitter.validateYieldSplitRealtime({ grossAmountSat, telemetry: scorecard, ...options });
   }
 
   // ── Capability 17: Universal Verification Adapter & BitVM3 Fraud Proofs ──

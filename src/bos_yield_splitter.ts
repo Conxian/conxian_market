@@ -10,8 +10,10 @@
  * Conxian Market: Business Operating System (BOS) Yield Splitter & Thin Orchestrator Guard.
  *
  * Implements the commercial packaging and economic rules specified in docs/knowledge_base/operating_manual.md:
- * 1. Commercial Yield Matrix (80/10/10): 80% Builder, 10% Platform Treasury, 10% Ecosystem Stakeholders.
- * 2. Protocol fee: the ONLY protocol fee model is the dynamic hybrid model in
+ * 1. Two-product rate model (ADR-007): the platform take is 10% of gross on a
+ *    matched job (builder keeps 90%); the rail product uses the ADR-005 dynamic
+ *    fee. The take is then split 50/30/20 (one split rule).
+ * 2. Protocol fee: the ONLY fee rate model is the dynamic hybrid model in
  *    `fee_calculator.ts` (ADR-004/ADR-005) — a single volume-decay percentage
  *    (0.50%/0.25%/0.15%/0.10%) composed with a per-rail flat floor, distributed
  *    50% Ops / 30% Founders / 20% Ecosystem. The former static 2.0/1.5/1.0%
@@ -22,7 +24,7 @@
  *    - Enforces 48-hour timelock delay for treasury transfers > $50,000 (100,000,000 satoshis).
  *    - Enforces 3-of-5 multisig quorum verification.
  *    - Manages founder compensation escrow payouts with DAO bonus validation.
- * 6. Real-Time Yield Split Validation (Session 75): Validates 80/10/10 splits against live multi-cloud telemetry.
+ * 6. Real-Time Yield Split Validation (Session 75): Validates take splits against live multi-cloud telemetry.
  */
 
 import type {
@@ -32,12 +34,19 @@ import type {
   TimelockTransactionRequest,
   TimelockValidationResult,
 } from "./core_types.js";
+import { type FeeProduct, computeProductTake } from "./fee_product.js";
 
 export interface YieldSplit {
   grossAmountSat: bigint;
-  builderSat: bigint;            // 80%
-  platformTreasurySat: bigint;   // 10%
-  ecosystemStakeholdersSat: bigint; // 10%
+  product: FeeProduct;
+  /** Builder share: `gross − take` (90% on a matched job). */
+  builderSat: bigint;
+  /** The platform's take (10% of gross on a matched job; the dynamic fee on a rail). */
+  takeSat: bigint;
+  /** Single split rule (50/30/20) applied to the take. */
+  operationsSat: bigint;
+  foundersSat: bigint;
+  ecosystemSat: bigint;
 }
 
 export interface RealtimeYieldSplitValidation {
@@ -94,30 +103,67 @@ export interface InferencePolicyResult {
 
 export class BosYieldSplitter {
   /**
-   * Calculate 80/10/10 yield split for AI labor transactions per KB specs.
+   * Calculate the take split for a settlement under the two-product model
+   * (ADR-007). Matched jobs take 10% of gross (builder keeps 90%); rails use the
+   * ADR-005 dynamic fee. The take is split 50/30/20. Classification is
+   * fail-closed to the matched-job rate when it cannot be determined.
    */
-  static calculateYieldSplit(grossAmountSat: bigint): YieldSplit {
-    const builderSat = (grossAmountSat * 80n) / 100n;
-    const platformTreasurySat = (grossAmountSat * 10n) / 100n;
-    const ecosystemStakeholdersSat = grossAmountSat - builderSat - platformTreasurySat;
+  static calculateYieldSplit(
+    grossAmountSat: bigint,
+    options: {
+      product?: FeeProduct;
+      signals?: import("./fee_product.js").ProductSignals;
+      tier?: import("./core_types.js").TrustTier;
+      rail?: import("./core_types.js").SettlementRail;
+      volumeDecayTier?: import("./core_types.js").VolumeDecayTier;
+      systemLoadFactor?: number;
+      matchedJobTakeBps?: number;
+    } = {},
+  ): YieldSplit {
+    const take = computeProductTake({
+      product: options.product,
+      signals: options.signals,
+      grossAmountSat,
+      tier: options.tier,
+      rail: options.rail,
+      volumeDecayTier: options.volumeDecayTier,
+      systemLoadFactor: options.systemLoadFactor,
+      matchedJobTakeBps: options.matchedJobTakeBps,
+    });
 
     return {
-      grossAmountSat,
-      builderSat,
-      platformTreasurySat,
-      ecosystemStakeholdersSat,
+      grossAmountSat: take.grossAmountSat,
+      product: take.product,
+      builderSat: take.builderSat,
+      takeSat: take.takeSat,
+      operationsSat: take.operationsSat,
+      foundersSat: take.foundersSat,
+      ecosystemSat: take.ecosystemSat,
     };
   }
 
   /**
-   * Validate 80/10/10 yield split execution in real-time backed by multi-cloud telemetry scorecard.
+   * Validate a take split in real-time backed by a multi-cloud telemetry scorecard.
    */
   static validateYieldSplitRealtime(input: {
     grossAmountSat: bigint;
     telemetry: MultiCloudTelemetryScorecard;
     evaluatedAtIso?: string;
+    product?: FeeProduct;
+    signals?: import("./fee_product.js").ProductSignals;
+    tier?: import("./core_types.js").TrustTier;
+    rail?: import("./core_types.js").SettlementRail;
+    volumeDecayTier?: import("./core_types.js").VolumeDecayTier;
+    systemLoadFactor?: number;
   }): RealtimeYieldSplitValidation {
-    const yieldSplit = BosYieldSplitter.calculateYieldSplit(input.grossAmountSat);
+    const yieldSplit = BosYieldSplitter.calculateYieldSplit(input.grossAmountSat, {
+      product: input.product,
+      signals: input.signals,
+      tier: input.tier,
+      rail: input.rail,
+      volumeDecayTier: input.volumeDecayTier,
+      systemLoadFactor: input.systemLoadFactor,
+    });
     const warnings: string[] = [...input.telemetry.alerts];
     const evaluatedAtMs = Date.parse(input.evaluatedAtIso ?? new Date().toISOString());
     const capturedAtMs = Date.parse(input.telemetry.capturedAtIso);

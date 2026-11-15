@@ -104,6 +104,24 @@ export type {
   InferencePolicyInput,
   InferencePolicyResult,
 } from "./bos_yield_splitter.js";
+
+// Two-product rate model (ADR-007): rail vs matched job, one split rule.
+export {
+  classifyFeeProduct,
+  resolveFeeProduct,
+  hasMarketplaceSignal,
+  splitPlatformTake,
+  computeProductTake,
+  MATCHED_JOB_TAKE_BPS,
+  TAKE_SPLIT_BPS,
+} from "./fee_product.js";
+export type {
+  FeeProduct,
+  ProductSignals,
+  ProductTake,
+  ProductTakeInput,
+  PlatformTakeSplit,
+} from "./fee_product.js";
 export { MarketAgnosticRouter } from "./market_agnostic_router.js";
 export type {
   NonCustodialSettlementRequest,

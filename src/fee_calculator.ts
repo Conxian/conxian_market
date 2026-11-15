@@ -287,8 +287,8 @@ export function generateFeeReport(
 
 export interface ProtocolFeeHeader {
   [key: string]: string;
-  "x-conxian-fee-bps": string;     // "200" = 2%
-  "x-conxian-fee-sat": string;     // "2000" for 100K sats @ 2%
+  "x-conxian-fee-bps": string;     // e.g. "50" = 0.50% (ADR-005 launch rate)
+  "x-conxian-fee-sat": string;     // e.g. "5000" for 1,000,000 sats @ 0.50%
   "x-conxian-tier": string;        // "MANAGED"
   "x-conxian-rail": string;        // "SBTC"
 }
@@ -305,16 +305,24 @@ export function toWireHeaders(fee: FeeResult): ProtocolFeeHeader {
 // ── Revenue projection helpers ──
 
 /**
- * Model monthly/annual protocol fee revenue for a volume scenario.
+ * Model monthly protocol-take revenue for a volume scenario (ADR-007).
+ *
+ * The take is the two-product model: matched-job volume × the take (10% by
+ * default) plus rail volume × the dynamic rate. The retired 2% hardcode and the
+ * four uncollected "streams" are gone — they are surfaced as 0 so the projection
+ * cannot overstate revenue.
  */
 export function projectRevenue(scenario: RevenueScenario): RevenueProjection {
-  const protocolFee = Math.round(scenario.monthlyVolumeUsd * 0.02 * 100) / 100;
-  const premiumSurcharge = Math.round(scenario.monthlyVolumeUsd * 0.005 * 100) / 100;
-  const institutional = Math.round(scenario.monthlyVolumeUsd * 0.003 * 100) / 100;
-  const communityPools = Math.round(scenario.monthlyVolumeUsd * 0.001 * 100) / 100;
-  const stakingYield = Math.round(scenario.monthlyVolumeUsd * 0.001 * 100) / 100;
+  const matchedVolume = scenario.matchedJobVolumeUsd ?? scenario.monthlyVolumeUsd;
+  const railVolume = scenario.railVolumeUsd ?? 0;
+  const matchedTakeBps = scenario.matchedJobTakeBps ?? 1000; // 10%
+  const railRateBps = scenario.railRateBps ?? 50;            // TIER_1 launch rate
 
-  const totalMonthlyUsd = Math.round((protocolFee + premiumSurcharge + institutional + communityPools + stakingYield) * 100) / 100;
+  const matchedJobTake = Math.round(matchedVolume * (matchedTakeBps / 10_000) * 100) / 100;
+  const railTake = Math.round(railVolume * (railRateBps / 10_000) * 100) / 100;
+  const protocolFee = Math.round((matchedJobTake + railTake) * 100) / 100;
+
+  const totalMonthlyUsd = protocolFee;
   const targetMonthlyUsd = 250_000;
   const pctOfTarget = Math.round((totalMonthlyUsd / targetMonthlyUsd) * 100 * 10) / 10;
 
@@ -322,10 +330,13 @@ export function projectRevenue(scenario: RevenueScenario): RevenueProjection {
     scenario: scenario.name,
     byStream: {
       protocolFee,
-      premiumSurcharge,
-      institutional,
-      communityPools,
-      stakingYield,
+      matchedJobTake,
+      railTake,
+      // Retired streams: no collection path exists (issues #364/#366).
+      premiumSurcharge: 0,
+      institutional: 0,
+      communityPools: 0,
+      stakingYield: 0,
     },
     totalMonthlyUsd,
     pctOfTarget,
