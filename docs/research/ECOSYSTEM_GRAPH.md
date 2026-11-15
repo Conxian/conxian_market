@@ -183,9 +183,11 @@ agent (x402 v2 / MPP client)
        └─► no job card  ──► Product A (rail) ──► ADR-005 dynamic fee
        └─► job card + escrow lock ──► Product B (matched) ──► 10% take ──► Chain D
 ```
-**Status:** x402 v2 wire + MCP-402 + replay guard shipped; **MPP not present** (bridge
-proposed, #367). x402 is a **Linux Foundation** standard with 40 members and **zero
-protocol fees** — Conxian's fee is a **trust-layer** fee. See
+**Status:** x402 v2 wire + MCP-402 + replay guard shipped; **MPP bridged**
+(`src/mpp_bridge.ts`, ADR-008, #371) — structural Challenge/Credential/Receipt codecs +
+a fail-closed adapter onto the escrow gate; no signature verification or settlement.
+x402 is a **Linux Foundation** standard with 40 members and **zero protocol fees**;
+MPP is co-authored by **Tempo and Stripe**. Conxian's fee is a **trust-layer** fee. See
 `docs/research/X402_MPP_ECOSYSTEM_2026.md`.
 
 ---

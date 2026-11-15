@@ -67,17 +67,22 @@ fact.**
 > reachable) could not verify the Linux Foundation affiliation and listed Google/Stripe/
 > Visa as unverified adopters. **All three are confirmed Premier members.**
 
-### 1.2 MPP — Machine Payments Protocol **[verified via Cloudflare]**
+### 1.2 MPP — Machine Payments Protocol **[verified]**
 
 - **What:** an open M2M payment protocol that formalises HTTP 402 as an **HTTP
   authentication scheme** (`WWW-Authenticate: Payment` / `Authorization: Payment`, plus
   `Payment-Receipt`). Payment-method-agnostic: stablecoins **and cards via Stripe**.
+- **Who:** **co-authored by Tempo and Stripe** (`mpp.dev`). **[verified]** Documented at
+  `mpp.dev`; the scheme is proposed to the IETF at `paymentauth.org`. SDK: `mppx`
+  (TS/Python/Rust/Go/Ruby). Payment methods include Tempo, EVM, Stripe, Card, Lightning,
+  Solana, XRP Ledger, Stellar, Monad, NEAR Intents, and RedotPay.
 - **Intents:** `charge` (one-time), `session` (usage), `subscription` (recurring).
 - **Relationship to x402:** **backwards-compatible** — MPP clients can consume existing
-  x402 services unchanged ("Use MPP with x402"). Documented at `mpp.dev`; the scheme was
-  proposed to the IETF at `paymentauth.org`. SDK: `mppx` (TS/Python/Rust/Go/Ruby).
-- ⚠️ Who **founded/operates** MPP was **[unverified]** — not named in the reachable
-  sources. Do not assume it is an LF project without checking.
+  x402 services unchanged ("Use MPP with x402").
+- **Wire:** a Challenge carries `id`, `realm`, `method`, `intent`, `request`
+  (base64url JCS JSON), and optional `expires`/`header`/`opaque`; a Credential echoes the
+  challenge and adds `source` + `payload`; a Receipt carries `method`/`reference`/
+  `status`/`timestamp`.
 
 ### 1.3 MCP payments — layered, not a spec **[verified]**
 
@@ -121,7 +126,7 @@ fact.**
 | Replay protection | `src/replay_guard.ts` | **Shipped (bounded)** | **Process-local, in-memory** — not durable/shared |
 | Entitlement resolution | `src/entitlement_resolver.ts` | **Shipped (fail-closed)** | Fails closed to ObserverOnly without a resolver |
 | Agent identity (ERC-8004-aligned) | `src/agent_registry.ts` + `contracts/agent_registry.clar` | **Shipped** | ERC-8004 registry lookup itself is #176/#159 |
-| **MPP** (`Authorization: Payment`, intents, cards) | — | **Not present** | Entirely new surface (§3) |
+| **MPP** (`Authorization: Payment`, intents, cards) | `src/mpp_bridge.ts` (ADR-008) | **Shipped (structural)** | No signature verification; no settlement |
 | MCP **elicitation** flows | — | **Not present** | Out-of-band auth/payment |
 | Durable/shared settlement | — | **Not present** | Deployment concern (#176) |
 
@@ -148,8 +153,9 @@ Payment` / `Authorization: Payment`, maps an MPP `charge` intent to the existing
 `X402EscrowGateway` demand, and returns a `Payment-Receipt`. Keep `x402_v2_wire.ts` as
 the transport. Do **not** re-base on MPP; the escrow/attestation layer is the moat.
 
-> ⚠️ This is a **proposal**, not a decision. MPP's operator is **[unverified]**, so
-> adopting it before confirming governance is premature. Tracked as #371; needs a new ADR.
+> ✅ **Decided and implemented** — see `docs/adr/ADR_008_MPP_BRIDGE.md` and
+> `src/mpp_bridge.ts` (issue #371). MPP is co-authored by **Tempo and Stripe** (verified
+> at `mpp.dev`).
 
 ---
 
@@ -191,6 +197,9 @@ wording was correct.**
   governance; working groups).
 - `x402.org` — 2026-10-01 Executive Director announcement (Michael Hursta).
 - `x402.org` footer — *"x402 a Series of LF Projects, LLC"*.
+- `mpp.dev` — home, `/protocol/challenges`, `/protocol/credentials`, `/protocol/receipts`,
+  `/protocol/http-402` (Challenge/Credential/Receipt wire; intents; **co-authored by Tempo
+  and Stripe**); `paymentauth.org` (IETF proposal).
 - Cloudflare — x402, MPP, Monetization Gateway docs; Agents SDK v0.4.0 changelog
   (2026-02-09); Machine Payments changelog (2026-09-30).
 
@@ -199,8 +208,8 @@ wording was correct.**
 - `eips.ethereum.org/EIPS/eip-8004`
 - `modelcontextprotocol/modelcontextprotocol` (tools, elicitation)
 
-**Unverified leads (verify before publishing):** `ap2-protocol.org`, `paymentauth.org`
-(MPP IETF proposal), `mpp.dev` (MPP operator).
+**Verified this scan (read directly):** `mpp.dev` — MPP co-authored by Tempo and Stripe;
+Challenge/Credential/Receipt wire; intents. **Unverified leads:** `ap2-protocol.org`.
 
 ---
 

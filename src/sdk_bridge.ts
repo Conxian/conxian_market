@@ -14,6 +14,7 @@ import type {
 import { ClientInstallerEngine } from "./client_onboarding.js";
 import { AgentRegistry, type AgentCard, type AgentRegistryEntry, type AgentReputationRecord } from "./agent_registry.js";
 import { Mcp402Facade, type McpToolCall, type Mcp402PaymentGateResult } from "./mcp_402.js";
+import { MppBridge, type MppBridgeResult, type MppChallenge, type MppChargeContext, type MppCredential } from "./mpp_bridge.js";
 import { MultiDimensionalScoringEngine } from "./multi_dimensional_scoring.js";
 import { UniversalVerificationAdapter } from "./verification.js";
 import type {
@@ -176,6 +177,7 @@ export class ConxianMarketSDK {
   readonly x402EscrowGateway: X402EscrowGateway;
   readonly agentRegistry: AgentRegistry;
   readonly mcp402Facade: Mcp402Facade;
+  readonly mppBridge: MppBridge;
   readonly multiDimensionalScoring: MultiDimensionalScoringEngine;
   readonly universalVerificationAdapter: UniversalVerificationAdapter;
   readonly flags: FeatureFlags;
@@ -201,6 +203,7 @@ export class ConxianMarketSDK {
     this.x402EscrowGateway = new X402EscrowGateway(this.jobCardEscrowEngine);
     this.agentRegistry = new AgentRegistry();
     this.mcp402Facade = new Mcp402Facade();
+    this.mppBridge = new MppBridge();
     this.multiDimensionalScoring = new MultiDimensionalScoringEngine();
     this.universalVerificationAdapter = new UniversalVerificationAdapter(this.verifier);
   }
@@ -720,6 +723,15 @@ export class ConxianMarketSDK {
     return this.mcp402Facade.authorize(call, receipt);
   }
 
+  /** Authorize an MPP (Machine Payments Protocol) Credential against the escrow gate (#371). */
+  authorizeMppCredential(
+    challenge: MppChallenge,
+    credential: MppCredential,
+    ctx: MppChargeContext
+  ): MppBridgeResult {
+    return this.mppBridge.authorize(challenge, credential, ctx);
+  }
+
   // ── Capability 15: Multi-Dimensional Scoring Engine (x402 & ERC-8183) ──
 
   calculateMultiDimensionalScore(metrics: AgentPerformanceMetrics): MultiDimensionalScoreResult {
@@ -856,6 +868,7 @@ evaluateSlaPolicyAndExemptions(
       clientInstallerEnabled: true,
       agentRegistryEnabled: true,
       mcp402FacadeEnabled: true,
+      mppBridgeEnabled: true,
       multiDimensionalScoringEnabled: true,
       multiCloudTelemetryEnabled: true,
       universalVerificationEnabled: true,

@@ -476,6 +476,7 @@ export interface CapabilitySummary {
   clientInstallerEnabled?: boolean;
   agentRegistryEnabled?: boolean;
   mcp402FacadeEnabled?: boolean;
+  mppBridgeEnabled?: boolean;
   multiDimensionalScoringEnabled?: boolean;
   multiCloudTelemetryEnabled?: boolean;
   universalVerificationEnabled?: boolean;

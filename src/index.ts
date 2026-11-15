@@ -181,6 +181,17 @@ export type {
 } from "./agent_registry.js";
 export { Mcp402Facade } from "./mcp_402.js";
 export type { McpToolCall, Mcp402PaymentGateResult } from "./mcp_402.js";
+export {
+  MPP_BRIDGE_PROFILE, MPP_HEADERS, MPP_AUTH_SCHEME, MPP_MAX_BYTES, MPP_INTENTS,
+  mppIntentToProduct, MppRequestSchema, MppCredentialSchema, MppReceiptSchema,
+  parseMppChallengeHeader, encodeMppChallengeHeader, decodeMppRequest,
+  parseMppCredential, encodeMppCredentialHeader, parseMppReceipt, encodeMppReceiptHeader,
+  MppBridge, buildMppReceipt,
+} from "./mpp_bridge.js";
+export type {
+  MppIntent, MppRequest, MppChallenge, MppCredential, MppReceipt,
+  MppChargeContext, MppBridgeResult, MppBridgeOptions,
+} from "./mpp_bridge.js";
 export { MultiDimensionalScoringEngine } from "./multi_dimensional_scoring.js";
 export { ConxianMarketSDK } from "./sdk_bridge.js";
 
