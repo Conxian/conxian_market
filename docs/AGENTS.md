@@ -393,9 +393,11 @@ collection is off** (`protocolFeeActive === false`). See
 ## 12. RESEARCH DOCUMENT CHAIN
 
 For economic decisions, ALWAYS reference in order:
-0. `docs/adr/ADR_001_FEE_MODEL.md` — **AUTHORITATIVE for recipients/split** — fee custody, exposure caps, pause/exit (resolves Gateway #247 conflict). Fee *rate* = ADR-005.
-0b. `docs/adr/ADR_005_COMPETITIVE_RATES_WITH_COST_RECOVERY.md` — **AUTHORITATIVE for the fee rate** (dynamic hybrid, Accepted 2026-11-14)
+0. `docs/adr/ADR_001_FEE_MODEL.md` — **AUTHORITATIVE for recipients/split** — fee custody, exposure caps, pause/exit. **Amended by `docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md`** (Accepted 2026-11-14) — the fee *level* is two-product (rail vs matched job); basis = Option A (#358).
+0b. `docs/adr/ADR_005_COMPETITIVE_RATES_WITH_COST_RECOVERY.md` — **AUTHORITATIVE for the rail fee rate** (dynamic hybrid; scoped to the **rail** product by ADR-007)
 0c. `docs/research/FEE_DESTINATION_AND_CUSTODY.md` — where the collected fee lands
+0d. `docs/research/FEE_MODEL_FEASIBILITY_AND_SURVIVAL.md` — **Are we too cheap to survive?** Real ask $24k/yr, infra ~$0; break-even at 0.50% = $4.8M/yr
+0e. `docs/research/FEE_MODEL_GROWTH_AND_ALIGNMENT.md` — **Growth plan** — land (0.50% rail/x402) then expand (marketplace take on matched jobs)
 0a. `docs/research/ECOSYSTEM_GRAPH.md` — **Full ecosystem map** — 16 repos, 55 issues, cross-repo dependencies, 5-phase roadmap
 1. `docs/research/FUNDING_AND_ECONOMICS.md` — Fee model, revenue streams, break-even (§3.4 Session 48)
 2. `docs/research/SETTLEMENT_RAILS.md` — 8 rails (6 ready): Statechain*, sBTC, RGB*, Babylon, Fedimint, Lightning, ALEX/Stacks, EVM/ERC-8183 (* = `ready:false`)

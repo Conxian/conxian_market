@@ -2,17 +2,13 @@
 
 > **Status:** Accepted | **Date:** 2026-08-03 | **Version:** 1.1 (2026-11-14)
 > **Supersedes:** Gateway #247 allocation diagram; conxian_market #6 RFC
-> **Authoritative for:** Fee *recipients and split* (80/10/10 builder matrix; 50/30/20 treasury split), rounding, custody, exposure caps, pause/exit
-> **Superseded by:** ADR-005 for the fee *rate* — the static 2.0/1.5/1.0%
-> percentage in §1 below is **retired**. The live rate is the dynamic hybrid model
-> (single volume-decay percentage 0.50%/0.25%/0.15%/0.10% + per-rail flat floor)
-> in `src/fee_calculator.ts` (`VOLUME_DECAY_BPS`, `calculateDynamicFee`).
->
-> **Reconciliation note (2026-11-14):** this ADR was internally inconsistent —
-> the 80/10/10 builder matrix (§1.1) and a 2% protocol fee (§1.2) both apply to the
-> same money and sum to >100%. Resolved: the 80/10/10 split applies to the
-> **net** (`gross − fee`); the fee (whatever the dynamic model returns) splits
-> 50/30/20. The fee rate itself is ADR-005's, not 2%.
+> **Authoritative for:** Fee *recipients and split* (the matched-job per-settlement split; 50/30/20 treasury split), rounding, custody, exposure caps, pause/exit
+> **Amended by [ADR-007](ADR_007_TWO_PRODUCT_RATE_MODEL.md) (2026-11-14, Accepted):**
+> §1.1 (80/10/10) is **reframed** as the *matched-job* product's per-settlement split;
+> §2 (the 2.0% tier table) is **superseded** by the two-product rates; §1.2 (50/30/20) is
+> **retained**. The fee **rate** is ADR-005's (dynamic hybrid), scoped to the **rail**
+> product. The fee **basis** is Option A (#358). Read this ADR together with ADR-007
+> before applying any rate.
 
 ---
 
