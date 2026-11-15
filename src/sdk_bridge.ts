@@ -38,7 +38,7 @@ import type { RealtimeYieldSplitValidation } from "./bos_yield_splitter.js";
  *   - SLA Engine (autonomous SLA evaluation, gap card bounties & auto-resolution, multi-cloud SLA health)
  *   - Monitoring Watcher (sBTC, Fedimint, Babylon, Treasury, and Multi-cloud telemetry watcher)
  *   - TrustTier Middleware (HTTP/MCP request verification & routing pipeline)
- *   - BOS Yield Splitter (80/10/10 yield matrix, real-time yield validation, founder vesting, inference policy)
+ *   - BOS Yield Splitter (two-product take, 50/30/20 split of the take, real-time yield validation, founder vesting, inference policy)
  *   - Market-Agnostic Router (Zero-custody validation, BYO DeFi protocol adapter resolution)
  *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission)
  *   - Fee Calculator (ADR-005 dynamic fee with tier/rail breakdown)

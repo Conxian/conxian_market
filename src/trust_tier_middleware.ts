@@ -3,7 +3,7 @@
  *
  * Implements the 4-stage pipeline specified in docs/knowledge_base/trust_tier_pricing.md:
  * 1. Tier Detector: Evaluates attestation/proof headers and degrades tier for P0 gaps.
- * 2. Fee Calculator: Calculates tier-based fee schedule and 80/10/10 yield split.
+ * 2. Fee Calculator: Calculates tier-based fee schedule and the two-product take split (50/30/20 on the take).
  * 3. SLA Enforcer: Selects SLA template guarantees and penalties for the detected tier.
  * 4. Rail Router: Selects optimal settlement rail and formats wire headers.
  * 5. Lifecycle Engine: Evaluates tier upgrade thresholds (Reputation >= 40, 70, 90) and downgrade triggers.
@@ -509,7 +509,7 @@ export class TrustTierMiddleware {
       }
     }
 
-    // Stage 3: Fee Calculation & 80/10/10 Yield Split
+    // Stage 3: Fee Calculation & two-product take split (50/30/20 on the take)
     let fee: FeeResult;
     if (effectiveTier === Tier.ObserverOnly) {
       fee = {
