@@ -133,7 +133,7 @@ never constructed").
 | 355 | docs(agents,kb) align KB + **single canonical fee model (ADR-005)** | market | Aligns KB; **keeps 80/10/10**, adds `FEE_DESTINATION_AND_CUSTODY.md`, `TREASURY_DEPLOYMENT_GUIDE.md` | **CONFLICTS with #356 on 6 files**; **contradicts ADR-007** (keeps 80/10/10; calls ADR-005 canonical; ADR-005 is still *Proposed*) | **Land FIRST**, then rebase #356 onto it |
 | 356 | Protocol fee ADR-007 **two-product model, implemented** (+ MPP bridge) | market | fee_product.ts, protocol-fee-vault.clar, MPP bridge, docs sweep | supersedes #355's fee-model conclusions; over-broad (3 topics) | **Split**: fee model (rebase after #355) + MPP (#371, already closed) as separate PRs |
 | 130 | restricted protocol-fee destination packet | .github-private | private continuity copy of #356 + a **second copy** of `protocol-fee-vault.clar` | 3rd copy of the vault contract (market, .github-private, `Conxian/contracts` submodule) | keep as backup; **name one canonical contract home** |
-| 2099 | fee-model economics juxtaposition + BOS renders the fee | business | grounded analysis; control-plane `/economics` shows the fee; L402 finding | **targets `dev` but business default branch is `main`** | confirm base branch; it is the **model of record** for economics |
+| 2099 | fee-model economics juxtaposition + BOS renders the fee | business | grounded analysis; control-plane `/economics` shows the fee; L402 finding | none — business has a `dev` branch, base is valid (corrected) | it is the **model of record** for economics |
 | 262 | align site pricing/search to **ADR-007** | labs-site | removes 80/10/10 from public pages | assumes ADR-007 is the model | **after** #355/#356 land; consistent with #356 |
 | 261 | access-request intake | labs-site | customer-safe intake | none | independent |
 | 621 / 783 / 1020 | org-wide doc audit | nexus / enclave-sdk / wallet | dead links, retired repos | none | independent |
@@ -151,7 +151,7 @@ never constructed").
 | **D1** | **#355 and #356 conflict** | `git merge-tree` → 6 conflicting files | you cannot enable a fee whose split rule two open PRs disagree on |
 | **D2** | **80/10/10 vs 50/30/20** | #355 keeps 80/10/10 (net); #356/ADR-007 retires it for one 50/30/20 on the take | the split rule is the number that reaches the wallet |
 | **D3** | **ADR-005 *Proposed* vs ADR-007 *Accepted*** | `origin/dev` shows ADR-005 Proposed; ADR-007 only exists on the #356 branch | #355 promotes ADR-005 to Accepted; ADR-007 amends it — the two branches assert different canonical rates |
-| **D4** | business **#2099 → `dev`** but default branch is **`main`** | repo API `defaultBranchRef = main` | a wrong base can strand the economics model |
+| ~~D4~~ | ~~business #2099 targets `dev`, but the default branch is `main`~~ | **RESOLVED 2026-11-15** — `conxian-business` has `dev`, `main` and `staged`; base `dev` is valid | none |
 | **D5** | gateway **"x402" is off-spec L402** | business #2099 §4; gateway #976 | naming a rail wrong misprices it (rail vs matched) |
 | **D6** | **3 copies** of `protocol-fee-vault.clar` | market #356, .github-private #130, `Conxian/contracts` submodule | ambiguity over which contract is canonical to deploy |
 | **D7** | **#355's deployment guide** points at the dead `Conxian/Conxian` | `TREASURY_DEPLOYMENT_GUIDE.md` §1.1 | a runbook that names a non-existent repo cannot be executed |
