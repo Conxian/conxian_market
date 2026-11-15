@@ -133,10 +133,15 @@ module that owns the capability. Capability counts come from
 
 | Trust Tier | Verification | Market Pricing | Use Case |
 |------------|-------------|---------------|----------|
-| **Strict** | TEE + ZK proof | Premium (negotiated) | Institutional settlement, treasury |
-| **Managed** | Enclave attestation | Standard (0.5% premium) | Professional builders, SAB operations |
-| **Expedient** | Light client verification | Basic (dynamic fee, ADR-005) | Standard agent settlement |
+| **Strict** | TEE + ZK proof | Dynamic (ADR-005) | Institutional settlement, treasury |
+| **Managed** | Enclave attestation | Dynamic (ADR-005) | Professional builders, SAB operations |
+| **Expedient** | Light client verification | Dynamic (ADR-005) | Standard agent settlement |
 | **ObserverOnly** | No verification | Free tier | Discovery, reputation browsing |
+
+> ⚠️ **ADR-007:** rail pricing is the single **ADR-005 dynamic schedule**
+> (0.50%→0.10% + cost floor). The old "+0.5% premium" and "flat 2%" are **retired**
+> — no premium collection path exists. Matched jobs (job card + escrow) are billed a
+> **10% take** (builder keeps 90%), split 50/30/20.
 
 ### Research Coverage (BTC L2 Ecosystem)
 
@@ -243,12 +248,12 @@ module that owns the capability. Capability counts come from
 
 ## 6. ECONOMIC MODEL
 
-### Protocol Fee: dynamic hybrid (ADR-005)
+### Protocol Fee: two-product (ADR-007)
 ```
-Rate: single volume-decay percentage (0.50% → 0.10%) composed with a
-      per-rail flat floor (cost × 1.25) — NEVER a flat 2% (retired).
-      effective_fee_sat = max(amount × decayed_bps/10000, rail_floor) × load_factor
-Split of the collected fee:
+Matched job: 10% take (builder keeps 90%)
+Rail (x402/M2M): ADR-005 dynamic rate (0.50%→0.10% + cost floor)
+
+Take splits 50/30/20:
 50% → Operations (CI/CD, SDKs, Nexus, Audits)
 30% → Founders (4-year vesting)
 20% → Ecosystem (Grants, Liquidity Mining)
@@ -321,8 +326,8 @@ collection is off** (`protocolFeeActive === false`). See
 ### conxian_market (THIS REPO)
 - **Role:** The Value Layer - PRIMARY revenue mechanism
 - **Ethos:** Settlement core, marketplace, treasury
-- **Standards:** MCP-native, ERC-8183, dynamic protocol fee (ADR-005), 4-tier TrustTier pricing
-- **Enhancement:** Phase 1–3 docs complete — 8 settlement rails defined (6 `ready:true`), SLA bounty system, tiered pricing middleware
+- **Standards:** MCP-native, ERC-8183, ADR-007 two-product take (10% matched / dynamic rail), 4-tier TrustTier pricing
+- **Enhancement:** Phase 1–3 complete — 6 settlement rails, SLA bounty system, tiered pricing middleware
 - **Guided by:** FUNDING_AND_ECONOMICS.md, SETTLEMENT_RAILS.md, FULL_SYSTEM_ARCHITECTURE.md
 
 ### conxian-business (PRIVATE)
@@ -431,12 +436,11 @@ For economic decisions, ALWAYS reference in order:
 | P0-4 | CCTP fail-closed (#198) | enclave-sdk | Cross-chain security | CLOSED |
 | P0-5 | Dev sandbox (#480) | Conxian | Builder onboarding | unresolvable — `Conxian/Conxian` no longer exists |
 | P0-6 | Value-op gate (#444) | wallet | Settlement verification | CLOSED |
-| P0-7 | Protocol fee (#488) | conxian_market | 5-stream revenue | **re-homed** — destination now `contracts/protocol-fee-vault.clar` (ADR-006); not deployed |
+| P0-7 | Protocol fee (#488) | conxian_market | two-product take | **re-homed** — `contracts/protocol-fee-vault.clar` (ADR-006); model implemented, deploy pending #360 |
 | P0-8 | CI validation (#1082) | platform | Green CI (BOS Gate 1) | CLOSED |
 
-> `attestationAvailable` in `DEFAULT_FEATURE_FLAGS` is still `false`, so the SDK
-> degrades to **ObserverOnly + Expedient** until P0-2 and P0-3 close. Revenue model
-> remains **theoretical** until the CON-1427 contract phases ship.
+> Market operates at **Expedient tier only** (Lightning + Fedimint, ADR-005 dynamic rail rate) until P0-1 through P0-4 resolve.
+> The two-product take model is **implemented in code** but **not deployed** — no fee is collected until TREASURY-VAULT ships (#360/#364).
 
 ### CON-1427 Status (Protocol Fee Collection)
 
@@ -463,20 +467,25 @@ For economic decisions, ALWAYS reference in order:
 
 ### Economic Model
 ```
-Protocol Fee: dynamic hybrid (ADR-005)
-├── 50% → Operations
+Two-product take (ADR-007)
+├── Matched job: 10% take (builder keeps 90%)
+└── Rail (x402/M2M): ADR-005 dynamic rate (0.50%→0.10% + floor)
+
+Take splits 50/30/20:
+├── 50% → Operations ($X/year based on volume)
 ├── 30% → Founders (4-year vesting)
 └── 20% → Ecosystem (Grants, Liquidity)
 ```
 
 ### Break-Even
 ```
-$240K/year ÷ 0.005 = $48M/year = $131.5K/day   (ADR-005 @0.50% launch rate)
-(was $12M/year = $33K/day under the retired 2% rate)
+Actual ask $24K/year (issue #369, not $240K)
+Matched job (10%):  $24K ÷ 0.10  = $240K/year  = ~$658/day
+Rail (0.50%):       $24K ÷ 0.005 = $4.8M/year  = ~$13K/day
 ```
 
 ### Treasury Targets
-- 12-month runway minimum ($240K)
+- 12-month runway minimum ($24K — issue #369)
 - 40/30/20/10 asset allocation
 - 3-of-5 multisig required
 

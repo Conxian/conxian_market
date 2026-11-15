@@ -167,3 +167,52 @@ cheap 0.50% rail to land developers and a marketplace take on matched jobs to ex
 then monetise with subscriptions. Do not try to survive on 0.50% of everything, and do
 not lead with a rate hike: that is the Upwork trap. Option A (the basis) is confirmed;
 the remaining owner decisions are the level (D-5) and the surface (D-6).**
+
+---
+
+## 10. The plan — signed (ADR-007 Accepted, 2026-11-14)
+
+The owner signed the two-product route. D-5 (the level) is closed: **10% matched-job
+take, builder keeps 90%**; the rail keeps the ADR-005 dynamic rate. This is now
+implemented in code (see `src/fee_product.ts`), not just modelled.
+
+### 10.1 Land then expand
+
+| Phase | Product | Rate | Job to be done | Success signal |
+|---|---|---|---|---|
+| **Land** | Rail (x402/M2M) | 0.50%→0.10% + floor | Win developers with the cheapest compliant settlement | Integration count, rail GMV |
+| **Expand** | Matched job | **10%** | Monetise the trust layer (escrow + SLA + dispute) | Matched-job GMV, repeat jobs |
+
+The two are the **same platform**: a settlement that carries a job card is a matched
+job; anything else is a rail call. Routing is **fail-closed to the higher rate**, so an
+unclassifiable settlement can never slip onto the cheap path.
+
+### 10.2 Why 10% is the level
+
+- **Labour marketplace analogue:** Upwork takes ~10%; Conxian is a labour marketplace.
+- **Pre-liquidity elasticity:** with no liquidity, volume is elastic — set the take for
+  adoption first, raise later only when the marketplace is working (and remember Upwork's
+  churn on a hike).
+- **Ecosystem is funded from the platform's share** (50/30/20 of the take), **not** as a
+  second deduction on the builder. The builder keeps a clean 90%.
+
+### 10.3 Break-even under the signed model
+
+| Product | Take | Break-even volume for the $24K/yr ask |
+|---|---|---|
+| Matched job | 10% | **$240K/yr** (~$658/day) |
+| Rail | 0.50% | **$4.8M/yr** (~$13,150/day) |
+
+The matched-job product is the **survival engine**; the rail is the **land product**.
+The $240K figure is the **actual** ask (issue #369), not the retired $240K *cost base*.
+
+### 10.4 What is still needed
+
+1. **Deploy TREASURY-VAULT** and provision the SAB multisigs (#360/#364) — needs keys.
+2. **Turn on `protocolFeeActive`** only after a shadow-mode settlement verifies (#363).
+3. **D-6:** decide whether the gateway subscription ladder carries steady revenue too
+   (#1343).
+
+**The growth engine is the flywheel (§2), not the fee rate.** Recruiting builders beats
+a rate hike and carries no churn risk. Land with the rail, expand with the matched-job
+take, and fund the ecosystem from the platform's own share.

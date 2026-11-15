@@ -68,11 +68,14 @@ describe("protocol-fee-vault (Clarity simnet)", () => {
     expect(print(r.result)).toBe("(err u103)"); // ERR_INVALID_SPLIT
   });
 
-  it("pause blocks both intake and sweep", async () => {
+  it("requires 2-of-3 emergency-pause members to pause (single member cannot)", async () => {
     const simnet = await initSimnet();
     const a = simnet.getAccounts();
     const deployer = a.get("deployer")!;
     const treasury = a.get("wallet_1")!;
+    const m1 = a.get("wallet_1")!;
+    const m2 = a.get("wallet_2")!;
+    const m3 = a.get("wallet_3")!;
     simnet.callPublicFn(VAULT, "set-treasury-principal", [Cl.principal(treasury)], deployer);
     simnet.callPublicFn(
       VAULT,
@@ -80,9 +83,29 @@ describe("protocol-fee-vault (Clarity simnet)", () => {
       [Cl.principal(a.get("wallet_2")!), Cl.principal(a.get("wallet_3")!), Cl.principal(a.get("wallet_4")!)],
       deployer,
     );
+    simnet.callPublicFn(
+      VAULT,
+      "set-emergency-pause-members",
+      [Cl.principal(m1), Cl.principal(m2), Cl.principal(m3)],
+      deployer,
+    );
     simnet.transferSTX(10_000, `${deployer}.${VAULT}`, deployer);
-    simnet.callPublicFn(VAULT, "pause", [], deployer);
 
+    // A non-member cannot pause at all.
+    expect(print(simnet.callPublicFn(VAULT, "pause", [], deployer).result)).toBe("(err u107)"); // ERR_NOT_MEMBER
+
+    // One member is not enough: the call succeeds but does not pause yet.
+    expect(print(simnet.callPublicFn(VAULT, "pause", [], m1).result)).toBe("(ok false)");
+    expect(print(simnet.callReadOnlyFn(VAULT, "get-emergency-pause", [], deployer).result))
+      .toContain("paused: false");
+
+    // A repeat approval from the same member is rejected.
+    expect(print(simnet.callPublicFn(VAULT, "pause", [], m1).result)).toBe("(err u108)"); // ERR_ALREADY_APPROVED
+
+    // The second distinct member pauses.
+    expect(print(simnet.callPublicFn(VAULT, "pause", [], m2).result)).toBe("(ok true)");
+
+    // Paused: both intake and sweep are blocked.
     expect(print(simnet.callPublicFn(VAULT, "sweep-treasury", [], treasury).result)).toBe("(err u104)");
     expect(
       print(
@@ -94,5 +117,28 @@ describe("protocol-fee-vault (Clarity simnet)", () => {
         ).result,
       ),
     ).toBe("(err u104)");
+  });
+
+  it("rejects duplicate emergency-pause members and fails closed before members are set", async () => {
+    const simnet = await initSimnet();
+    const a = simnet.getAccounts();
+    const deployer = a.get("deployer")!;
+    const m1 = a.get("wallet_1")!;
+    const m2 = a.get("wallet_2")!;
+
+    // No members configured: pause is unavailable (fail closed).
+    expect(print(simnet.callPublicFn(VAULT, "pause", [], m1).result)).toBe("(err u110)"); // ERR_NO_PAUSE_MEMBERS
+
+    // Duplicate members are rejected.
+    expect(
+      print(
+        simnet.callPublicFn(
+          VAULT,
+          "set-emergency-pause-members",
+          [Cl.principal(m1), Cl.principal(m1), Cl.principal(m2)],
+          deployer,
+        ).result,
+      ),
+    ).toBe("(err u109)"); // ERR_DUPLICATE_MEMBER
   });
 });

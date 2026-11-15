@@ -31,6 +31,10 @@
 (define-constant ERR_PAUSED (err u104))
 (define-constant ERR_TRANSFER_FAILED (err u105))
 (define-constant ERR_INSUFFICIENT_BALANCE (err u106))
+(define-constant ERR_NOT_MEMBER (err u107))
+(define-constant ERR_ALREADY_APPROVED (err u108))
+(define-constant ERR_DUPLICATE_MEMBER (err u109))
+(define-constant ERR_NO_PAUSE_MEMBERS (err u110))
 
 ;; ---------------------------------------------------------------------------
 ;; State
@@ -53,6 +57,13 @@
 
 ;; Emergency pause (SAB_EMERGENCY_PAUSE_MULTISIG, 2-of-3). Pause only.
 (define-data-var paused bool false)
+
+;; 2-of-3 emergency pause members (SAB_EMERGENCY_PAUSE_MULTISIG). Empty => the
+;; emergency pause is unavailable (fail closed). Set by the owner.
+(define-data-var emergency-pause-members (list 3 principal) (list))
+
+;; Members who have approved the current pause proposal.
+(define-data-var emergency-pause-approvals (list 3 principal) (list))
 
 ;; Accounting (read-only transparency, mirrors src/treasury_report.ts).
 (define-data-var collected-total-ustx uint u0)
@@ -125,11 +136,47 @@
     )
 )
 
-;; Pause authority. Pause only; no value transfer, no unpause.
-(define-public (pause)
+;; Set the 2-of-3 emergency pause members (SAB_EMERGENCY_PAUSE_MULTISIG). Owner-only.
+;; Exactly three distinct principals; duplicates are rejected.
+(define-public (set-emergency-pause-members
+        (a principal)
+        (b principal)
+        (c principal))
     (begin
         (asserts! (is-owner) ERR_UNAUTHORIZED)
-        (ok (var-set paused true))
+        (asserts!
+            (and (not (is-eq a b)) (not (is-eq a c)) (not (is-eq b c)))
+            ERR_DUPLICATE_MEMBER)
+        (var-set emergency-pause-members (list a b c))
+        (var-set emergency-pause-approvals (list))
+        (ok true)
+    )
+)
+
+(define-private (is-pause-member (p principal))
+    (is-some (index-of (var-get emergency-pause-members) p))
+)
+
+;; Emergency pause (SAB_EMERGENCY_PAUSE_MULTISIG). Pause only; no value transfer.
+;; Requires 2-of-3 member approvals. A single member cannot pause.
+(define-public (pause)
+    (begin
+        (asserts! (> (len (var-get emergency-pause-members)) u0) ERR_NO_PAUSE_MEMBERS)
+        (asserts! (is-pause-member tx-sender) ERR_NOT_MEMBER)
+        (asserts!
+            (is-none (index-of (var-get emergency-pause-approvals) tx-sender))
+            ERR_ALREADY_APPROVED)
+        (var-set emergency-pause-approvals
+            (unwrap-panic (as-max-len? (append (var-get emergency-pause-approvals) tx-sender) u3)))
+        ;; The pause takes effect only once two distinct members have approved.
+        (if (>= (len (var-get emergency-pause-approvals)) u2)
+            (begin
+                (var-set paused true)
+                (var-set emergency-pause-approvals (list))
+                (ok true)
+            )
+            (ok false)
+        )
     )
 )
 
@@ -256,6 +303,15 @@
         collected-total-ustx: (var-get collected-total-ustx),
         swept-total-ustx: (var-get swept-total-ustx),
         balance-ustx: (stx-get-balance (as-contract tx-sender))
+    }
+)
+
+;; Emergency pause state: members, current approvals, and whether paused.
+(define-read-only (get-emergency-pause)
+    {
+        members: (var-get emergency-pause-members),
+        approvals: (var-get emergency-pause-approvals),
+        paused: (var-get paused)
     }
 )
 

@@ -65,5 +65,22 @@ roadmap/docs-only (0 code). This ADR closes that gap.
 - No EVM deployment — ERC-8004 is a semantic reference, not an EVM dependency.
 - No custody of funds or keys (consistent with ADR 002 zero-custody guarantee).
 
+## 6. Research update (2026-11-14)
+
+This ADR predates x402 **v2** and the emergence of **MPP**. See
+`docs/research/X402_MPP_ECOSYSTEM_2026.md` for the full scan and juxtaposition.
+
+- The **x402 v2** wire is now shipped (`src/x402_v2_wire.ts`, profile
+  `conxian-x402-v2-wire/1`): `PAYMENT-REQUIRED`/`PAYMENT-SIGNATURE`/`PAYMENT-RESPONSE`,
+  CAIP-2 networks, decimal atomic amounts.
+- **MPP (Machine Payments Protocol)** is a backwards-compatible superset of x402 that
+  formalises HTTP 402 as an auth scheme and adds `charge`/`session`/`subscription`
+  intents and card payments. **Recommendation: bridge, do not re-base** (proposal only;
+  MPP's operator is unverified).
+- **MCP elicitation** (spec `2025-11-25`) can carry out-of-band authorisation/payment
+  flows that this ADR's MCP-402 design does not yet model.
+- Under ADR-007, an MCP-402 call that locks escrow is a **matched job** (10% take); a
+  raw call is a **rail** (ADR-005 dynamic fee).
+
 ---
 **CONXIAN LABS // 2026**

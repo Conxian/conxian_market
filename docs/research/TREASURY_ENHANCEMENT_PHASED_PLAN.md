@@ -81,12 +81,12 @@ signing / deployment.
 |---|---|---|---|---|
 | P1-1 | Add `/api/v1/billing/fee-report` + wire `accumulate_protocol_fee` into the settlement path | gateway | — | [gateway#974](https://github.com/Conxian/conxian-gateway/issues/974) |
 | P1-2 | Implement `settle_protocol_fee` (sign + broadcast the `collect-protocol-fee` call) | gateway | P0-1 | [gateway#975](https://github.com/Conxian/conxian-gateway/issues/975) |
-| P1-3 | Emit `X-Conxian-Fee` headers on live settlement requests | market | — | [#361](https://github.com/Conxian/conxian_market/issues/361) |
+| P1-3 | Emit `X-Conxian-Fee` headers on live settlement requests | market | — | [#361](https://github.com/Conxian/conxian_market/issues/361) ✅ |
 
 ### P2 — Hardening
 | # | Task | Owner | Depends on | Issue |
 |---|---|---|---|---|
-| P2-1 | Replace single-owner vault `pause` with 2-of-3 SAB pause (pause-only) | market | P0-1 | [#362](https://github.com/Conxian/conxian_market/issues/362) |
+| P2-1 | Replace single-owner vault `pause` with 2-of-3 SAB pause (pause-only) | market | P0-1 | [#362](https://github.com/Conxian/conxian_market/issues/362) ✅ |
 | P2-2 | Provision `SAB-TREASURY-MS` (3-of-5) and `DAO-TREASURY-MS` (5-of-7) | ops | P0-1 | [#364](https://github.com/Conxian/conxian_market/issues/364) |
 
 ### P3 — Utilisation
