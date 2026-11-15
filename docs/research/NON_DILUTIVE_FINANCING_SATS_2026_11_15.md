@@ -97,6 +97,10 @@ Non-dilutive, paid in sats. Eligibility (primary sources):
 - **NOT eligible:** **NLnet** — dropped for two hard blockers (EU 60%-of-funds rule and
   the generative-AI policy). Do not re-file.
 
+> **Expanded map:** `BITCOIN_GRANTS_AND_ECOSYSTEM_FUNDING_EXPANDED_2026_11_15.md` adds
+> Spiral (bitcoin+AI), Brink, Chaincode, Btrust, Vinteum, Qala, RootstockCollective and
+> Citrea, and the **OpenSats Red Team Fund — which reimburses past LLM token costs**.
+
 ### 2.4 DLC + Lightning liquidity leases — **only if the need is channel float**
 
 - **Lightning Pool** (Lightning Labs) — "a marketplace for Lightning channels … connects
