@@ -149,7 +149,7 @@ Payment` / `Authorization: Payment`, maps an MPP `charge` intent to the existing
 the transport. Do **not** re-base on MPP; the escrow/attestation layer is the moat.
 
 > ⚠️ This is a **proposal**, not a decision. MPP's operator is **[unverified]**, so
-> adopting it before confirming governance is premature. Track as a new ADR if pursued.
+> adopting it before confirming governance is premature. Tracked as #371; needs a new ADR.
 
 ---
 
