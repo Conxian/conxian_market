@@ -67,29 +67,61 @@ targets.
 ## 3. Meso economics — the Laffer curve applied to the fee
 
 Revenue is `R(r) = r × V(r)`, where `V(r)` is settled volume as a function of the
-rate. If volume is elastic to price, there is an interior revenue-maximising rate.
+rate. A revenue-maximising rate exists only if demand has a **choke price** (a
+finite maximum willingness to pay).
 
-![Laffer](charts/03_laffer_revenue_vs_rate.png)
+> **Correction (Pass-1 self-review).** An earlier version of this doc claimed a
+> "~69 bps optimum at ε≈1". That was a floating-point artifact. Under *constant*
+> elasticity there is **no interior optimum**: `R(r) = V₀·r₀ᵉ·r^(1−ε)`, which is
+> increasing for ε<1, flat for ε=1, and decreasing for ε>1 — a corner solution, not
+> a peak. The correct model uses a demand curve with a choke price.
 
-| Volume elasticity ε | Revenue-maximising rate | Implication |
-|:--:|:--:|---|
-| 0.5 | 400 bps | Inelastic — charge more |
-| 1.0 | **69 bps** | Unit-elastic — the ~50 bps launch rate is near-optimal |
-| 1.5 | 1 bps | The percentage rate's optimum collapses; the **floor** is the revenue |
-| ≥2.0 | 1 bps | Same — only the floor collects |
+![Laffer](charts_v2/01_laffer_choke.png)
 
-**This is the central finding.** The percentage rate only matters while volume is
-inelastic. In a competitive settlement market (many rails, easy multi-homing, a
-"race to zero" on routing) elasticity is high, the percentage optimum collapses
-toward zero, and **the flat floor becomes the entire revenue line**. The design is
-therefore correct to treat the floor as the load-bearing component and the
-percentage as the competitive headline. It also means: do not raise the headline
-rate hoping for revenue — above ε≈1.5 it destroys revenue.
+**Linear demand** `V(r) = Vmax·(1 − r/r_c)` gives `R(r) = Vmax·r·(1 − r/r_c)`, whose
+maximum is exactly at **`r* = r_c / 2`**:
 
-The empirical anchors for ε come from the transaction-tax literature (Tobin tax,
-stamp duty), where estimates of trading-volume elasticity commonly run from about
-−1 to −2, i.e. ε ≈ 1–2. At ε=1 the model's 50 bps launch rate is within ~20 bps of
-the theoretical optimum.
+| Choke price `r_c` | Revenue-maximising rate `r*` |
+|:--:|:--:|
+| 100 bps | 50 bps |
+| 200 bps | 100 bps |
+| 300 bps | 150 bps |
+| 400 bps | 200 bps |
+
+![Laffer varying elasticity](charts_v2/02_laffer_varying_elasticity.png)
+
+With **elasticity that rises with the rate** (the realistic shape), the peak sits
+where `|ε|` crosses 1. The empirical anchors come from the transaction-tax
+literature (Tobin tax, stamp duty), where trading-volume elasticity estimates
+commonly run from about −1 to −2 (ε ≈ 1–2).
+
+**The corrected central finding.** The revenue peak is set by the *choke price*, not
+by the headline rate. If clients will not pay more than ~100 bps all-in, the optimum
+is ~50 bps — exactly the shipped launch rate. Two consequences stand:
+
+1. The **flat floor is load-bearing** on high-elasticity (large/mature) traffic,
+   where the percentage component's optimum collapses toward zero.
+2. **Do not raise the headline rate to chase revenue.** Above the choke-price half,
+   revenue falls (and above the disintermediation threshold it falls sharply — §3b).
+
+### 3b. Disintermediation — the real ceiling
+
+![Disintermediation](charts_v2/03_disintermediation.png)
+
+The binding constraint is not the Laffer peak but **off-platform leakage**: above a
+threshold, parties settle off-platform to avoid the fee. Modelled as a logistic
+retention curve, revenue falls past the leakage midpoint. The 50 bps shipped rate
+sits **below** typical leakage midpoints (100–200 bps) — inside the safe zone. This
+is independent support for keeping the rate low.
+
+### 3c. The floor is regressive (new finding)
+
+![Regressive floor](charts_v2/04_regressive_floor.png)
+
+The cost floor makes the **effective rate regressive**: small jobs pay a *higher*
+effective rate than large ones. The crossover (floor = percentage) is ~2,000 sat
+(Lightning) to ~75,000 sat (sBTC). This is intended (cost recovery) but is a real
+distributional fact: micro-agent work subsidises large work.
 
 ---
 
@@ -225,7 +257,7 @@ load-bearing revenue component.**
 
 | Layer | Recommendation | Why |
 |---|---|---|
-| **Rate** | Keep dynamic 0.50%→0.10% decay | At ε≈1 the Laffer optimum is ~69 bps; 50 bps is near-optimal and competitive |
+| **Rate** | Keep dynamic 0.50%→0.10% decay | With a choke price ~100 bps the optimum is ~50 bps; the shipped rate is at the optimum, and below the disintermediation threshold |
 | **Floor** | Keep cost × 1.25, but **calibrate from telemetry** | It is the real revenue on elastic/high-volume traffic; v0 estimates are unverified |
 | **Load factor** | Keep 1.0–3.0 congestion pricing | Aligns price with real rail congestion; correct direction |
 | **Split basis** | **50/30/20 on fee F** (Option A) | Avoids a hidden ~20% take (Option B); matches docs and ADR-005 |
@@ -243,7 +275,7 @@ load-bearing revenue component.**
 
 ### What not to do
 
-- Do **not** raise the headline rate to chase revenue — above ε≈1.5 it destroys it.
+- Do **not** raise the headline rate to chase revenue — above the choke-price half (≈r_c/2) it falls, and above the leakage midpoint it falls sharply.
 - Do **not** ship Option B (the ~20× take) — it is a hidden tax that will drive
   volume off-platform.
 - Do **not** denominate the fee basis in sats while BTC appreciates — it is an
@@ -256,19 +288,35 @@ load-bearing revenue component.**
 | Claim | Basis | Confidence |
 |---|---|---|
 | Two-sided pricing structure matters as much as level | Rochet–Tirole, Armstrong | High (theory) |
-| Revenue has an interior optimum under elastic volume | Laffer / transaction-tax literature | High (theory), Medium (ε magnitude) |
+| Revenue peaks at half the choke price (linear demand) | This model, re-derived | High (maths) |
+| No interior optimum under constant elasticity | This model, re-derived | High (maths) |
+| Empirical volume elasticity to fees | Transaction-tax literature | Medium (ε ≈ 1–2) |
 | Network value grows super-linearly; revenue linearly | Metcalfe (+ Briscoe–Odlyzko critique) | Medium (exponent contested) |
 | Take rates should decline with scale | Above + near-zero marginal cost | Medium-High |
 | BTC denomination creates a real-fee escalator | Quantity theory, hard cap | Medium (depends on pricing unit) |
 | The floor, not the rate, collects revenue at high ε | This model's result | High (model), Medium (empirical ε) |
 | Benchmark take rates (Stripe 2.9%, cards ~1.5%, Lightning ~0.03%) | Public pricing | High (well known); **not re-verified online this session** (search tools rate-limited) |
 
+**Verification status (3-pass challenge, 2026-11-14).** The Python model was diffed
+against the compiled TypeScript (`analysis/parity_check.py`, 1440 rows, 0 mismatches).
+The Laffer claim was found wrong on self-review and corrected (see §3). D-1 and cost
+recovery were re-derived with exact rational arithmetic. Full log:
+`analysis/WORKING_NOTES.md`.
+
 **Known gaps.** (1) The rail cost table is uncalibrated. (2) The elasticity of
 agent-work volume to fees is unmeasured — the single most valuable number to obtain;
 a pilot with two fee levels would estimate it. (3) Benchmark figures are from
 established public knowledge and were **not** re-fetched online because the search
 and browser-rendering tools were rate-limited/unavailable during this session; they
-should be re-verified before external publication.
+should be re-verified before external publication. (4) The demand curve shape
+(choke price, elasticity path) is assumed, not estimated.
+
+**Material discrepancy found (feeds issue #366).** `FUNDING_AND_ECONOMICS.md` §5.3
+projects **$220,800/mo at $10M volume** from the full 5-stream model. That figure is
+built on the **retired 2%** (the doc's own line 48 says "TOTAL PROTOCOL FEE: 2%").
+At the ADR-005 rate the protocol-fee stream is **$50,000/mo** (0.50% × $10M) — about
+**4.4× smaller**. The doc's revenue projection therefore overstates revenue by ~4.4×
+against the live model.
 
 ---
 

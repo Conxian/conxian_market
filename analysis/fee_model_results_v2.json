@@ -1,0 +1,18 @@
+{
+  "laffer_linear_peak_bps": {
+    "100": 50.0,
+    "200": 100.0,
+    "300": 150.0,
+    "400": 200.0
+  },
+  "laffer_linear_note": "Linear demand V=Vmax(1-r/rc) \u2192 R peaks at r*=rc/2 exactly.",
+  "breakeven_volume_usd_at_20k_burn": 4000000.0,
+  "five_stream_at_10m": {
+    "Protocol fee (0.50%)": 50000.0,
+    "Premium (+0.5%)": 50000.0,
+    "Institutional (0.30%)": 30000.0,
+    "Community pools (1%)": 0.0,
+    "Staking yield": 5000.0
+  },
+  "five_stream_total_collectable_today": 0.0
+}
