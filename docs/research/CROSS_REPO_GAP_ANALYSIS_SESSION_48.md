@@ -1,6 +1,11 @@
 # Cross-Repo Gap Analysis — Session 48
 
 > **Generated:** 2026-08-01 | **Repos Audited:** 10 | **Open Issues:** 60 | **Code Gaps:** 23
+>
+> **Fee-model note (2026-11-14):** this snapshot quotes the retired **2%** static
+> protocol fee. The live rate is the ADR-005 dynamic hybrid model (0.50%→0.10% +
+> per-rail floor) in `src/fee_calculator.ts`. See
+> `docs/research/FEE_DESTINATION_AND_CUSTODY.md`. Retained for historical context.
 
 ---
 

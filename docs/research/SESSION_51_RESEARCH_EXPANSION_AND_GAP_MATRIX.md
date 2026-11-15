@@ -1,7 +1,12 @@
 # Session 51: Cross-Repo Research Expansion & Gap Synthesis Matrix
 
-> **Generated:** 2026-08-20 | **Session:** 51 | **Status:** Active
+> **Generated:** 2026-08-20 | **Session:** 51 | **Status:** Historical snapshot
 > **Scope:** Ecosystem-wide Audit across 10 Repos, Managed DBs (Neon & Supabase), Render Cloud, Open PRs, Missing Components, and Candidate Scoring for Knowledge Base Runtime Implementation.
+
+> **Fee-model note (2026-11-14):** this session snapshot quotes the retired **2%**
+> static protocol fee. The live rate is the ADR-005 dynamic hybrid model
+> (0.50%→0.10% + per-rail floor) in `src/fee_calculator.ts`; the 80/10/10 split
+> applies to the net and the fee splits 50/30/20. Retained for historical context.
 
 ---
 

@@ -1,6 +1,14 @@
 # Implementation Tracker — Session 76 Update
 
 > **Updated:** 2026-10-17 | **Session:** 76 | **Scope:** Decentralized Systems Production Readiness, Resilient Issue Fallback & Opportunity Engine
+>
+> **Status note (2026-11-14):** the "current org issue reality" list below is a
+> Session 76 snapshot and several entries have since closed (enclave-sdk #242/#198,
+> wallet #444, platform #1082). See `AGENTS.md` for the verified P0 gap state.
+>
+> **Fee-model note (2026-11-14):** references to a 2% protocol fee below are
+> superseded by ADR-005 (dynamic hybrid: 0.50%→0.10% + per-rail floor). See
+> `docs/research/FEE_DESTINATION_AND_CUSTODY.md`.
 
 ---
 
@@ -9,11 +17,13 @@
 The live issue set shows this direct implementation path is active and relevant:
 
 1. **Conxian/Conxian** — **DEPRECATED / ARCHIVED REFERENCE**: On-chain smart contract development in this repo is frozen to avoid maintenance debt. All settlement routing and value orchestration are handled by `conxian_market` (`@conxian/market-sdk`) via external BYO DeFi protocols.
-2. **conxian-gateway** — completed follow-on work includes [#306](https://github.com/Conxian/conxian-gateway/issues/306), [#228](https://github.com/Conxian/conxian-gateway/issues/228), and [#220](https://github.com/Conxian/conxian-gateway/issues/220); gateway client integration active in market-sdk.
-3. **conxius-platform** — active org hardening work: [#1082](https://github.com/Conxian/conxius-platform/issues/1082), [#854](https://github.com/Conxian/conxius-platform/issues/854), [#1223](https://github.com/Conxian/conxius-platform/issues/1223), [#1212](https://github.com/Conxian/conxius-platform/issues/1212)
-4. **conxius-enclave-sdk** — active P0 blockers: [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242), [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241), [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240), [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202), [#200](https://github.com/Conxian/conxius-enclave-sdk/issues/200), [#267](https://github.com/Conxian/conxius-enclave-sdk/issues/267), [#271](https://github.com/Conxian/conxius-enclave-sdk/issues/271)
-5. **conxius-wallet** — active wallet safety work: [#444](https://github.com/Conxian/conxius-wallet/issues/444), [#357](https://github.com/Conxian/conxius-wallet/issues/357), [#356](https://github.com/Conxian/conxius-wallet/issues/356)
-6. **conxian-business** — strategy research active on [#989](https://github.com/Conxian/conxian-business/issues/989).
+2. **conxian-gateway** — [#306](https://github.com/Conxian/conxian-gateway/issues/306) CLOSED, [#228](https://github.com/Conxian/conxian-gateway/issues/228) CLOSED, [#220](https://github.com/Conxian/conxian-gateway/issues/220) CLOSED; gateway client integration active in market-sdk.
+3. **conxius-platform** — [#1082](https://github.com/Conxian/conxius-platform/issues/1082) CLOSED, [#854](https://github.com/Conxian/conxius-platform/issues/854) CLOSED, [#1223](https://github.com/Conxian/conxius-platform/issues/1223) CLOSED, [#1212](https://github.com/Conxian/conxius-platform/issues/1212) CLOSED
+4. **conxius-enclave-sdk** — [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242) CLOSED, [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241) **OPEN**, [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240) **OPEN**, [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202) **OPEN**, [#200](https://github.com/Conxian/conxius-enclave-sdk/issues/200) CLOSED, [#267](https://github.com/Conxian/conxius-enclave-sdk/issues/267) CLOSED, [#271](https://github.com/Conxian/conxius-enclave-sdk/issues/271) CLOSED
+5. **conxius-wallet** — [#444](https://github.com/Conxian/conxius-wallet/issues/444) CLOSED, [#357](https://github.com/Conxian/conxius-wallet/issues/357) **OPEN**, [#356](https://github.com/Conxian/conxius-wallet/issues/356) CLOSED
+6. **conxian-business** — strategy research active on [#989](https://github.com/Conxian/conxian-business/issues/989) (**OPEN**).
+
+> Issue states above verified against the GitHub API on 2026-11-14.
 7. **conxian_market** — value layer runtime active:
    - Candidate #1 (`SLA Bounty Engine`): `sla_engine.ts` (Session 49).
    - Candidate #2 (`Telemetry & Treasury Health Watcher`): `monitoring_watcher.ts` (Session 50).

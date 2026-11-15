@@ -1,7 +1,12 @@
 # Session 69: Org-Wide SLA Positioning, Research Expansion & Exemption Policy Matrix
 
-> **Generated:** 2026-09-19 | **Session:** 69 | **Status:** Active
+> **Generated:** 2026-09-19 | **Session:** 69 | **Status:** Historical snapshot
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
+
+> **Fee-model note (2026-11-14):** this session snapshot quotes the retired **2%**
+> static protocol fee. The live rate is the ADR-005 dynamic hybrid model
+> (0.50%→0.10% + per-rail floor) in `src/fee_calculator.ts`; the 80/10/10 split
+> applies to the net and the fee splits 50/30/20. Retained for historical context.
 
 ---
 

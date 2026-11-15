@@ -1,6 +1,13 @@
 # Session 58: TrustTier Upgrade & Downgrade Lifecycle Engine, Reputation Threshold Verification & Ecosystem Convergence
 
-> **Generated:** 2026-09-07 | **Session:** 58 | **Status:** Active
+> **Generated:** 2026-09-07 | **Session:** 58 | **Status:** Historical snapshot
+>
+> **Fee-model note (2026-11-14):** this plan predates ADR-005 and quotes the
+> retired **2%** static rate (and removed helpers such as
+> `calculateEffectiveFeeRate`/`FEE_DECAY_TIMELINE`). The live rate is the ADR-005
+> dynamic hybrid model (0.50%→0.10% + per-rail floor) in `src/fee_calculator.ts`.
+> Retained for historical context.
+>
 > **Scope:** Full Ecosystem Research Expansion, Open Issue/PR Gap Matrix, TrustTier Lifecycle Engine, Reputation Threshold Verification, and End-to-End Session Continuity.
 
 ---

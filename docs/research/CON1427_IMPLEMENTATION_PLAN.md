@@ -2,6 +2,13 @@
 
 > **Issue:** [#488](https://github.com/Conxian/Conxian/issues/488) — Implement 2% Protocol Fee Collection
 > **Status:** Research Complete → Implementation Phase | **Repo Map:** 4 affected | **Revenue Impact:** 71% of $21.1K/mo target
+>
+> **Fee-model note (2026-11-14):** this plan predates ADR-005 and quotes the
+> retired **2%** static rate (and removed helpers such as
+> `calculateEffectiveFeeRate`/`FEE_DECAY_TIMELINE`). The live rate is the ADR-005
+> dynamic hybrid model (0.50%→0.10% + per-rail floor) in `src/fee_calculator.ts`.
+> Retained for historical context.
+>
 
 ---
 

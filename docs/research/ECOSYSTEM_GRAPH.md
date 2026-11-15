@@ -78,7 +78,7 @@
 | 242 | enclave-sdk | AWS Nitro attestation | Cloud TEE |
 | 198 | enclave-sdk | CCTP fail-closed | Cross-chain security |
 | 202 | enclave-sdk | Security review + release evidence | Production deploy |
-| 488 | Conxian | 2% Protocol Fee Collection | Revenue |
+| 488 | Conxian (repo gone) | Protocol Fee Collection — unresolvable | Revenue |
 | 496 | Conxian | Partnership Fee Contracts | Revenue split |
 | 890 | business | BOS Gate 0: SAB handoff re-baseline | Mainnet launch |
 | 934 | business | BOS Gate 2: Authority transfer | Mainnet launch |
@@ -104,7 +104,7 @@
 
 | # | Repo | Title | Revenue Impact |
 |---|------|-------|:-------------:|
-| 488 | Conxian | 2% Protocol Fee Collection | 71% of $21.1K |
+| 488 | Conxian (repo gone) | Protocol Fee Collection — unresolvable | 71% of $21.1K |
 | 496 | Conxian | Partnership Fee Contracts | 15% |
 | 529 | Conxian | Partner usage ledger + split settlement | 10% |
 | 500 | Conxian | Oracle source + DEX wiring | Infrastructure |
@@ -124,7 +124,7 @@
 enclave-sdk #240,#241,#242 (attestation roots)
   └─► lib-conxian-core (TrustTier, control_model)
        └─► conxian_market (fee_calculator.ts: Managed/Strict tiers)
-            └─► Conxian #488 (2% fee collection)
+            └─► Conxian #488 (fee collection; repo gone)
                  └─► Revenue: $21.1K/mo target
 ```
 **Status:** 🔒 Blocked on 3 P0 attestation issues. Current: Expedient-only ($1,500/mo).
@@ -206,7 +206,7 @@ conxian_market (fee_calculator.ts)
 | Task | Status |
 |------|:------:|
 | lib-conxian-core re-exports all 50 SDK modules | ✅ PR #241 |
-| conxian_market SDK bridge (27 capabilities) | ✅ PR #22 |
+| conxian_market SDK bridge (38 capabilities) | ✅ PR #22 |
 | ADR-001 fee model resolution | ✅ PR #21 |
 | Gateway billing.rs + REST API | ✅ |
 | FUNDING_AND_ECONOMICS.md complete | ✅ |
@@ -225,7 +225,7 @@ conxian_market (fee_calculator.ts)
 ### Phase 2 — Protocol Fee Activation (CON-1427)
 | Issue | Priority | Effort |
 |-------|:--------:|:------:|
-| #488 2% Protocol Fee Collection | 🔴 P0 | L |
+| #488 Protocol Fee Collection (repo gone — re-file) | 🔴 P0 | L |
 | #496 Partnership Fee Contracts | 🟠 P1 | M |
 | #529 Partner usage ledger + split settlement | 🟠 P1 | M |
 | #500 Oracle source + DEX wiring | 🟡 P2 | M |

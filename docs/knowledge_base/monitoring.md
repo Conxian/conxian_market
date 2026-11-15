@@ -2,6 +2,10 @@
 
 > **Status:** Active | **Version:** 1.0 | **Last Updated:** 2026-08-01 (Session 48)
 > **Purpose:** Real-time monitoring specifications for all settlement rails and treasury health.
+>
+> **Implementation:** `src/monitoring_watcher.ts` (`MonitoringWatcher`,
+> `createSnapshot()`), surfaced on the SDK as `sdk.getHealthSnapshot()`. The Rust
+> paths below are the intended Gateway data sources, not code in this repository.
 
 ---
 

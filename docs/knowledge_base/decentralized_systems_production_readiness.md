@@ -76,7 +76,7 @@ Supporting diverse decentralized systems unlocks specific, measurable revenue st
 
 1. **Cross-Chain x402 Value Routing Fees**:
    - *Target Market*: Autonomous agents executing cross-chain tool calls (Bitcoin, Stacks, EVM, Lightning).
-   - *Revenue Model*: Dynamic protocol fee (0.5%–2.0%) on x402 payment volume.
+   - *Revenue Model*: Dynamic protocol fee (ADR-005: 0.50%→0.10% by volume + per-rail floor) on x402 payment volume.
    - *Target TAM*: $50M+ annual agent payment volume.
 
 2. **ERC-8183 Programmable Escrow Yield Split (80/10/10)**:
@@ -98,14 +98,19 @@ Supporting diverse decentralized systems unlocks specific, measurable revenue st
 
 ## 5. GitHub Issues & Project Tracking Matrix
 
+> Issue IDs are given only where they can be verified. The two market rows below
+> previously cited `#75`/`#76`; those numbers are **merged PRs**, not issues, and are
+> corrected here. The market capability rows are tracked by this SDK's own tests and
+> the `docs/IMPLEMENTATION_TRACKER.md` candidate list.
+
 | Repository | GitHub Issue ID | Title / Focus Area | Status | Target Capability |
 |:-----------|:----------------|:-------------------|:------:|:------------------|
-| `conxian_market` | `#76` | Decentralized System Readiness & Fallback Engine | **IN_PROGRESS** | `evaluateDecentralizedReadiness`, `resolveIssueFallback` |
-| `conxian_market` | `#75` | Multi-Dimensional Scoring & BitVM3 Verification | **COMPLETED** | `MultiDimensionalScoringEngine`, `verifyBitVM3Proof` |
-| `conxian-gateway` | `#306` | Gateway Client x402 Settlement Bridge | **COMPLETED** | `GatewayClient` integration |
-| `conxius-enclave-sdk` | `#242` | AWS Nitro Attestation Root Integration | **OPEN (P0)** | TEE Enclave verification fallback |
-| `conxius-enclave-sdk` | `#240` | KeyMint Attestation Chain Validation | **OPEN (P0)** | TEE Hardware attestation |
-| `conxius-wallet` | `#444` | Wallet Non-Custodial Safety Checks | **OPEN** | Zero-custody sanity check |
+| `conxian_market` | — | Decentralized System Readiness & Fallback Engine | implemented in `src/decentralized_systems.ts` | `evaluateSystemReadiness`, `resolveIssueFallback` |
+| `conxian_market` | — | Multi-Dimensional Scoring & BitVM3 Verification | implemented (BitVM3 fails closed) | `MultiDimensionalScoringEngine`, `verifyBitVM3Proof` |
+| `conxian-gateway` | `#306` | Gateway Client x402 Settlement Bridge | **CLOSED** | `GatewayClient` integration |
+| `conxius-enclave-sdk` | `#242` | AWS Nitro Attestation Root Integration | **CLOSED** | TEE Enclave verification fallback |
+| `conxius-enclave-sdk` | `#240` | Attestation roots / KeyMint chain | **OPEN (P0)** | TEE Hardware attestation |
+| `conxius-wallet` | `#444` | Wallet Non-Custodial Safety Checks | **CLOSED** | Zero-custody sanity check |
 | `conxian-business` | `#989` | Decentralized AI Market Expansion Analysis | **OPEN** | Opportunity scoring & TAM model |
 
 ---

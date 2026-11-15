@@ -1,6 +1,13 @@
 # Conxian Full System Architecture & Integration Map
 
-> **Status:** Living Document | **Last Updated:** 2026-07-15  
+> **Status:** Historical snapshot | **Last Updated:** 2026-07-15
+>
+> **Fee-model note (2026-11-14):** this document predates ADR-005 and quotes the
+> retired **2%** static protocol fee and the `Protocol 2% / Ecosystem 18%` split.
+> The live fee rate is the ADR-005 dynamic hybrid model (0.50%→0.10% + per-rail
+> floor); the recipient split is 80/10/10 on the net and 50/30/20 on the fee.
+> See `docs/adr/ADR_005_COMPETITIVE_RATES_WITH_COST_RECOVERY.md` and
+> `docs/research/FEE_DESTINATION_AND_CUSTODY.md`. Retained for historical context.  
 > **Version:** 1.0 | **Owner:** Conxian Labs
 
 ---
@@ -77,7 +84,7 @@ This document provides a comprehensive audit of the **entire Conxian ecosystem**
 │                                                                          │
 │           ▼                                                              │
 │  ┌─────────────────────────────────────────────────────────┐              │
-│  │              PROTOCOL FEE (2%)                         │              │
+│  │              PROTOCOL FEE (ADR-005)                         │              │
 │  │                  conxian/Conxian                       │              │
 │  │               (Clarity smart contract)                  │              │
 │  └─────────────────────────┬───────────────────────────────┘              │
@@ -138,7 +145,7 @@ This document provides a comprehensive audit of the **entire Conxian ecosystem**
 │         ▼                  ▼                  ▼                 │
 │  ┌────────────┐    ┌────────────┐    ┌────────────┐           │
 │  │  Builder   │    │  Protocol  │    │ Ecosystem  │           │
-│  │  (80%)    │    │  (2%)     │    │  (18%)    │           │
+│  │  (80%)    │    │ Fee(ADR5) │    │  (net)    │           │
 │  └────────────┘    └────────────┘    └────────────┘           │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -190,7 +197,7 @@ This document provides a comprehensive audit of the **entire Conxian ecosystem**
 │                           ▼                                               │
 │                  ┌─────────────────┐                                      │
 │                  │  TrustTier Gate │  ObserverOnly→Expedient→Managed      │
-│                  │  Fee Calculator │  0%→2%→2.5%→Negotiated              │
+│                  │  Fee Calculator │  ADR-005 dynamic              │
 │                  └────────┬────────┘                                      │
 │                           ▼                                               │
 │                  ┌─────────────────┐                                      │
@@ -201,7 +208,7 @@ This document provides a comprehensive audit of the **entire Conxian ecosystem**
 │         ▼                 ▼                  ▼                             │
 │  ┌────────────┐   ┌────────────┐    ┌────────────┐                       │
 │  │  Builder   │   │  Protocol  │    │  Treasury  │                       │
-│  │  (80%)    │   │  Fee (2%)  │    │  (18%)    │                       │
+│  │  (80%)    │   │ Fee (ADR5) │    │  (net)    │                       │
 │  └────────────┘   └────────────┘    └────────────┘                       │
 │                                                                            │
 │  Babylon staking yield (3-5% APY) → 50% ops / 30% founders / 20% eco     │
@@ -241,9 +248,9 @@ function selectRail(
 
 | Tier | Verification | Protocol Fee | Settlement Rails | SLA Template |
 |:----:|:------------|:------------:|:----------------|:------------|
-| **Strict** | TEE + ZK proof | Negotiated | All 6 rails | 99.99% uptime, 100ms P95, ZK proof, 1h dispute |
-| **Managed** | Enclave attestation | 2% + 0.5% premium | Statechain, sBTC, RGB, Babylon, +Expedient rails | 99.9% uptime, 500ms P95, enclave proof, 4h dispute |
-| **Expedient** | Light client | 2% flat | Lightning, Fedimint, ALEX, EVM | 99% uptime, 2s P95, light proof, 24h dispute |
+| **Strict** | TEE + ZK proof | ADR-005 dynamic | All rails | 99.99% uptime, 100ms P95, ZK proof, 1h dispute |
+| **Managed** | Enclave attestation | ADR-005 dynamic (+0.5% premium, inactive) | Statechain, sBTC, RGB, Babylon, +Expedient rails | 99.9% uptime, 500ms P95, enclave proof, 4h dispute |
+| **Expedient** | Light client | ADR-005 dynamic | Lightning, Fedimint, ALEX, EVM | 99% uptime, 2s P95, light proof, 24h dispute |
 | **ObserverOnly** | None | Free | None (discovery only) | N/A |
 
 > Tier detection: `trust_tier_pricing.md` §2. SLA templates: `trust_tier_pricing.md` §5.
@@ -270,14 +277,20 @@ async function detectTrustTier(req: SettlementRequest): Promise<TrustTier> {
   return TrustTier.ObserverOnly;
 }
 
-// Fee calculation by tier
-function calculateFee(amount: bigint, tier: TrustTier): bigint {
-  switch (tier) {
-    case TrustTier.Strict:   return 0n;  // Negotiated separately
-    case TrustTier.Managed:  return (amount * 250n) / 10000n;  // 2.5%
-    case TrustTier.Expedient: return (amount * 200n) / 10000n; // 2%
-    case TrustTier.ObserverOnly: return 0n;
-  }
+// Fee calculation — canonical dynamic model (ADR-005), NOT a flat per-tier rate.
+// The trust tier governs rail access; the fee is a volume-decay percentage plus
+// a per-rail flat floor. See src/fee_calculator.ts (calculateDynamicFee).
+import { calculateDynamicFee } from "@conxian/market-sdk";
+
+function calculateFee(amount: bigint, tier: TrustTier, rail: SettlementRail): bigint {
+  if (tier === TrustTier.ObserverOnly) return 0n; // settlement disabled
+  const fee = calculateDynamicFee({
+    tier,
+    rail,
+    amountSat: amount,
+    volumeDecayTier: "TIER_1", // 0.50% launch rate; scales down with volume
+  });
+  return fee.effectiveFeeSat; // = max(amount × decayed_bps/10000, rail_floor) × load
 }
 ```
 
@@ -326,7 +339,7 @@ JobCard → SLA Watcher (60s poll) → 7 gap detection rules
 │          ▼                 ▼                 ▼                  │
 │   ┌────────────┐    ┌────────────┐    ┌────────────┐           │
 │   │  Builder   │    │  Protocol  │    │ Ecosystem  │           │
-│   │  (80%)    │    │  (2%)     │    │  (18%)    │           │
+│   │  (80%)    │    │ Fee(ADR5) │    │  (net)    │           │
 │   └────────────┘    └────────────┘    └────────────┘           │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -355,7 +368,7 @@ JobCard → SLA Watcher (60s poll) → 7 gap detection rules
 │  Target: 40% Stablecoins | 30% RWA | 20% Liquid Staking | 10% Native │
 │                                                                  │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │ OPERATIONS TREASURY (50% of 2% = 1% of total)              ││
+│  │ OPERATIONS TREASURY (50% of F)              ││
 │  │ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       ││
 │  │ │ CI/CD   │ │ SDK Dev  │ │ Nexus    │ │ Audits   │       ││
 │  │ │ $X/mo   │ │ $X/mo    │ │ Ops      │ │ $X/qtr   │       ││
@@ -363,14 +376,14 @@ JobCard → SLA Watcher (60s poll) → 7 gap detection rules
 │  └─────────────────────────────────────────────────────────────┘│
 │                                                                  │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │ FOUNDER COMPENSATION (30% of 2% = 0.6% of total)           ││
+│  │ FOUNDER COMPENSATION (30% of F)           ││
 │  │ ┌──────────────────────────────────────────────────────┐   ││
 │  │ │ 4-Year Cliff Vesting │ Performance Bonus │ Emergency │   ││
 │  │ └──────────────────────────────────────────────────────┘   ││
 │  └─────────────────────────────────────────────────────────────┘│
 │                                                                  │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │ ECOSYSTEM GROWTH (20% of 2% = 0.4% of total)               ││
+│  │ ECOSYSTEM GROWTH (20% of F)               ││
 │  │ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       ││
 │  │ │ Builder  │ │Liquidity │ │Bug       │ │Legal     │       ││
 │  │ │ Grants   │ │Mining    │ │Bounty    │ │Defense   │       ││
@@ -411,7 +424,7 @@ JobCard → SLA Watcher (60s poll) → 7 gap detection rules
 ```
 PHASE 0 (Pre-Launch - Critical)
 ├── Deploy multisig treasury (3-of-5 SAFE)
-├── Activate protocol fee collection (2%)
+├── Activate protocol fee collection (ADR-005 dynamic)
 ├── Set up ALEX settlement pools
 └── Build treasury reporting dashboard
 
@@ -491,7 +504,7 @@ PHASE 2 (Stabilization - Medium)
 
 ### 9.3 Economic Model Validation
 
-✅ **VALIDATED:** The 2% protocol fee with 50/30/20 allocation is compatible with the existing Conxian ecosystem architecture.
+✅ **VALIDATED:** The protocol fee (ADR-005 dynamic) with 50/30/20 allocation is compatible with the existing Conxian ecosystem architecture.
 
 - **Operations (50%):** Supports CI/CD, SDK development, Nexus operations, and quarterly audits
 - **Founders (30%):** 4-year vesting with DAO-voted performance bonuses

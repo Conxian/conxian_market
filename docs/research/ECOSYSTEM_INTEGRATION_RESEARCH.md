@@ -4,6 +4,12 @@
 |---|---|
 | Classification | Public-safe research |
 | Status | Phase 0 — 2026-08-02 |
+
+> **Fee-model note (2026-11-14):** this document quotes the retired **2%** static
+> protocol fee. The live rate is the ADR-005 dynamic hybrid model
+> (0.50%→0.10% + per-rail floor) in `src/fee_calculator.ts`; the 80/10/10 split
+> applies to the net and the fee splits 50/30/20. See
+> `docs/research/FEE_DESTINATION_AND_CUSTODY.md`. Retained for historical context.
 | Authority | [Market issue #9](https://github.com/Conxian/conxian_market/issues/9) |
 | Ethos alignment | Sovereign, Productive, Federated, BYOK, Multi-Deployment |
 

@@ -7,16 +7,20 @@
 
 ## 1. Rail Overview
 
+Status mirrors `RAIL_CAPABILITIES[].ready` in `src/settlement.ts` (verified
+2026-11-14): a rail is only "ready" when its adapter is wired. Statechain and RGB
+are advertised but `ready:false`, so the orchestrator fails closed on them.
+
 | # | Rail | Protocol | Trust Tier | Settlement Type | Fee Model | Status |
 |---|------|----------|:----------:|----------------|-----------|:------:|
-| 1 | **Statechain (Spark)** | Spark VTXO | T2 Managed | Off-chain BTC transfer | VTXO transfer fee + L1 withdrawal | ✅ v2.0.12 |
-| 2 | **sBTC (Stacks)** | Stacks L2 | T2 Managed | BTC peg-in/peg-out | 0% rail fee (protocol 2% only) | ✅ Wired |
-| 3 | **RGB** | RGB L2/L3 | T2 Managed | Contract-backed asset | 2% protocol fee | ✅ Wired |
-| 4 | **Babylon** | BTC staking | T2 Managed | Staking yield | Babylon protocol fee + market 0.5% | ✅ Wired |
-| 5 | **Fedimint** | Federation | T1 Expedient | E-cash settlement | Mint fee (community-set) + market 1% | ✅ Wired |
-| 6 | **Lightning** | LN (SRL-1) | T1 Expedient | Instant micropayments | LN routing fee + market 1% | ✅ Wired |
-| 7 | **ALEX/Stacks** | Stacks L2 | T1 Expedient | AMM swap settlement | ALEX pool fee + protocol 2% | ✅ Active |
-| 8 | **EVM (ERC-8183)** | Ethereum/L2s | T1 Expedient | Programmable escrow | Gas + protocol 2% | ✅ Active |
+| 1 | **Statechain (Spark)** | Spark VTXO | T2 Managed | Off-chain BTC transfer | VTXO transfer fee + L1 withdrawal | ⚠️ `ready:false` (ProtocolUnsupported gate) |
+| 2 | **sBTC (Stacks)** | Stacks L2 | T2 Managed | BTC peg-in/peg-out | 0% rail fee (protocol fee ADR-005 only) | ✅ `ready:true` |
+| 3 | **RGB** | RGB L2/L3 | T2 Managed | Contract-backed asset | ADR-005 dynamic fee | ⚠️ `ready:false` (rgb-std stash resolver not wired) |
+| 4 | **Babylon** | BTC staking | T2 Managed | Staking yield | Babylon protocol fee + market 0.5% | ✅ `ready:true` |
+| 5 | **Fedimint** | Federation | T1 Expedient | E-cash settlement | Mint fee (community-set) + market 1% | ✅ `ready:true` |
+| 6 | **Lightning** | LN (SRL-1) | T1 Expedient | Instant micropayments | LN routing fee + market 1% | ✅ `ready:true` |
+| 7 | **ALEX/Stacks** | Stacks L2 | T1 Expedient | AMM swap settlement | ALEX pool fee + protocol fee (ADR-005) | ✅ `ready:true` |
+| 8 | **EVM (ERC-8183)** | Ethereum/L2s | T1 Expedient | Programmable escrow | Gas + protocol fee (ADR-005) | ✅ `ready:true` |
 
 ---
 
@@ -53,7 +57,7 @@
 | VTXO creation (deposit) | 0.1% of amount | Spark Entity operators |
 | VTXO transfer (owner change) | Flat 100 sats | Spark Entity operators |
 | VTXO withdrawal (to L1) | Bitcoin mining fee | Bitcoin miners |
-| Market protocol fee | 2% of settlement | Conxian treasury |
+| Market protocol fee | ADR-005 dynamic | Conxian treasury |
 
 ### 2.4 Market Integration
 
@@ -118,7 +122,7 @@ Builder can: hold (off-chain), transfer (to another agent), withdraw (to L1)
 |-----------|----:|-------|
 | BTC→sBTC deposit | 0% | Signer-operated |
 | sBTC→BTC withdrawal | 0% | Signer-operated |
-| Market protocol fee | 2% | Applied to settlement value |
+| Market protocol fee | ADR-005 dynamic | Applied to settlement value |
 
 ### 3.4 Market Integration
 
@@ -159,7 +163,7 @@ Builder can: hold (off-chain), transfer (to another agent), withdraw (to L1)
 |-----------|----:|-----------|
 | Asset issuance | One-time 50K sats | RGB contract deployer |
 | State transition | Bitcoin fee (anchor) | Bitcoin miners |
-| Market protocol fee | 2% of settlement | Conxian treasury |
+| Market protocol fee | ADR-005 dynamic | Conxian treasury |
 
 ### 4.4 Market Integration
 
@@ -255,9 +259,10 @@ Builder can: hold (off-chain), transfer (to another agent), withdraw (to L1)
 | Mint fee (e-cash issue) | 0.1% – 0.5% | Community governance |
 | Transfer fee | 0% | Protocol |
 | Redemption fee | 0% | Protocol |
-| Market protocol fee | 1% (reduced) | Conxian treasury |
+| Market protocol fee | ADR-005 dynamic (Fedimint reduced) | Conxian treasury |
 
-> Fedimint market fee is reduced to 1% (vs standard 2%) because the community bears operational costs.
+> Fedimint market fee is reduced (community bears operational costs).
+> Standard rate is the ADR-005 dynamic model (0.50%→0.10% + per-rail floor), not 2%.
 
 ### 6.4 Market Integration
 
@@ -293,7 +298,7 @@ Builder can: hold (off-chain), transfer (to another agent), withdraw (to L1)
 │       ├── SLA met → auto-settle via selected rail                    │
 │       └── SLA breach → auto-generate CJCS gap card (MARKET-013)      │
 │                          │                                           │
-│  4. Protocol fee collection: 2% → treasury                           │
+│  4. Protocol fee (ADR-005 dynamic) → treasury                        │
 │       ├── 50% → Operations (CI/CD, SDKs, Nexus, audits)              │
 │       ├── 30% → Founders (4-year vesting)                            │
 │       └── 20% → Ecosystem (grants, liquidity mining)                 │
@@ -314,7 +319,7 @@ Builder can: hold (off-chain), transfer (to another agent), withdraw (to L1)
 | **Privacy** | Medium | Low | High | Medium | High | Low |
 | **Counterparty Risk** | 1-of-n trust | Signer set | Contract schema | Channel peer | Guardians | Provider |
 | **Min Amount** | 10K sats | 1 sat | 1 sat | 1 msat | 1 sat | 0.005 BTC |
-| **Market Fee** | 2% | 2% | 2% | 1% | 1% | 0.5% (yield) |
+| **Market Fee** | ADR-005 | ADR-005 | ADR-005 | ADR-005 | ADR-005 | 0.5% (yield) |
 | **Use Case** | Agent payments | Primary settlement | Asset settlement | Micro-payments | Community pools | Treasury yield |
 
 ---

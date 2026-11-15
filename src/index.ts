@@ -94,11 +94,10 @@ export type {
   AuthenticateOptions,
   AuthenticateResult,
 } from "./trust_tier_middleware.js";
-export { BosYieldSplitter, FEE_DECAY_TIMELINE } from "./bos_yield_splitter.js";
+export { BosYieldSplitter } from "./bos_yield_splitter.js";
 export type {
   YieldSplit,
   RealtimeYieldSplitValidation,
-  FeeDecayTier,
   ProtocolFeeDistribution,
   FounderVestingInput,
   FounderVestingResult,

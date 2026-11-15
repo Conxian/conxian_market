@@ -2,6 +2,12 @@
 
 > **Status:** Active | **Version:** 1.0 | **Last Updated:** 2026-08-01 (Session 48)
 > **Purpose:** Tier detection, fee middleware, and SLA templates for 4-tier pricing model.
+>
+> **Implementation:** `src/trust_tier_middleware.ts` (`TrustTierMiddleware`,
+> `TrustTierLifecycleEngine`), `src/fee_calculator.ts` (`detectTrustTier`,
+> `calculateRailFee`), surfaced as `sdk.runTrustTierPipeline()` and
+> `sdk.detectTrustTier()`. The `src/middleware/trust-tier.ts` path in the snippets
+> is illustrative, not a file in this repository.
 
 ---
 
@@ -112,46 +118,46 @@ async function detectTrustTier(req: SettlementRequest): Promise<TrustTier> {
 
 ### 3.1 Tier-Based Pricing
 
-| Tier | Verification | Protocol Fee | Premium | Total | Settlement Rails |
-|:----:|:------------|:------------:|:-------:|:-----:|-----------------|
-| **Strict** | TEE + ZK | Negotiated | Negotiated | Custom | All rails |
-| **Managed** | Enclave attestation | 2% | +0.5% | **2.5%** | All rails |
-| **Expedient** | Light client | 2% | — | **2.0%** | ALEX, EVM, Fedimint, Lightning |
-| **ObserverOnly** | None | — | — | **Free** | None (discovery only) |
+The fee **rate** is the ADR-005 dynamic model (`src/fee_calculator.ts`): a single
+volume-decay percentage (0.50%→0.10%) composed with a per-rail flat floor. The
+trust tier governs rail availability; the Managed premium is proposed but not
+wired (`attestationAvailable === false`).
 
-### 3.2 Fee Split by Tier
+| Tier | Verification | Protocol Fee | Premium | Settlement Rails |
+|:----:|:------------|:------------:|:-------:|-----------------|
+| **Strict** | TEE + ZK | Negotiated | Negotiated | All rails |
+| **Managed** | Enclave attestation | ADR-005 dynamic | +0.5% (proposed, inactive) | All rails |
+| **Expedient** | Light client | ADR-005 dynamic | — | ALEX, EVM, Fedimint, Lightning |
+| **ObserverOnly** | None | Settlement disabled | — | None (discovery only) |
+
+### 3.2 Fee Split
+
+The collected fee (whatever the dynamic model returns) splits:
 
 | Tier | Ops (50%) | Founders (30%) | Ecosystem (20%) | Premium Destination |
 |------|:---------:|:--------------:|:---------------:|--------------------|
 | Strict | 50% | 30% | 20% | Premium → SAB treasury |
-| Managed | 50% of 2% | 30% of 2% | 20% of 2% | +0.5% → SAB treasury |
+| Managed | 50% | 30% | 20% | +0.5% → SAB treasury (if enabled) |
 | Expedient | 50% | 30% | 20% | — |
 | ObserverOnly | — | — | — | — |
 
 ### 3.3 Fee Calculation
 
+The canonical model is `calculateDynamicFee` in `src/fee_calculator.ts` — use it
+directly; do not re-derive a flat rate.
+
 ```typescript
-function calculateFee(amount: bigint, tier: TrustTier): FeeBreakdown {
-  switch (tier) {
-    case TrustTier.Strict:
-      // Negotiated — use contract-defined rate
-      return { protocolFee: 0n, premium: 0n, total: 0n, negotiated: true };
+// Canonical: single volume-decay percentage + per-rail flat floor.
+import { calculateDynamicFee } from "./fee_calculator";
 
-    case TrustTier.Managed: {
-      const protocolFee = (amount * 200n) / 10000n; // 2%
-      const premium = (amount * 50n) / 10000n;       // 0.5%
-      return { protocolFee, premium, total: protocolFee + premium };
-    }
-
-    case TrustTier.Expedient: {
-      const protocolFee = (amount * 200n) / 10000n; // 2%
-      return { protocolFee, premium: 0n, total: protocolFee };
-    }
-
-    case TrustTier.ObserverOnly:
-      return { protocolFee: 0n, premium: 0n, total: 0n };
-  }
-}
+const fee = calculateDynamicFee({
+  tier,                    // TrustTier (ObserverOnly throws)
+  rail,                    // SettlementRail
+  amountSat,
+  volumeDecayTier: "TIER_1", // 0.50% launch rate
+});
+// fee.effectiveFeeSat  = max(amount × decayed_bps/10000, rail_floor) × load_factor
+// fee.distribution     = { operationsSat: 50%, foundersSat: 30%, ecosystemSat: 20% }
 ```
 
 ## 4. Rail Selection by Tier

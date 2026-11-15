@@ -37,10 +37,10 @@ import type { RealtimeYieldSplitValidation } from "./bos_yield_splitter.js";
  *   - SLA Engine (autonomous SLA evaluation, gap card bounties & auto-resolution, multi-cloud SLA health)
  *   - Monitoring Watcher (sBTC, Fedimint, Babylon, Treasury, and Multi-cloud telemetry watcher)
  *   - TrustTier Middleware (HTTP/MCP request verification & routing pipeline)
- *   - BOS Yield Splitter (80/10/10 yield matrix, real-time yield validation, fee decay, founder vesting, inference policy)
+ *   - BOS Yield Splitter (80/10/10 yield matrix, real-time yield validation, founder vesting, inference policy)
  *   - Market-Agnostic Router (Zero-custody validation, BYO DeFi protocol adapter resolution)
  *   - Job Card Escrow Engine (ERC-8183 programmable escrow creation, output submission)
- *   - Fee Calculator (2% protocol fee with tier/rail breakdown)
+ *   - Fee Calculator (ADR-005 dynamic fee with tier/rail breakdown)
  *   - x402 Escrow Gateway (Multi-rail HTTP 402 payment demands)
  *   - Client Installer Engine (Client onboarding, system setup, domain routing firewall)
  *   - Multi-Dimensional Scoring Engine (WPS and network valuation impact using live x402 volume and escrow state)
@@ -390,11 +390,24 @@ export class ConxianMarketSDK {
     return BosYieldSplitter.calculateYieldSplit(grossAmountSat);
   }
 
-  distributeProtocolFee(
-    grossAmountSat: bigint,
-    monthsElapsed: number
-  ): ProtocolFeeDistribution {
-    return BosYieldSplitter.distributeProtocolFee(grossAmountSat, monthsElapsed);
+  /**
+   * Distribute a protocol fee 50% Ops / 30% Founders / 20% Ecosystem.
+   *
+   * `feeSat` is the fee produced by the canonical dynamic model
+   * (`calculateDynamicFee`, ADR-004/ADR-005) — this method only splits it, it
+   * does not compute a rate. Use `calculateDynamicFee`/`calculateFee` for the
+   * amount.
+   */
+  distributeProtocolFee(feeSat: bigint): ProtocolFeeDistribution {
+    const operationsTreasurySat = (feeSat * 50n) / 100n;
+    const founderCompensationSat = (feeSat * 30n) / 100n;
+    const ecosystemGrowthSat = feeSat - operationsTreasurySat - founderCompensationSat;
+    return {
+      feeSat,
+      operationsTreasurySat,
+      founderCompensationSat,
+      ecosystemGrowthSat,
+    };
   }
 
   evaluateFounderVesting(input: FounderVestingInput): FounderVestingResult {

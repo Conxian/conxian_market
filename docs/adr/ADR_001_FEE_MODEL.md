@@ -1,14 +1,24 @@
 # ADR-001: Protocol Fee Model — Authoritative Versioned Decision
 
-> **Status:** Accepted | **Date:** 2026-08-03 | **Version:** 1.0
+> **Status:** Accepted | **Date:** 2026-08-03 | **Version:** 1.1 (2026-11-14)
 > **Supersedes:** Gateway #247 allocation diagram; conxian_market #6 RFC
-> **Authoritative for:** Fee basis, recipients, percentages, rounding, custody, exposure caps, pause/exit
+> **Authoritative for:** Fee *recipients and split* (80/10/10 builder matrix; 50/30/20 treasury split), rounding, custody, exposure caps, pause/exit
+> **Superseded by:** ADR-005 for the fee *rate* — the static 2.0/1.5/1.0%
+> percentage in §1 below is **retired**. The live rate is the dynamic hybrid model
+> (single volume-decay percentage 0.50%/0.25%/0.15%/0.10% + per-rail flat floor)
+> in `src/fee_calculator.ts` (`VOLUME_DECAY_BPS`, `calculateDynamicFee`).
+>
+> **Reconciliation note (2026-11-14):** this ADR was internally inconsistent —
+> the 80/10/10 builder matrix (§1.1) and a 2% protocol fee (§1.2) both apply to the
+> same money and sum to >100%. Resolved: the 80/10/10 split applies to the
+> **net** (`gross − fee`); the fee (whatever the dynamic model returns) splits
+> 50/30/20. The fee rate itself is ADR-005's, not 2%.
 
 ---
 
 ## Context
 
-Issue [#6](https://github.com/Conxian/conxian_market/issues/6) proposed a 2% protocol fee with ALEX integration. The model has since been refined through Session 48 into a 4-tier TrustTier pricing system backed by `src/fee_calculator.ts`, `docs/knowledge_base/trust_tier_pricing.md`, and `docs/research/FUNDING_AND_ECONOMICS.md`.
+Issue [#6](https://github.com/Conxian/conxian_market/issues/6) proposed a 2% protocol fee with ALEX integration. The model has since been refined into a dynamic hybrid fee model (ADR-004/ADR-005) backed by `src/fee_calculator.ts`, `docs/knowledge_base/trust_tier_pricing.md`, and `docs/research/FUNDING_AND_ECONOMICS.md`.
 
 A conflict exists between two documented allocation models:
 
@@ -25,38 +35,67 @@ This ADR resolves the conflict and establishes the single authoritative fee mode
 
 ### 1. Fee Basis and Percentages
 
-**Total protocol fee: 2%** of settlement amount, charged at settlement time.
+**The protocol fee rate is defined by ADR-005** (dynamic hybrid: single
+volume-decay percentage + per-rail flat floor). This ADR is authoritative only
+for *where the fee goes*, not how much it is.
 
-#### 1.1 Builder Revenue Split (80/10/10)
+The fee is charged on the gross settlement amount at settlement time:
 
 ```
-Total Settlement Value ($100)
+Gross settlement value (locked in escrow)
     │
+    ├── Protocol fee  F = max(amount × decayed_bps/10000, rail_floor) × load_factor
+    │        (ADR-005; decayed_bps ∈ {50, 25, 15, 10})
+    │
+    └── Net = gross − F   →  builder matrix (80/10/10)
+             ├── 80% → Builder (Agent Creator)
+             ├── 10% → Platform Treasury   ◄── this is what F funds
+             └── 10% → Ecosystem Stakeholders
+```
+
+> **Clarification (2026-11-14):** earlier revisions showed "80/10/10" *and* "2%
+> protocol fee" on the same diagram without stating the base. They are on
+> different bases: the 80/10/10 split applies to the **net** (`gross − F`), and
+> the protocol fee `F` is a separate, additional deduction. The old 2% rate is
+> retired (ADR-005); the ten-percent platform-treasury share of the *net* is a
+> distribution line, not the protocol fee.
+
+#### 1.1 Builder Revenue Split (80/10/10) — applied to net
+
+```
+Net after protocol fee (e.g. $100)
     ├── 80% → Builder (Agent Creator)         $80.00
-    ├── 10% → Platform Treasury               $10.00  ◄── protocol fee funds this
+    ├── 10% → Platform Treasury               $10.00  ◄── funds from the fee, not the split
     └── 10% → Ecosystem Stakeholders          $10.00
 ```
 
-#### 1.2 Platform Treasury Allocation (50/30/20)
+#### 1.2 Platform Treasury Allocation (50/30/20) — applied to the fee F
 
-Of the 10% platform treasury:
+| Recipient | Share |
+|-----------|:-----:|
+| Operations (CI/CD, SDKs, Nexus, audits) | 50% |
+| Founder/Contributor Compensation (4yr vesting) | 30% |
+| Ecosystem Growth (grants, liquidity mining) | 20% |
 
-| Recipient | Share | Of $10 Treasury |
-|-----------|:-----:|:---------------:|
-| Operations (CI/CD, SDKs, Nexus, audits) | 50% | $5.00 |
-| Founder/Contributor Compensation (4yr vesting) | 30% | $3.00 |
-| Ecosystem Growth (grants, liquidity mining) | 20% | $2.00 |
+> The Gateway #247 diagram showing `Protocol 2% / Ecosystem 18%` remains
+> **superseded**. The 80/10/10 builder matrix is authoritative for the net split.
 
-**The Gateway #247 diagram showing `Protocol 2% / Ecosystem 18%` is superseded.** The 80/10/10 builder matrix in `FUNDING_AND_ECONOMICS.md` §2.3 is authoritative.
+### 2. TrustTier Pricing Model
 
-### 2. 4-Tier TrustTier Pricing Model
+The **fee rate** is ADR-005's dynamic model (see `src/fee_calculator.ts`). The
+trust tier still governs *which rails are available* and the Managed premium
+(if re-enabled):
 
-| Tier | Verification | Protocol Fee | Premium | Effective Rate | Use Case |
-|------|:------------|:------------:|:-------:|:--------------:|----------|
-| **Strict** | TEE + ZK proof | Negotiated | Negotiated | Custom | Institutional settlement |
-| **Managed** | Enclave attestation | 2.0% | +0.5% | **2.5%** | Professional builders |
-| **Expedient** | Light client proof | 2.0% | — | **2.0%** | Standard agent settlement |
-| **ObserverOnly** | None | — | — | **Free** | Discovery/browsing |
+| Tier | Verification | Premium over base rate | Use Case |
+|------|:------------|:----------------------:|----------|
+| **Strict** | TEE + ZK proof | Negotiated | Institutional settlement |
+| **Managed** | Enclave attestation | +0.5% (proposed; not yet active) | Professional builders |
+| **Expedient** | Light client proof | — | Standard agent settlement |
+| **ObserverOnly** | None | Settlement disabled | Discovery/browsing |
+
+> The base rate is the ADR-005 volume-decay schedule (0.50% → 0.10%) composed
+> with the per-rail flat floor — **not** a flat 2%. The +0.5% Managed premium is
+> not wired (`DEFAULT_FEATURE_FLAGS.attestationAvailable === false`).
 
 #### 2.1 Premium Surcharge Destination
 
@@ -64,28 +103,38 @@ The +0.5% Managed premium and negotiated Strict premium flow to the SAB treasury
 
 #### 2.2 Tier-Available Rails
 
+Availability only (rates are ADR-005's dynamic model; the per-rail flat floor
+differs by rail cost — see ADR-005 §3.2):
+
 | Rail | ObserverOnly | Expedient | Managed | Strict |
 |------|:------------:|:---------:|:-------:|:------:|
-| Lightning | — | ✅ 1.0% | ✅ 1.0% | ✅ |
-| Fedimint | — | ✅ 1.0% | ✅ 1.0% | ✅ |
-| ALEX/Stacks | — | ✅ 2.0% | ✅ 2.0% | ✅ |
-| EVM/ERC-8183 | — | ✅ 2.0% | ✅ 2.5% | ✅ |
-| sBTC | — | — | ✅ 2.5% | ✅ |
-| Statechain (Spark) | — | — | ✅ 2.0% | ✅ |
-| RGB | — | — | ✅ 2.0% | ✅ |
-| Babylon | — | — | ✅ 0.5%* | ✅ |
+| Lightning | — | ✅ | ✅ | ✅ |
+| Fedimint | — | ✅ | ✅ | ✅ |
+| ALEX/Stacks | — | ✅ | ✅ | ✅ |
+| EVM/ERC-8183 | — | ✅ | ✅ | ✅ |
+| sBTC | — | — | ✅ | ✅ |
+| Statechain (Spark) | — | — | ✅ | ✅ |
+| RGB | — | — | ✅ | ✅ |
+| Babylon | — | — | ✅ * | ✅ |
 
-> \* Babylon = yield share only, not settlement fee.
+> \* Babylon = yield share only, not settlement fee. Statechain and RGB are
+> advertised but `RAIL_CAPABILITIES[].ready === false` (fail-closed).
 
-### 3. Fee Decay Timeline
+### 3. Fee Rate Schedule
 
-| Phase | Duration | Rate | Governance |
-|-------|----------|:----:|------------|
-| Launch Stabilization | 0–12 months | 2.0% | Automatic |
-| Growth | 12–36 months | 1.5% | DAO vote (60%) |
-| Mature | 36+ months | 1.0% | DAO vote (60%) |
+The rate is **ADR-005's** dynamic model — a single volume-decay percentage
+composed with a per-rail flat floor. There is no time-based 2%/1.5%/1% decay:
 
-Decay is **DAO-governed** per `FUNDING_AND_ECONOMICS.md` §2.2. Emergency pause via 2-of-3 SAB multisig.
+| Volume tier (30-day) | Decayed rate |
+|----------------------|:------------:|
+| `TIER_1` | 0.50% |
+| `TIER_2` | 0.25% |
+| `TIER_3` | 0.15% |
+| `TIER_4` | 0.10% |
+
+`effective_fee_sat = max(amount × decayed_bps/10000, rail_floor) × load_factor`,
+with `rail_floor = rail_cost × 1.25` and `load_factor ∈ [1.0, 3.0]`. DAO-governed;
+emergency pause via 2-of-3 SAB multisig.
 
 ### 4. Rounding
 
@@ -164,9 +213,11 @@ Per `FUNDING_AND_ECONOMICS.md` §3.3:
 
 - `docs/research/FUNDING_AND_ECONOMICS.md` — Full economic model, revenue streams, break-even
 - `docs/knowledge_base/trust_tier_pricing.md` — Tier detection, fee schedule, SLA templates
-- `docs/research/SETTLEMENT_RAILS.md` — 6 settlement rails, bridge status
+- `docs/research/SETTLEMENT_RAILS.md` — 8 settlement rails, bridge status
 - `docs/research/CON1427_IMPLEMENTATION_PLAN.md` — 4-phase implementation plan
-- `src/fee_calculator.ts` — Production fee calculator (363 lines)
+- `src/fee_calculator.ts` — Production dynamic fee calculator (ADR-004/ADR-005)
+- `docs/adr/ADR_005_COMPETITIVE_RATES_WITH_COST_RECOVERY.md` — the live fee *rate*
+- `docs/research/FEE_DESTINATION_AND_CUSTODY.md` — where the collected fee lands
 - [Gateway #247](https://github.com/Conxian/conxian-gateway/issues/247) — Superseded allocation diagram
 - [Gateway PR #297](https://github.com/Conxian/conxian-gateway/pull/297) — Fail-closed venue defaults
 

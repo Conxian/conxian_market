@@ -1,7 +1,13 @@
 # Conxian Market: Unified Ecosystem Positioning & Enhancement Blueprint
 
-> **Status:** Unified Research | **Last Updated:** 2026-08-01 (Session 48)  
+> **Status:** Historical snapshot | **Last Updated:** 2026-08-01 (Session 48)  
 > **Version:** 1.0 | **Purpose:** Synthesis of all ecosystem research
+>
+> **Fee-model note (2026-11-14):** this document quotes the retired **2%** static
+> protocol fee. The live rate is the ADR-005 dynamic hybrid model
+> (0.50%→0.10% + per-rail floor) in `src/fee_calculator.ts`; the 80/10/10 split
+> applies to the net and the fee splits 50/30/20. See
+> `docs/research/FEE_DESTINATION_AND_CUSTODY.md`. Retained for historical context.
 
 ---
 
@@ -417,7 +423,7 @@ AI Office v2.0:
 | Task | Status | Evidence |
 |:-----|:------:|:---------|
 | Deploy 3-of-5 multisig treasury | ✅ | BOS gates #934-#938 tracking SAB operationalization |
-| Activate 2% protocol fee | ✅ | CON-1427 wired via gateway billing engine (362 lines) |
+| Protocol fee collection | ⬜ Blocked | Fee *computed* (ADR-005) + gateway billing wired; contract not deployed, `protocolFeeActive:false` (#488) |
 | ALEX settlement pool setup | ✅ | Active — ALEX/Stacks AMM settlement live |
 | Treasury dashboard | ✅ | Specified in `monitoring.md` §4, infrastructure ready |
 | Agent registry MVP | ✅ | CJCS JobCard + WorkIntent types aligned across core, platform |
