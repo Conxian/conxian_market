@@ -3,6 +3,11 @@
 > **Current Session:** Session 76
 > **Strategic Directive:** Decentralized Systems Production Readiness, Resilient Issue Fallback Engine, and Commercial Opportunity Evaluator
 > **Primary Orchestration Repo:** `conxian_market` (`@conxian/market-sdk`)
+>
+> **Fee model note (2026-11-15):** entries below that mention the **80/10/10** split or a flat **2.0%**
+> rate are **historical** (Session 48-era). The current model is [ADR-007](docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md)
+> — a two-product rate model (matched-job 10% take; ADR-005 dynamic rail fee) with **one 50/30/20 split**
+> of the platform take. See [README](README.md#-economic--governance-framework) and [GOVERNANCE](docs/GOVERNANCE.md).
 
 ---
 

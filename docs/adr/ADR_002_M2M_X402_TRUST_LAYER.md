@@ -39,7 +39,7 @@ Conxian must clarify its strategic positioning and technical architecture relati
 3. **Immutable Trust Proof Artifacts**:
    - Every attestation-backed x402 payment lock generates an immutable `X402TrustProofArtifact` containing proof hashes, verified TrustTier level, and issuer identity (`conxian.org/trust-layer`).
 4. **Attestation-Locked Escrow Gateway**:
-   - `X402EscrowGateway.processPaymentAndLockEscrowWithAttestation` locks funds into ERC-8183 job card escrows with TrustTier enforcement and previewed 80/10/10 yield splits.
+   - `X402EscrowGateway.processPaymentAndLockEscrowWithAttestation` locks funds into ERC-8183 job card escrows with TrustTier enforcement and previewed two-product take splits (matched-job 90/10, 50/30/20 on the take — see [ADR-007](ADR_007_TWO_PRODUCT_RATE_MODEL.md)).
 
 ---
 

@@ -13,18 +13,21 @@ To be listed as a "Sovereign" module, the following mandates must be fulfilled:
 - **ZK-Compliant:** Transactions must generate ZK-proofs of correctness, allowing for "Auditing without Surveillance."
 
 ## 3. The Builder Revenue Matrix
-Conxian implements a default **80/10/10** yield matrix:
-- **80%:** To the Builder (Agent Creator).
-- **10%:** To the Platform Treasury (The "Hub Fee" for orchestration).
-- **10%:** To Ecosystem Stakeholders (Governance/Incentives).
+Conxian prices settlements by **product**, not by one flat rate ([ADR-007](adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md)):
+- **Product B — matched job:** the platform takes **10%** of gross; the builder keeps **90%**. This is the marketplace product (job card, escrow, trust-tier attestation, SLA, dispute).
+- **Product A — rail settlement:** the platform takes the [ADR-005](adr/ADR_005_COMPETITIVE_RATES_WITH_COST_RECOVERY.md) dynamic fee (`0.50% → 0.10%` + per-rail cost floor); the builder keeps the rest. This is the raw pass-through product (x402 / MCP-402 call, M2M packet, direct transfer).
+- Routing is **fail-closed** to the matched-job rate when a settlement cannot be classified.
+
+The **80/10/10 of gross** builder matrix (ADR-001 §1.1) is **retired**; it implied a ~20% take that contradicted the rail rate.
 
 ### 3.1 Protocol Fee Structure (Revenue Standards)
 | Fee Component | Rate | Allocation |
 |:--------------|:----:|:-----------|
-| **Total Protocol Fee** | ADR-005 dynamic | Volume-decay 0.50%→0.10% + per-rail floor (governance-adjustable) |
-| **Operations Treasury** | 50% | CI/CD, SDKs, Nexus, Audits |
-| **Founder Compensation** | 30% | 4-year vesting schedule |
-| **Ecosystem Growth** | 20% | Grants, Liquidity Mining, Bug Bounties |
+| **Product B — matched job** | 10% of gross | builder keeps 90%; take splits 50/30/20 |
+| **Product A — rail settlement** | ADR-005 dynamic | Volume-decay 0.50%→0.10% + per-rail floor (governance-adjustable) |
+| **Platform take split** | 50/30/20 | Operations / Founder Vesting / Ecosystem Growth |
+
+The split is applied to the **platform's take**, whatever the product is — there is exactly one split rule.
 
 ### 3.2 Fee Adjustment Governance
 - **Rate Changes:** Require 60% DAO approval with 7-day voting period
