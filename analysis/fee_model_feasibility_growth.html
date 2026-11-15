@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conxian — Feasibility & Growth (verified)</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--mut:#8b949e;--acc:#f7931a;--bad:#f85149;--ok:#3fb950;--card:#161b22;--bd:#30363d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:48px 24px 24px;max-width:1100px;margin:0 auto}
+h1{font-size:32px;margin:0 0 8px;letter-spacing:-.5px} h1 span{color:var(--acc)}
+.sub{color:var(--mut);font-size:15px;max-width:74ch}
+.verdict{background:linear-gradient(135deg,#1a2332,#161b22);border:1px solid var(--acc);border-radius:12px;padding:20px 24px;margin:24px auto;max-width:1100px}
+.verdict h2{margin:0 0 8px;font-size:18px;color:var(--acc)} .verdict p{margin:6px 0;font-size:15px}
+.verdict .corr{border-top:1px solid var(--bd);margin-top:12px;padding-top:12px}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}
+th,td{border:1px solid var(--bd);padding:8px 10px;text-align:left} th{background:#1c2128;color:var(--mut)}
+.bad{color:var(--bad);font-weight:600} .ok{color:var(--ok);font-weight:600}
+.grid{max-width:1100px;margin:0 auto;padding:0 24px 64px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px;margin:20px 0}
+.card h3{margin:0 0 4px;font-size:17px} .card p{margin:0 0 14px;color:var(--mut);font-size:14px}
+.card img{width:100%;border-radius:8px;background:#fff}
+footer{max-width:1100px;margin:0 auto;padding:24px;color:var(--mut);font-size:13px;border-top:1px solid var(--bd)}
+</style></head><body>
+<header>
+<h1>Conxian — <span>Feasibility &amp; Growth</span></h1>
+<p class="sub">"Are we too cheap to survive?" and "how do we grow?" — answered from the
+org's own funding docs (ask = $24k/yr, infra ~$0) and the playbooks of the platforms we
+resemble. Model verified against the compiled TypeScript (1440 rows, 0 mismatches).</p>
+</header>
+<div class="verdict">
+<h2>The answer</h2>
+<p><strong>Yes — at 0.50% the market fee is too cheap to survive.</strong> Covering the
+$24k/yr ask needs <span class="bad">$4.8M/yr</span> settled volume at 0.50%, vs
+<span class="ok">$240k/yr</span> at a marketplace-grade 10%.</p>
+<p><strong>Diagnosis:</strong> Conxian prices a <em>marketplace</em> service (escrow +
+attestation + SLA + dispute) like a <em>settlement rail</em> (0.50%).</p>
+<p><strong>Fix — price two products:</strong> a cheap <span class="ok">0.50% rail</span>
+to land developers (x402/API), and a <span class="ok">marketplace take</span> on matched
+jobs to expand. Monetise with subscriptions, not a rate hike.</p>
+<p><strong>Option A (the split basis) is confirmed.</strong> Remaining owner decisions:
+the <em>level</em> (D-5) and the <em>surface</em> (D-6).</p>
+<div class="corr">
+<p><strong>10× contradiction found:</strong> <code>FUNDING sec.4.1</code> declares a
+$240k/yr cost base; the actual ask is $24k/yr.</p>
+<p><strong>Three take rates in the docs:</strong> ADR-005 = 0.50%, ADR-001 = 2.0%,
+ADR-001 sec.1.1 (80/10/10 of gross) = 10%. A 20× spread.</p>
+<p><strong>Growth lesson (Upwork):</strong> leading with a rate hike on a working
+marketplace causes churn. Grow the scarce side (builders) first.</p>
+</div>
+</div>
+<div class="grid"><section class="card"><h3>Survival: break-even volume by take rate</h3><p>Annual settled volume needed to cover the $24k/yr ask. At 0.50% it is $4.8M/yr; at a marketplace rate it is $240k/yr.</p><img src="charts_survival/01_breakeven_by_rate.png" alt="Survival: break-even volume by take rate"></section>
+<section class="card"><h3>Revenue vs volume, by rate</h3><p>Where each take rate crosses each cost base ($24k lean, $60k base, $240k doc).</p><img src="charts_survival/02_revenue_vs_volume.png" alt="Revenue vs volume, by rate"></section>
+<section class="card"><h3>At $1M/yr volume</h3><p>Only a marketplace-grade rate covers even the lean cost. 0.50% earns $5,000.</p><img src="charts_survival/05_revenue_at_1m.png" alt="At $1M/yr volume"></section>
+<section class="card"><h3>Take-rate benchmark</h3><p>Conxian prices in the RAIL band (0.05-2.9%) but operates a MARKETPLACE (escrow, attestation, SLA, dispute).</p><img src="charts_survival/04_take_benchmark.png" alt="Take-rate benchmark"></section>
+<section class="card"><h3>Runway</h3><p>The $24k ask funds 12 months only at <=$2k/mo burn.</p><img src="charts_survival/03_runway.png" alt="Runway"></section>
+<section class="card"><h3>Growth: the flywheel</h3><p>Supply growth (active agents) drives GMV. Builders are the scarce side.</p><img src="charts_growth/01_flywheel.png" alt="Growth: the flywheel"></section>
+<section class="card"><h3>Growth: lever sensitivity</h3><p>Recruiting builders (+50%) and retention (+20%) beat a rate hike (+50% revenue but churn risk).</p><img src="charts_growth/03_lever_sensitivity.png" alt="Growth: lever sensitivity"></section>
+<section class="card"><h3>Growth: path to break-even</h3><p>At 0.50% break-even arrives far later than at a marketplace rate.</p><img src="charts_growth/02_path_to_breakeven.png" alt="Growth: path to break-even"></section>
+<section class="card"><h3>Growth: land-and-expand</h3><p>Land with cheap raw settlement (x402, 0.50%); expand into matched jobs at a marketplace take.</p><img src="charts_growth/05_land_and_expand.png" alt="Growth: land-and-expand"></section>
+<section class="card"><h3>Growth: comparable playbooks</h3><p>Shopify (subs, ~0% GMV take), Stripe (dev-first), Uber (subsidise supply), Airbnb (trust) fit; Upwork (rate hike -> churn) is the warning.</p><img src="charts_growth/04_playbooks.png" alt="Growth: comparable playbooks"></section>
+</div>
+<footer>
+Generated 2026-11-14 &middot; Models: <code>analysis/fee_model_survival.py</code>,
+<code>analysis/fee_model_growth.py</code> &middot; Parity: <code>analysis/parity_check.py</code>
+(1440 rows, 0 mismatches) &middot; Log: <code>analysis/WORKING_NOTES.md</code>.<br>
+Comparable-company facts are from public sources; growth parameters (K, r, job size) are
+illustrative assumptions, not measured traction (recognised revenue is $0). Benchmark
+take-rate figures were not re-fetched online this session. Produced by an AI agent
+(OpenHands) on behalf of the user.
+</footer></body></html>

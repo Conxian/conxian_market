@@ -129,3 +129,80 @@ The corrected model **strengthens** the Option A recommendation: with a plausibl
 ~100 bps choke price the revenue-maximising rate is ~50 bps — the shipped rate — and
 50 bps sits below the disintermediation threshold. No change to the recommendation;
 the reasoning behind it is now correct rather than partly spurious.
+
+## Pass 4 — Feasibility / "are we too cheap to survive?" (owner challenge)
+
+### 4a. THE ACTUAL FUNDING CONTEXT (found, not assumed)
+- **Real funding ask:** **USD 24,000 / 12 months** (~$2,000/mo), 0.5 FTE senior engineer
+  (HRF + Spiral + OpenSats drafts, `.github-private/docs/funding/`). Budget = engineering
+  time $15k + TEE test hardware $3k + security review $5k + docs $1k.
+- **Real cost base:** infra ≈ **$0/mo** (Render free ×5, Cloudflare/Supabase/Neon free);
+  the only bleed was GitHub (~$105/mo, now stopped). `FINANCIAL_REALITY_CHECK_2026_11_14.md`.
+- **Recognised revenue: $0.** `unit-economics.json` is mostly `null`; verdict
+  `INSUFFICIENT DATA`.
+- **⚠️ CONTRADICTION:** `FUNDING_AND_ECONOMICS.md` §4.1 says the cost base is
+  **$20,000/mo ($240k/yr)**. The actual ask is **$24k/yr**. That is a **10× discrepancy**
+  in the org's own numbers.
+
+### 4b. THREE CONFLICTING TAKE RATES in the docs
+| Source | Platform take | Break-even @ $24k/yr |
+|---|---|---|
+| ADR-005 (newest, "calibrated") | **0.50% → 0.10%** | **$4.8M/yr** volume |
+| ADR-001 §2 (tier table) | **2.0%** | **$1.2M/yr** volume |
+| ADR-001 §1.1/§1.2 (80/10/10 of GROSS) | **10.0%** | **$240k/yr** volume |
+| FUNDING §2.3 (50/30/20 of the 10% treasury) | 10% (Option B) | $240k/yr |
+
+So the platform's take is documented as **0.50%, 2%, AND 10%** — a **20× spread**.
+
+### 4c. CODE reality (two unreconciled takes, two code paths)
+- `job_card_escrow.evaluateAndRelease` applies **80/10/10 of gross** → platform **10%**
+  (and drops the treasury/ecosystem legs — the P0-7 bug).
+- `fee_calculator.calculateDynamicFee` computes **0.50% of gross**, split 50/30/20.
+- These are **different takes on different paths** — the D-1 conflict, now sharpened.
+
+### 4d. ANSWER to "ain't we too cheap to survive?"
+- At **0.50%**: self-funding needs **~$4.8M/yr** settled volume. Not plausible in year 1.
+- At **10%**: needs **~$240k/yr** — plausible.
+- **Diagnosis:** Conxian prices like a *settlement rail* (0.50%, vs Stripe 2.9%) while
+  operating like a *marketplace* (escrow + attestation + SLA + dispute). Marketplaces take
+  10–30% (Upwork 10%, Airbnb ~15%, Uber ~25%, app stores 15–30%). **0.50% is too cheap
+  for the service provided.**
+- **But** the market fee is not the only surface: the gateway subscription ladder
+  ($200/mo base + usage; 128k-sat plans; x402 1000 sat/call) is the designated
+  monetisation surface (ADR-009) and the four surfaces are **disjoint** (#1343).
+- **Nuance:** the correct answer is not "raise the market fee to 10% blindly" (that risks
+  disintermediation), but to (a) resolve which surface books the revenue, and (b) set the
+  market fee at a level that survives *if it is the only surface*.
+
+### 4e. Option A re-check (owner: "option A also, but make sure first")
+Option A (split the FEE F 50/30/20; treat 80/10/10 as aggregate) is still the correct
+**split-basis** resolution. BUT Option A alone leaves the platform with only **0.50%** of
+gross — which, on the survival math, **is too cheap**. So Option A must be paired with a
+decision on the **fee level** (not just the basis). Recommendation updated below.
+
+## Pass 5 — Survival model (`fee_model_survival.py`)
+- Break-even volume for the **$24k/yr** ask: 0.50% → **$4.8M/yr**; 2% → $1.2M/yr;
+  10% → $240k/yr; 15% → $160k/yr.
+- At a plausible **$1M/yr** volume: 0.50% earns **$5,000** (21% of the ask); 2% → $20k
+  (83%); 10% → $100k. **0.50% cannot survive.**
+- Take-rate benchmark chart: Conxian prices in the **rail** band (0.05–2.9%) but
+  operates a **marketplace** (escrow+attestation+SLA+dispute; peers take 10–30%).
+
+## Pass 6 — Growth model (`fee_model_growth.py`)
+- Flywheel: **supply (builders) is the scarce side**; recruiting builders (+50%) and
+  retention (+20% jobs/agent) beat a rate hike on risk-adjusted terms.
+- Path to break-even: at 0.50% far later than at a marketplace rate.
+- Comparable playbooks: **Shopify** (subs, ~0% GMV take on $292B GMV), **Stripe**
+  (dev-first), **Uber** (subsidise supply), **Airbnb** (trust layer) → fit; **Upwork**
+  (rate hike → churn) → warning. Uniswap (free protocol + token).
+- Land-and-expand: cheap 0.50% rail to land devs (x402) + marketplace take on matched jobs.
+
+## Pass 5–6 outputs
+- Docs: `docs/research/FEE_MODEL_FEASIBILITY_AND_SURVIVAL.md`,
+  `docs/research/FEE_MODEL_GROWTH_AND_ALIGNMENT.md`.
+- Artifact: `analysis/fee_model_feasibility_growth.html` (10 charts).
+- Alignment: **D-1 (basis) = Option A confirmed**; **D-5 (level)** and **D-6 (surface)**
+  are the remaining owner decisions.
+
+## Final verification (all passes)
+Parity 0/1440 · 4 models OK · 2 artifacts valid (24 images, 0 missing) · 471 tests pass.

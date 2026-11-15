@@ -1,0 +1,14 @@
+{
+  "month_first_covering_24k": {
+    "0.50%": 10,
+    "2.0%": 4,
+    "10%": 0
+  },
+  "lever_sensitivity_month24": {
+    "agents +50%\n(recruit builders)": 610853.93,
+    "jobs/agent +20%\n(retention)": 488683.15,
+    "avg job +15%\n(move upmarket)": 468321.35,
+    "take 2%\u21923%\n(price up)": 610853.93
+  },
+  "lever_base_month24": 407235.96
+}
