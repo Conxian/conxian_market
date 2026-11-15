@@ -71,30 +71,30 @@ signing / deployment.
 ### P0 — Make the destination real and stop dropping legs
 | # | Task | Owner | Depends on | Issue |
 |---|---|---|---|---|
-| P0-1 | Deploy `TREASURY-VAULT` to Stacks testnet | ops | SAB_DEPLOYER_MULTISIG deploy keys | (created) |
-| P0-2 | Wire escrow release to emit the full settlement plan (not drop treasury/ecosystem legs) | market | D-1, D-2 | (created) |
-| P0-3 | Call `submitFeeReport` from the release path (opt-in, fail-closed) | market | gateway endpoint (P1-1) | (created) |
-| P0-4 | Resolve D-1/D-2 fee-basis + split-scope decision | market/governance | — | (created) |
+| P0-1 | Deploy `TREASURY-VAULT` to Stacks testnet | ops | SAB_DEPLOYER_MULTISIG deploy keys | [#360](https://github.com/Conxian/conxian_market/issues/360) |
+| P0-2 | Wire escrow release to emit the full settlement plan (not drop treasury/ecosystem legs) | market | D-1, D-2 | [#357](https://github.com/Conxian/conxian_market/issues/357) |
+| P0-3 | Call `submitFeeReport` from the release path (opt-in, fail-closed) | market | gateway endpoint (P1-1) | [#359](https://github.com/Conxian/conxian_market/issues/359) |
+| P0-4 | Resolve D-1/D-2/D-3 fee-basis + split-scope decision | market/governance | — | [#358](https://github.com/Conxian/conxian_market/issues/358) |
 
 ### P1 — Close the gateway collection loop
 | # | Task | Owner | Depends on | Issue |
 |---|---|---|---|---|
-| P1-1 | Add `/api/v1/billing/fee-report` + wire `accumulate_protocol_fee` into the settlement path | gateway | — | (created) |
-| P1-2 | Implement `settle_protocol_fee` (sign + broadcast the `collect-protocol-fee` call) | gateway | P0-1 | (created) |
-| P1-3 | Emit `X-Conxian-Fee` headers on live settlement requests | market | — | (created) |
+| P1-1 | Add `/api/v1/billing/fee-report` + wire `accumulate_protocol_fee` into the settlement path | gateway | — | [gateway#974](https://github.com/Conxian/conxian-gateway/issues/974) |
+| P1-2 | Implement `settle_protocol_fee` (sign + broadcast the `collect-protocol-fee` call) | gateway | P0-1 | [gateway#975](https://github.com/Conxian/conxian-gateway/issues/975) |
+| P1-3 | Emit `X-Conxian-Fee` headers on live settlement requests | market | — | [#361](https://github.com/Conxian/conxian_market/issues/361) |
 
 ### P2 — Hardening
 | # | Task | Owner | Depends on | Issue |
 |---|---|---|---|---|
-| P2-1 | Replace single-owner vault `pause` with 2-of-3 SAB pause (pause-only) | market | P0-1 | (created) |
-| P2-2 | Provision `SAB-TREASURY-MS` (3-of-5) and `DAO-TREASURY-MS` (5-of-7) | ops | P0-1 | (created) |
+| P2-1 | Replace single-owner vault `pause` with 2-of-3 SAB pause (pause-only) | market | P0-1 | [#362](https://github.com/Conxian/conxian_market/issues/362) |
+| P2-2 | Provision `SAB-TREASURY-MS` (3-of-5) and `DAO-TREASURY-MS` (5-of-7) | ops | P0-1 | [#364](https://github.com/Conxian/conxian_market/issues/364) |
 
 ### P3 — Utilisation
 | # | Task | Owner | Depends on | Issue |
 |---|---|---|---|---|
-| P3-1 | Babylon auto-stake of treasury balance | gateway | P2-2 | (created) |
-| P3-2 | Treasury dashboard queries | platform | P2-2 | (created) |
-| P3-3 | Enable `protocolFeeActive` after a shadow-mode settlement verifies end to end | ops/market | all above | (created) |
+| P3-1 | Babylon auto-stake of treasury balance | gateway | P2-2 | gateway umbrella: [#880](https://github.com/Conxian/conxian-gateway/issues/880) |
+| P3-2 | Treasury dashboard queries | platform | P2-2 | [platform#1625](https://github.com/Conxian/conxius-platform/issues/1625) |
+| P3-3 | Enable `protocolFeeActive` after a shadow-mode settlement verifies end to end | ops/market | all above | [#363](https://github.com/Conxian/conxian_market/issues/363) |
 
 ---
 
