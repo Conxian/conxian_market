@@ -300,3 +300,14 @@ export type {
   TreasuryUtilisationPlan,
   VaultSweepPlan,
 } from "./protocol_fee_settlement.js";
+export {
+  buildRevenueShareAssignment,
+  assignmentProgress,
+  ASSIGNABLE_BUCKET,
+} from "./revenue_share_assignment.js";
+export type {
+  RevenueShareAssignment,
+  AssignmentResult,
+  AssignedLeg,
+  AssignmentBucket,
+} from "./revenue_share_assignment.js";

@@ -163,6 +163,11 @@ import {
   type TreasuryUtilisationPlan,
   type VaultSweepPlan,
 } from "./protocol_fee_settlement.js";
+import {
+  buildRevenueShareAssignment,
+  type RevenueShareAssignment,
+  type AssignmentResult,
+} from "./revenue_share_assignment.js";
 
 export class ConxianMarketSDK {
   readonly gateway: GatewayClient;
@@ -447,6 +452,22 @@ export class ConxianMarketSDK {
    */
   planTreasuryUtilisation(sweep: VaultSweepPlan): TreasuryUtilisationPlan {
     return planTreasuryUtilisation(sweep);
+  }
+
+  /**
+   * Apply capped revenue-share assignments to a vault sweep's OPERATIONS bucket.
+   * Non-dilutive financing: a lender takes a slice of the Ops bucket until a
+   * repayment cap, then 100% reverts. FOUNDERS/ECOSYSTEM are ring-fenced.
+   * Off by default — pass no assignments and the bucket is untouched.
+   */
+  applyRevenueShareAssignment(
+    sweep: VaultSweepPlan,
+    assignments?: RevenueShareAssignment[]
+  ): AssignmentResult {
+    return buildRevenueShareAssignment({
+      operationsSat: sweep.operationsSat,
+      assignments,
+    });
   }
 
   verifyInferencePolicy(input: InferencePolicyInput): InferencePolicyResult {

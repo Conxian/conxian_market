@@ -718,3 +718,22 @@ Ran the whole runbook in the sandbox; **all documented claims reproduce**. App =
 - **Env quirk**: repo pins Node `>=26 <27` (engine-strict) but the box default is v24 → `npm install` EBADENGINE.
   Node 26.13.1 installed at `/opt/node26`; run tests with `export PATH=/opt/node26/bin:$PATH`.
 - Full detail: `.openhands/memory/2026-11-14.md`.
+
+## Session 2026-11-15 — fee model landed on dev; custody design (durable)
+- **Fee model is LIVE on `conxian_market` dev** (PR #355 then #356, both merged; squash
+  disabled → merge commits). Canonical: **ADR-007 two-product** — rail = ADR-005 dynamic
+  (0.50%→0.10%+floor); matched job = **10% take (builder keeps 90%)**; **one 50/30/20
+  split of the take**. 80/10/10 and the 2% fee are retired. #358 closed.
+- **CI is dead org-wide** (GitHub billing lock: jobs fail in ~2s, 0 steps). Checks are
+  red regardless of code → **admin-merge (`gh pr merge --admin`) is the only route**, but
+  **always verify locally first**: `export PATH=/opt/node26/bin:$PATH && npx tsc --noEmit
+  && npx vitest run` (repo pins Node 26; box default 24).
+- **Web research when Tavily (HTTP 432) + browser MCP are down: use `curl`** via
+  `/tmp/fetch.py <url> <out>` (fetch + strip HTML). Subagents have no curl → research in
+  the main session.
+- **`contracts/protocol-fee-vault.clar`** exists in-repo (ADR-006, re-homed from the dead
+  `Conxian/Conxian`): passive intake, 50/30/20 `sweep-treasury`, **2-of-3 pause-only
+  emergency**, fail-closed. **Not deployed**; `protocolFeeActive` stays `false` (#360/#363).
+- **Custody design (PR #373)**: separate **custody / authority / process**. Enable the
+  system wallet only with a scoped rate-capped role + pause-only emergency + delayed
+  two-step admin; migrate to DAO by granting the timelock Proposer role (no redeploy).
