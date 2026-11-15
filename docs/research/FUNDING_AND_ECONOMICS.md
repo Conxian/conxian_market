@@ -98,9 +98,14 @@ This document defines the **Multi-Dimensional DeFi Monetary System** for the Con
 > the fee never rounds to zero on micro-settlements. Rate changes are
 > **DAO-governed**; emergency pause via 2-of-3 multisig.
 
-### 2.3 Layer 3: Revenue Allocation Matrix (80/10/10 Integration)
+### 2.3 Layer 3: Revenue Allocation Matrix — superseded by ADR-007
 
-The 80/10/10 builder matrix applies to the **net** (`gross − protocol fee`):
+> **Superseded (2026-11-14).** The 80/10/10-of-net matrix below was the pre-ADR-007
+> model. It is retired: it implied a second ~20% deduction on the builder, which
+> contradicts the ADR-005 rail rate and the matched-job 90/10 take. Retained for
+> history. Current model: [ADR-007](../adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md).
+
+The retired 80/10/10 builder matrix applied to the **net** (`gross − protocol fee`):
 
 | Recipient | Allocation | Purpose |
 |:----------|:----------:|:--------|
@@ -108,7 +113,8 @@ The 80/10/10 builder matrix applies to the **net** (`gross − protocol fee`):
 | **Platform Treasury** | 10% | Operations & development |
 | **Ecosystem Stakeholders** | 10% | Governance incentives |
 
-**The collected protocol fee `F` splits:**
+**Under ADR-007 there is one split rule** — the platform's **take** (Product A rail
+fee, or Product B matched-job 10% take) splits 50/30/20:
 - 50% → Operations
 - 30% → Founder Compensation Pool
 - 20% → Ecosystem Growth
@@ -454,30 +460,40 @@ Following DAO treasury best practices:
 ## Appendix A: Fee Flow Diagram
 
 ```
+Product B — matched job (job card + escrow + trust-tier + SLA + dispute)
 Gross settlement ($100) — locked in ERC-8183 escrow
         │
         ▼
-┌─────────────────────────────────────────┐
-│  Protocol fee  F = max($100 × 0.50%, floor)   ($0.50 at launch) │
-└─────────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  Platform take T = 10% of gross     ($10.00)  │
+│  Builder keeps gross − T            ($90.00)  │
+└──────────────────────────────────────────────┘
+        │
+        └──► T splits 50/30/20
+             ├── 50% → Operations
+             ├── 30% → Founders
+             └── 20% → Ecosystem
+```
+
+```
+Product A — rail settlement (raw x402 / MCP-402 / direct transfer)
+Gross settlement ($100)
+        │
+        ▼
+┌──────────────────────────────────────────────────────┐
+│  Platform fee F = max($100 × decayed_bps, rail_floor) │
+│    decayed_bps in {50, 25, 15, 10}   ($0.50 at launch)│
+└──────────────────────────────────────────────────────┘
         │
         ├──► 50% → Operations
         ├──► 30% → Founders
         └──► 20% → Ecosystem
-
-Net = $100 − F  ($99.50)
-        │
-        ▼
-┌─────────────────────────────────────────┐
-│            80 / 10 / 10 split           │
-│  ├── 80% → Builder                       │
-│  ├── 10% → Platform Treasury             │
-│  └── 10% → Ecosystem Stakeholders        │
-└─────────────────────────────────────────┘
 ```
 
-> The fee **rate** is ADR-005's dynamic model (0.50%→0.10% by volume + per-rail
-> floor), not the retired flat 2%. The 80/10/10 split applies to the **net**.
+> The 50/30/20 split applies to the **platform's take**, whatever the product is —
+> there is exactly **one split rule** (ADR-007 §2.0). The retired 80/10/10-of-net
+> matrix is superseded: it implied a second ~20% deduction on the builder, which
+> contradicts both the ADR-005 rail rate and the matched-job 90/10 take.
 
 ---
 
