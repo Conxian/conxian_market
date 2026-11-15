@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conxian Protocol Fee — Economic Model Analysis</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--mut:#8b949e;--acc:#f7931a;--bad:#f85149;--card:#161b22;--bd:#30363d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:48px 24px 24px;max-width:1100px;margin:0 auto}
+h1{font-size:32px;margin:0 0 8px;letter-spacing:-.5px} h1 span{color:var(--acc)}
+.sub{color:var(--mut);font-size:15px;max-width:70ch}
+.verdict{background:linear-gradient(135deg,#1a2332,#161b22);border:1px solid var(--acc);border-radius:12px;padding:20px 24px;margin:24px auto;max-width:1100px}
+.verdict h2{margin:0 0 8px;font-size:18px;color:var(--acc)} .verdict p{margin:6px 0;font-size:15px}
+.grid{max-width:1100px;margin:0 auto;padding:0 24px 64px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px;margin:20px 0}
+.card h3{margin:0 0 4px;font-size:17px} .card p{margin:0 0 14px;color:var(--mut);font-size:14px}
+.card img{width:100%;border-radius:8px;background:#fff}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
+th,td{border:1px solid var(--bd);padding:8px 10px;text-align:left}
+th{background:#1c2128;color:var(--mut)}
+.num{font-variant-numeric:tabular-nums;text-align:right} .bad{color:var(--bad);font-weight:600}
+footer{max-width:1100px;margin:0 auto;padding:24px;color:var(--mut);font-size:13px;border-top:1px solid var(--bd)}
+</style></head><body>
+<header>
+<h1>Conxian Protocol Fee — <span>Economic Model</span></h1>
+<p class="sub">Juxtaposing the live and documented fee models, overlaid with micro-, meso- (Laffer),
+macro- (monetary) and scaling-economics theory, across the full system — market, gateway, BOS
+control plane and platform. Reproduced from <code>analysis/fee_model_economics.py</code>.</p>
+</header>
+<div class="verdict">
+<h2>Recommendation</h2>
+<p><strong>Adopt the shipped dynamic model (0.50% → 0.10% + cost×1.25 floor) with 50/30/20
+applied to the fee F (Option A).</strong> Treat 80/10/10 as an aggregate distribution statement,
+not a per-settlement deduction.</p>
+<p>At volume elasticity ε≈1 the revenue-maximising rate is ~69 bps — the 50 bps launch rate is
+near-optimal. Above ε≈1.5 the percentage rate's optimum collapses and the <strong>flat floor
+becomes the entire revenue line</strong>: the floor, not the headline rate, is load-bearing.</p>
+<p class="bad">Do not ship Option B: applying 50/30/20 to the 10%-of-net slice is a ~20× larger
+take than the headline fee — a hidden ~10%-of-net tax.</p>
+</div>
+<div class="grid">
+<section class="card">
+<h3>The decision that changes everything (D-1)</h3>
+<p>Two documented split bases, juxtaposed on a 1,000,000-sat settlement at 0.50%.</p>
+<table>
+<tr><th>Bucket</th><th class="num">A: 50/30/20 on fee F</th><th class="num">B: on 10%-of-net</th><th class="num">Ratio</th></tr>
+<tr><td>Operations</td><td class="num">2,500</td><td class="num bad">49,750</td><td class="num">19.9×</td></tr>
+<tr><td>Founders</td><td class="num">1,500</td><td class="num bad">29,850</td><td class="num">19.9×</td></tr>
+<tr><td>Ecosystem (fee leg)</td><td class="num">1,000</td><td class="num bad">19,900</td><td class="num">19.9×</td></tr>
+</table>
+<p>Option A keeps the effective protocol take at ~0.50% of gross. Option B implies ~10% of net —
+larger than Stripe, and almost certainly not the intent.</p>
+</section>
+<section class="card"><h3>Micro: fee vs settlement size</h3><p>The floor dominates micro-payments; the rate dominates macro. Crossover where amount×0.005 = rail floor.</p><img src="charts/01_fee_vs_size.png" alt="Micro: fee vs settlement size"></section>
+<section class="card"><h3>Effective rate vs size</h3><p>High effective rate on micro-payments (floor doing its job); settles to headline rate on large ones.</p><img src="charts/02_effective_rate_vs_size.png" alt="Effective rate vs size"></section>
+<section class="card"><h3>Meso: Laffer curve</h3><p>Revenue = rate × volume(rate). At elasticity ε≥1.5 the percentage optimum collapses toward zero.</p><img src="charts/03_laffer_revenue_vs_rate.png" alt="Meso: Laffer curve"></section>
+<section class="card"><h3>Cost recovery floor</h3><p>Every rail: fee ≥ cost × 1.25. The 'never subsidise a client' invariant.</p><img src="charts/05_cost_recovery.png" alt="Cost recovery floor"></section>
+<section class="card"><h3>Scaling economics</h3><p>Network value ∝ n²; revenue ∝ n. Capture ratio falls as 1/n → rates must decline.</p><img src="charts/06_scaling.png" alt="Scaling economics"></section>
+<section class="card"><h3>Macro: BTC denomination</h3><p>USD-priced work: stable real fee. Sat-priced work: hidden escalator.</p><img src="charts/07_macro_btc.png" alt="Macro: BTC denomination"></section>
+<section class="card"><h3>Revenue vs volume</h3><p>The fee that funds the protocol, by model variant.</p><img src="charts/04_revenue_vs_volume.png" alt="Revenue vs volume"></section>
+<section class="card"><h3>Full system: one settlement</h3><p>Where a 1,000,000-sat settlement goes across market, gateway, vault, platform.</p><img src="charts/08_full_system_waterfall.png" alt="Full system: one settlement"></section>
+<section class="card"><h3>Decision D-1: split basis</h3><p>50/30/20 on fee F vs on 10%-of-net slice: a ~20× difference.</p><img src="charts/09_split_basis.png" alt="Decision D-1: split basis"></section>
+</div>
+<footer>
+Generated 2026-11-14 · Model: <code>analysis/fee_model_economics.py</code> ·
+Parameters mirrored from <code>src/fee_calculator.ts</code>, <code>src/bos_yield_splitter.ts</code>,
+<code>src/monitoring_watcher.ts</code>.<br>
+Benchmark take-rate figures (Stripe, card interchange, Lightning) are from established public
+knowledge and were not re-verified online this session (search tools rate-limited).
+Rail cost estimates are a v0 first-principles table, not measured telemetry.
+This artifact was produced by an AI agent (OpenHands) on behalf of the user.
+</footer></body></html>

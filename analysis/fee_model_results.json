@@ -1,0 +1,57 @@
+{
+  "laffer_optimum_bps": {
+    "0.5": 400.0,
+    "1.0": 69.0,
+    "1.5": 1.0,
+    "2.0": 1.0,
+    "3.0": 1.0
+  },
+  "assumptions": {
+    "btc_usd": 100000.0,
+    "avg_txn_sat": 250000,
+    "rail": "AlexStacks"
+  },
+  "rail_floors_sat": {
+    "Lightning": 10.0,
+    "Statechain": 125.0,
+    "Fedimint": 25.0,
+    "Rgb": 312.5,
+    "Sbtc": 375.0,
+    "AlexStacks": 50.0,
+    "Babylon": 50.0,
+    "EvmErc8183": 75.0
+  },
+  "example_1m_sat_settlement": {
+    "gross_sat": 1000000,
+    "fee_sat": 5000.0,
+    "fee_bps": 50.0,
+    "net_sat": 995000.0,
+    "split": {
+      "Builder (80% net)": 796000.0,
+      "Platform treasury (10% net)": 99500.0,
+      "Ecosystem (10% net)": 99500.0,
+      "Ops (50% fee)": 2500.0,
+      "Founders (30% fee)": 1500.0,
+      "Ecosystem (20% fee)": 1000.0
+    },
+    "optionA_fee_50_30_20": {
+      "operations": 2500.0,
+      "founders": 1500.0,
+      "ecosystem_fee": 1000.0
+    },
+    "optionB_slice_50_30_20": {
+      "operations": 49750.0,
+      "founders": 29850.0,
+      "ecosystem_fee": 19900.0
+    },
+    "optionB_is_multiple_of_A": 19.9
+  },
+  "effective_bps_examples": {
+    "10k_sat_alexstacks": 50.0,
+    "100k_sat_alexstacks": 50.0,
+    "1M_sat_alexstacks": 50.0,
+    "1M_sat_lightning": 50.0,
+    "1M_sat_sbtc": 50.0
+  },
+  "protocol_take_note": "If 80/10/10 is a per-settlement deduction, the effective protocol take is 10% of net (not 0.50% of gross). At a 1,000,000-sat gross with a 0.50% fee, the platform treasury receives the 10%-of-net slice, ~20x the whole 50/30/20 of F. This is the crux of decision D-1/D-2."
+}
