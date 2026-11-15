@@ -1,0 +1,8 @@
+[project]
+name = "conxian_market"
+description = "Conxian Market protocol-fee destination (TREASURY-VAULT) Clarity contracts."
+
+# Only the fee-destination contract is covered by the simnet suite. The
+# agent_registry contract is exercised through src/agent_registry.ts.
+[contracts.protocol-fee-vault]
+path = "contracts/protocol-fee-vault.clar"

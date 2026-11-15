@@ -1,5 +1,13 @@
 # Competitive Fee Benchmark & G8 Rail-Cost Calibration
 
+> ⚠️ **SUPERSEDED (2026-11-14, ADR-007).** The fee/revenue model in this document is
+> **historical**. The accepted model is **two products** — rail (ADR-005 dynamic rate)
+> and matched job (**10% take, builder keeps 90%**) — under **one 50/30/20 split rule on
+> the take**. There is no 2% fee, no 80/10/10, and no 5-stream revenue (no collection
+> path). Numbers below are retained for history. Authoritative:
+> `docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md`.
+
+
 > **Date:** 2026-10-10
 > **Scope:** Ground ADR-005 rate decisions in (a) top-tier competitor take-rates and
 > (b) measured per-rail settlement costs (the G8 calibration ADR-004 deferred).

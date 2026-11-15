@@ -125,9 +125,9 @@ describe("Multi-Cloud Telemetry & Yield Validation", () => {
       telemetry: scorecard,
     });
 
-    expect(validation.yieldSplit.builderSat).toBe(800_000n);
-    expect(validation.yieldSplit.platformTreasurySat).toBe(100_000n);
-    expect(validation.yieldSplit.ecosystemStakeholdersSat).toBe(100_000n);
+    expect(validation.yieldSplit.builderSat).toBe(900_000n);
+    expect(validation.yieldSplit.takeSat).toBe(100_000n);
+    expect(validation.yieldSplit.operationsSat).toBe(50_000n);
     expect(validation.authorized).toBe(false); // Paused on RED
     expect(validation.warnings.some((w) => w.includes("paused"))).toBe(true);
   });

@@ -123,9 +123,11 @@ describe("x402 facade & gateway", () => {
     expect(escrow.budgetSat).toBe(1_000_000n);
 
     const yieldSplit = gateway.previewYieldSplit(demand);
-    expect(yieldSplit.builderSat).toBe(800_000n);
-    expect(yieldSplit.platformTreasurySat).toBe(100_000n);
-    expect(yieldSplit.ecosystemStakeholdersSat).toBe(100_000n);
+    // An x402 demand is a raw rail call: ADR-005 dynamic fee (50 bps here).
+    expect(yieldSplit.product).toBe("rail");
+    expect(yieldSplit.builderSat).toBe(995_000n);
+    expect(yieldSplit.takeSat).toBe(5_000n);
+    expect(yieldSplit.operationsSat).toBe(2_500n);
   });
 
   it("builds a local correlation record using an explicitly successful verifier fixture", async () => {

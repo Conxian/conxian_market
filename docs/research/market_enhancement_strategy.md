@@ -1,12 +1,15 @@
 # Strategic Enhancement Strategy: Conxian Market
 
-> **Status:** Historical snapshot | **Version:** 3.0 | **Last Updated:** 2026-08-01 (Session 48)
->
-> **Fee-model note (2026-11-14):** this document quotes the retired **2%** static
-> protocol fee. The live rate is the ADR-005 dynamic hybrid model
-> (0.50%→0.10% + per-rail floor). See
-> `docs/adr/ADR_005_COMPETITIVE_RATES_WITH_COST_RECOVERY.md`. Retained for
-> historical context.
+> ⚠️ **SUPERSEDED (2026-11-14, ADR-007).** The fee/revenue model in this document is
+> **historical**. The accepted model is **two products** — rail (ADR-005 dynamic rate)
+> and matched job (**10% take, builder keeps 90%**) — under **one 50/30/20 split rule on
+> the take**. There is no 2% fee, no 80/10/10, and no 5-stream revenue (no collection
+> path). Numbers below are retained for history. Authoritative:
+> `docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md`.
+
+
+> **Status:** Complete (Phase 1-3) | **Version:** 3.0 | **Last Updated:** 2026-08-01 (Session 48)
+> **All 7 enhancement issues closed. All 5 deliverables deployed.**
 
 ---
 

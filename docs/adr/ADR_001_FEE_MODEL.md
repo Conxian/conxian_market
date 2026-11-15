@@ -2,17 +2,13 @@
 
 > **Status:** Accepted | **Date:** 2026-08-03 | **Version:** 1.1 (2026-11-14)
 > **Supersedes:** Gateway #247 allocation diagram; conxian_market #6 RFC
-> **Authoritative for:** Fee *recipients and split* (80/10/10 builder matrix; 50/30/20 treasury split), rounding, custody, exposure caps, pause/exit
-> **Superseded by:** ADR-005 for the fee *rate* — the static 2.0/1.5/1.0%
-> percentage in §1 below is **retired**. The live rate is the dynamic hybrid model
-> (single volume-decay percentage 0.50%/0.25%/0.15%/0.10% + per-rail flat floor)
-> in `src/fee_calculator.ts` (`VOLUME_DECAY_BPS`, `calculateDynamicFee`).
->
-> **Reconciliation note (2026-11-14):** this ADR was internally inconsistent —
-> the 80/10/10 builder matrix (§1.1) and a 2% protocol fee (§1.2) both apply to the
-> same money and sum to >100%. Resolved: the 80/10/10 split applies to the
-> **net** (`gross − fee`); the fee (whatever the dynamic model returns) splits
-> 50/30/20. The fee rate itself is ADR-005's, not 2%.
+> **Authoritative for:** Fee basis, recipients, percentages, rounding, custody, exposure caps, pause/exit
+> **Amended by [ADR-007](ADR_007_TWO_PRODUCT_RATE_MODEL.md) (2026-11-14, Accepted):**
+> §1.1 (80/10/10) is **retired** — replaced by the matched-job **90/10** take (builder 90%,
+> platform 10%) with 50/30/20 on the platform's share; §2 (the 2.0% tier table) is
+> **superseded** by the two-product rates; §1.2 (50/30/20) is **retained** as the single
+> split rule for both products. The fee **basis** is Option A (#358). Read this ADR
+> together with ADR-007 before applying any rate.
 
 ---
 
@@ -203,7 +199,7 @@ Per `FUNDING_AND_ECONOMICS.md` §3.3:
 |-----------|:------:|----------|
 | Fee calculator (Market) | ✅ Shipped | `src/fee_calculator.ts` |
 | Gateway billing bridge | ✅ Shipped | `conxian-gateway:billing.rs` |
-| Clarity contract activation | ⬜ Phase C | `fee-manager.clar` (stub) |
+| Clarity contract activation | ✅ Re-homed to `conxian_market` | `contracts/protocol-fee-vault.clar` (ADR-006) |
 | Treasury auto-staking | ⬜ Phase D | Babylon integration |
 | Gateway #247 diagram fix | ⬜ | See action items |
 

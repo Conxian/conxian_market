@@ -1,7 +1,23 @@
 # Conxian Funding & Economics: Multi-Dimensional DeFi Monetary System
 
-> **Status:** Active Research | **Last Updated:** 2026-07-15  
-> **Version:** 1.0 | **Owner:** Conxian Labs
+> **Status:** Partially superseded (2026-11-14) | **Last Updated:** 2026-11-14  
+> **Version:** 1.1 | **Owner:** Conxian Labs
+>
+> ⚠️ **SUPERSEDED BY ADR-007.** The fee **level** and the **5-stream revenue
+> model** below are retired. `docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md`
+> (Accepted) replaces them:
+>
+> - **Two products, one split rule.** Rail (raw x402/M2M) = ADR-005 dynamic fee;
+>   matched job (job card + escrow + SLA + dispute) = **10% take, builder keeps
+>   90%**. The take is split **50/30/20**. There is **no 2% platform fee** and
+>   **no second 10% "ecosystem" deduction** on the builder.
+> - **The 5-stream table is retired.** Only the protocol take is real today.
+>   "Premium surcharge", "institutional", "community pools" and "staking yield"
+>   have **no collection path** and are not revenue. See issues #364/#366.
+> - **§4.1 cost base is 10× the actual ask.** The real funding ask is **USD
+>   24,000/yr** (HRF/Spiral/OpenSats), not $240,000. See issue #369.
+>
+> Sections below are retained for history and are annotated where they diverge.
 
 ---
 
@@ -45,9 +61,8 @@ This document defines the **Multi-Dimensional DeFi Monetary System** for the Con
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│   PROTOCOL FEE: dynamic hybrid (ADR-005)                        │
-│   rate = max(amount × decayed_bps/10000, rail_floor) × load     │
-│   decayed_bps: 50 / 25 / 15 / 10  (0.50% → 0.10% by volume)     │
+│         PLATFORM TAKE: 10% matched job / dynamic rail           │
+│            (ADR-007 — supersedes the retired 2%)                │
 └─────────────────────────────────────────────────────────────────┘
                     │
                     ├── 50% → Operations Treasury
@@ -157,12 +172,13 @@ All 17 core modules wired across 5 consumers. New settlement rails unlocked:
 
 | Tier | Verification | Fee | Revenue Mix Target |
 |:----:|:------------|:---:|:------------------:|
-| **Strict** | TEE + ZK | Negotiated | 10% of volume (high value) |
-| **Managed** | Enclave attestation | ADR-005 dynamic + 0.5% premium (inactive) | 40% of volume |
-| **Expedient** | Light client | ADR-005 dynamic | 50% of volume |
+| **Strict** | TEE + ZK | Dynamic (ADR-005) | 10% of volume (high value) |
+| **Managed** | Enclave attestation | Dynamic (ADR-005) | 40% of volume |
+| **Expedient** | Light client | Dynamic (ADR-005) | 50% of volume |
 | **ObserverOnly** | None | Free | 0% (discovery only) |
 
-> Premium tier (+0.5% on Managed, negotiated on Strict) funds enclave attestation infrastructure.
+> ⚠️ The "+0.5% premium" is **retired** (ADR-007): no premium collection path
+> exists. Rail rates are the ADR-005 dynamic schedule (0.50%→0.10% + cost floor).
 
 #### Babylon Treasury Staking (MARKET-014)
 
@@ -192,22 +208,29 @@ All 17 core modules wired across 5 consumers. New settlement rails unlocked:
 
 #### Updated Revenue Projections
 
-> **Superseded basis (2026-11-14):** the figures below were computed under the
-> retired **2%** static rate. Under ADR-005 the base rate is **0.50%** at launch
-> (volume-decay 0.50%→0.10% + per-rail floor). The "Base" column below is shown
-> at both rates; the remaining streams (premium, staking, Fedimint) are unchanged
-> as research targets. Recompute the full model before using these externally.
+> ⚠️ **RETIRED (ADR-007).** The "5-stream" model below is **not revenue**: only
+> the protocol take collects. Premium surcharge, institutional, community pools
+> and staking yield have **no collection path** (#364/#366). The real two-product
+> projection is in `FEE_MODEL_GROWTH_AND_ALIGNMENT.md` §3. Retained for history.
 
-| Scenario | Volume | Base @2% (retired) | Base @0.50% (ADR-005) | +0.5% Premium | Staking Yield | Fedimint | **Total @0.50%** |
-|----------|-------:|-------------------:|----------------------:|:------------:|:------------:|:--------:|-----------------:|
-| Launch (mo 1–3) | $1M/mo | $20K | **$5K** | $450 | $150 | $500 | **~$6.1K** |
-| Growth (mo 4–6) | $3M/mo | $60K | **$15K** | $3K | $400 | $1.5K | **~$19.9K** |
-| Mature (mo 7–12) | $10M/mo | $200K | **$50K** | $15K | $800 | $5K | **~$70.8K** |
+| Scenario | Volume | 2% Base | +0.5% Premium | Staking Yield | Fedimint 1% | **Total** |
+|----------|-------:|--------:|:------------:|:------------:|:----------:|----------:|
+| Launch (mo 1–3) | $1M/mo | $20K | $450 | $150 | $500 | **$21.1K** |
+| Growth (mo 4–6) | $3M/mo | $60K | $3K | $400 | $1.5K | **$64.9K** |
+| Mature (mo 7–12) | $10M/mo | $200K | $15K | $800 | $5K | **$220.8K** |
+
+> ~~Break-even ($240K/year = $20K/mo) achieved at $1M monthly volume.~~
+> The cost base is **$24K/yr** (issue #369), not $240K. Under the ADR-007 model the
+> two-product take is the only collected stream.
 
 > The per-rail floor raises the *effective* rate above 0.50% on small
 > settlements, so realised revenue sits between the floor and the headline rate.
 
 #### Per-Rail Revenue Breakdown (ADR-005: one rate, 0.50%)
+
+> ⚠️ **RETIRED (ADR-007).** Rail rates below are the old static matrix. The rail
+> product now uses the single ADR-005 dynamic schedule; there is no per-rail 2%
+> and no premium surcharge. Retained for history.
 
 | Rail | Volume Share | Rate | Monthly Rev (@$1M vol) | Monthly Rev (@$10M vol) |
 |------|:-----------:|-----:|----------------------:|------------------------:|
@@ -263,7 +286,11 @@ All 17 core modules wired across 5 consumers. New settlement rails unlocked:
 
 ### 4.1 Minimum Viable Treasury (MVT)
 
-At launch, we target **12-month runway** minimum:
+> ⚠️ **CORRECTED (issue #369).** The table below is a **10× overstatement**. The
+> real, filed funding ask is **USD 24,000 / 12 months** (HRF/Spiral/OpenSats) and
+> the real infrastructure burn is **~$0/mo** (Render free ×5; CF/Supabase/Neon
+> free). The $20,000/mo figure was an aspiration, not a cost base. Retained for
+> history; the authoritative figure is $24,000/yr.
 
 | Cost Category | Monthly Estimate | Annual |
 |:--------------|:----------------:|:------:|
@@ -272,20 +299,21 @@ At launch, we target **12-month runway** minimum:
 | **Security Audits** | $5,000 | $60,000 |
 | **Legal/Compliance** | $2,000 | $24,000 |
 | **Operations** | $2,000 | $24,000 |
-| **Total** | **$20,000** | **$240,000** |
+| **Total (aspirational)** | **$20,000** | **$240,000** |
+| **Actual ask** | **$2,000** | **$24,000** |
 
 ### 4.2 Break-Even Volume Calculation
 
 ```
-Required Annual Revenue = $240,000
-Platform Fee (ADR-005 launch) = 0.50%
-Break-Even Volume = $240,000 / 0.005 = $48,000,000/year
-Break-Even Volume = $48M / 365 = ~$131,500/day
-
-(Under the retired 2% rate the break-even was $12M/year = ~$33K/day; the lower
-competitive rate moves it up ~4×. The per-rail floor raises the effective rate on
-small settlements, partially offsetting this.)
+Actual Annual Ask        = $24,000            (not $240,000 — issue #369)
+Matched-job take         = 10%                (ADR-007)
+Break-Even Volume        = $24,000 / 0.10     = $240,000/year  (~$658/day)
+Rail take (0.50% launch) = $24,000 / 0.005    = $4,800,000/year (~$13,150/day)
 ```
+
+> Under ADR-007 the two products have very different break-even volumes: a
+> **10% matched-job take breaks even at $240k/yr**; the **0.50% rail needs $4.8M/yr**.
+> The matched-job product is the survival engine; the rail is the land product.
 
 ### 4.3 Volume Milestones
 
@@ -469,18 +497,21 @@ Net = $100 − F  ($99.50)
 
 ### 5.1 Current Blockers
 
-The 5-stream revenue model is **theoretical** until these P0 gaps close:
+> ⚠️ **SUPERSEDED (ADR-007).** The "5-stream" framing is retired — the four
+> non-take streams are not revenue (no collection path). What remains true: the
+> **protocol take is the only collected stream**, and it is now implemented in
+> code (two-product model). Remaining blockers are deployment (keys), not design.
 
-| Stream | Status | Blocker | Revenue at Risk |
-|--------|:------:|---------|:---------------:|
-| Protocol fee (ADR-005 dynamic) | ⛔ Blocked | CON-1427 contract not deployed (#488) | 50% of revenue |
-| Premium surcharge (+0.5%) | ⛔ Blocked | No enclave attestation (#240-#242) | 15% of revenue |
-| Institutional (negotiated) | ⛔ Blocked | No TEE+ZK proof chain (#198, #202) | 10% of revenue |
-| Community pools (1%) | ✅ Ready | Fedimint adapter wired | 5% of revenue |
-| Staking yield (3-5% APY) | ✅ Ready | Babylon adapter wired | 5% of revenue |
+| Stream | Status | Notes |
+|--------|:------:|-------|
+| Protocol take (two-product) | 🟡 Implemented | Code lands the model; deployment pending keys (#360/#364) |
+| Premium surcharge (+0.5%) | ⛔ Retired | No collection path (#364/#366) |
+| Institutional (negotiated) | ⛔ Retired | No collection path (#364/#366) |
+| Community pools (1%) | ⛔ Retired | No collection path (#364/#366) |
+| Staking yield (3-5% APY) | ⛔ Retired | No collection path (#364/#366) |
 
-> **Current realizable revenue:** ~$1,500/mo (Fedimint + Babylon only) vs. **target** $21,100/mo at launch.
-> **Revenue gap:** 93% of projected revenue is blocked on 3 P0 issues.
+> **Current realizable revenue:** $0 until TREASURY-VAULT is deployed and the SAB
+> multisigs provisioned (#360/#364). The code path is complete and fail-closed.
 
 ### 5.2 Degraded Revenue Scenarios
 

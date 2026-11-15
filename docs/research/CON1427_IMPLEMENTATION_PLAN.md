@@ -1,5 +1,21 @@
 # CON-1427: Protocol Fee Collection — Implementation Plan
 
+> ⚠️ **SUPERSEDED (2026-11-14, ADR-007).** The fee/revenue model in this document is
+> **historical**. The accepted model is **two products** — rail (ADR-005 dynamic rate)
+> and matched job (**10% take, builder keeps 90%**) — under **one 50/30/20 split rule on
+> the take**. There is no 2% fee, no 80/10/10, and no 5-stream revenue (no collection
+> path). Numbers below are retained for history. Authoritative:
+> `docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md`.
+
+
+> **Re-homed (2026-11-14):** the Clarity destination contracts previously planned
+> for `Conxian/Conxian` now live in this repository —
+> `contracts/protocol-fee-vault.clar` (TREASURY-VAULT intake + gated 50/30/20
+> sweep) with the planner in `src/protocol_fee_settlement.ts`. See
+> `docs/adr/ADR_006_PROTOCOL_FEE_DESTINATION_AND_SWEEP.md`. Contract
+> implementation and tests are done; testnet deployment remains gated on SAB
+> deploy keys.
+
 > **Issue:** [#488](https://github.com/Conxian/Conxian/issues/488) — Implement 2% Protocol Fee Collection
 > **Status:** Research Complete → Implementation Phase | **Repo Map:** 4 affected | **Revenue Impact:** 71% of $21.1K/mo target
 >

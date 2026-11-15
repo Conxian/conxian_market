@@ -83,3 +83,12 @@ test.txt
 # Example sub-package artifacts (source-only examples)
 examples/package-lock.json
 examples/node_modules/
+
+# Clarinet simnet accounts are generated at test time (see tests/contracts/clarinet.setup.ts)
+settings/
+
+# Clarinet-generated simnet deployment plan (regenerated on each test run)
+deployments/
+
+# Agent working memory (local only)
+.openhands/

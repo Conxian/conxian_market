@@ -104,6 +104,24 @@ export type {
   InferencePolicyInput,
   InferencePolicyResult,
 } from "./bos_yield_splitter.js";
+
+// Two-product rate model (ADR-007): rail vs matched job, one split rule.
+export {
+  classifyFeeProduct,
+  resolveFeeProduct,
+  hasMarketplaceSignal,
+  splitPlatformTake,
+  computeProductTake,
+  MATCHED_JOB_TAKE_BPS,
+  TAKE_SPLIT_BPS,
+} from "./fee_product.js";
+export type {
+  FeeProduct,
+  ProductSignals,
+  ProductTake,
+  ProductTakeInput,
+  PlatformTakeSplit,
+} from "./fee_product.js";
 export { MarketAgnosticRouter } from "./market_agnostic_router.js";
 export type {
   NonCustodialSettlementRequest,
@@ -163,6 +181,17 @@ export type {
 } from "./agent_registry.js";
 export { Mcp402Facade } from "./mcp_402.js";
 export type { McpToolCall, Mcp402PaymentGateResult } from "./mcp_402.js";
+export {
+  MPP_BRIDGE_PROFILE, MPP_HEADERS, MPP_AUTH_SCHEME, MPP_MAX_BYTES, MPP_INTENTS,
+  mppIntentToProduct, MppRequestSchema, MppCredentialSchema, MppReceiptSchema,
+  parseMppChallengeHeader, encodeMppChallengeHeader, decodeMppRequest,
+  parseMppCredential, encodeMppCredentialHeader, parseMppReceipt, encodeMppReceiptHeader,
+  MppBridge, buildMppReceipt,
+} from "./mpp_bridge.js";
+export type {
+  MppIntent, MppRequest, MppChallenge, MppCredential, MppReceipt,
+  MppChargeContext, MppBridgeResult, MppBridgeOptions,
+} from "./mpp_bridge.js";
 export { MultiDimensionalScoringEngine } from "./multi_dimensional_scoring.js";
 export { ConxianMarketSDK } from "./sdk_bridge.js";
 
@@ -257,3 +286,17 @@ export {
   ORG_SERVICE_PERMISSIONS,
 } from "./org_m2m.js";
 export type { OrgM2mConfig, OrgM2mResult, OrgM2mFailure } from "./org_m2m.js";
+
+// Protocol fee settlement planning (TREASURY-VAULT routing + 50/30/20 sweep)
+export { buildProtocolFeeSettlement, planTreasuryUtilisation, TREASURY_PURPOSES } from "./protocol_fee_settlement.js";
+export type {
+  FeeSettlementConfig,
+  FeeSettlementInput,
+  ProtocolFeeSettlementPlan,
+  RolePrincipal,
+  SettlementInstruction,
+  SettlementRole,
+  TreasuryUtilisationLine,
+  TreasuryUtilisationPlan,
+  VaultSweepPlan,
+} from "./protocol_fee_settlement.js";

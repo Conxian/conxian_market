@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conxian Protocol Fee — Economic Model (v2, verified)</title>
+<style>
+:root{--bg:#0d1117;--fg:#e6edf3;--mut:#8b949e;--acc:#f7931a;--bad:#f85149;--ok:#3fb950;--card:#161b22;--bd:#30363d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:48px 24px 24px;max-width:1100px;margin:0 auto}
+h1{font-size:32px;margin:0 0 8px;letter-spacing:-.5px} h1 span{color:var(--acc)}
+.sub{color:var(--mut);font-size:15px;max-width:72ch}
+.verdict{background:linear-gradient(135deg,#1a2332,#161b22);border:1px solid var(--acc);border-radius:12px;padding:20px 24px;margin:24px auto;max-width:1100px}
+.verdict h2{margin:0 0 8px;font-size:18px;color:var(--acc)} .verdict p{margin:6px 0;font-size:15px}
+.verdict .corr{border-top:1px solid var(--bd);margin-top:12px;padding-top:12px}
+.grid{max-width:1100px;margin:0 auto;padding:0 24px 64px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:20px;margin:20px 0}
+.card h3{margin:0 0 4px;font-size:17px} .card p{margin:0 0 14px;color:var(--mut);font-size:14px}
+.card img{width:100%;border-radius:8px;background:#fff}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
+th,td{border:1px solid var(--bd);padding:8px 10px;text-align:left}
+th{background:#1c2128;color:var(--mut)}
+.num{font-variant-numeric:tabular-nums;text-align:right} .bad{color:var(--bad);font-weight:600} .ok{color:var(--ok);font-weight:600}
+footer{max-width:1100px;margin:0 auto;padding:24px;color:var(--mut);font-size:13px;border-top:1px solid var(--bd)}
+</style></head><body>
+<header>
+<h1>Conxian Protocol Fee — <span>Economic Model</span> (v2, verified)</h1>
+<p class="sub">Three-pass analysis: (1) self-verification against the compiled TypeScript
+(1440 rows, 0 mismatches), (2) corrected &amp; expanded model, (3) final cross-check. Overlays
+micro-, meso- (Laffer), macro- (monetary) and scaling-economics theory across the full system.</p>
+</header>
+<div class="verdict">
+<h2>Recommendation</h2>
+<p><strong>Adopt the shipped dynamic model (0.50% &rarr; 0.10% + cost&times;1.25 floor) with
+50/30/20 on the fee F (Option A).</strong> Treat 80/10/10 as an aggregate statement.</p>
+<p>With a choke price ~100 bps the revenue-maximising rate is ~50 bps &mdash; the shipped
+launch rate sits at the optimum and below the disintermediation threshold.</p>
+<p class="bad">Do not ship Option B: 50/30/20 on the 10%-of-net slice is a 19.9&times; larger
+take &mdash; a hidden ~10%-of-net tax.</p>
+<div class="corr">
+<p><strong>Self-correction.</strong> An earlier version claimed a "~69 bps Laffer optimum".
+That was a floating-point artifact: under constant elasticity there is <em>no</em> interior
+optimum. The corrected model uses choke-price demand and peaks at exactly r_c/2.</p>
+<p><strong>Material discrepancy.</strong> <code>FUNDING_AND_ECONOMICS.md</code> projects
+$220,800/mo at $10M volume &mdash; a <span class="bad">retired 2%</span>-era figure. At the
+ADR-005 rate the fee stream is <span class="ok">$50,000/mo</span> (~4.4&times; smaller).</p>
+</div>
+</div>
+<div class="grid">
+<section class="card"><h3>Meso: Laffer with a choke price (corrected)</h3><p>Linear demand peaks at exactly half the choke price. Replaces the withdrawn '69 bps' isoelastic claim.</p><img src="charts_v2/01_laffer_choke.png" alt="Meso: Laffer with a choke price (corrected)"></section>
+<section class="card"><h3>Laffer with rising elasticity</h3><p>The realistic shape: the peak sits where |elasticity| crosses 1.</p><img src="charts_v2/02_laffer_varying_elasticity.png" alt="Laffer with rising elasticity"></section>
+<section class="card"><h3>Disintermediation (the real ceiling)</h3><p>Above the leakage midpoint, volume leaves and revenue falls. 50 bps sits below it.</p><img src="charts_v2/03_disintermediation.png" alt="Disintermediation (the real ceiling)"></section>
+<section class="card"><h3>The floor is regressive</h3><p>Small jobs pay a higher effective rate than large ones (cost recovery, by design).</p><img src="charts_v2/04_regressive_floor.png" alt="The floor is regressive"></section>
+<section class="card"><h3>Micro: fee vs settlement size</h3><p>Floor dominates micro-payments; rate dominates macro.</p><img src="charts/01_fee_vs_size.png" alt="Micro: fee vs settlement size"></section>
+<section class="card"><h3>Effective rate vs size</h3><p>Never zero, never above the headline rate on large jobs.</p><img src="charts/02_effective_rate_vs_size.png" alt="Effective rate vs size"></section>
+<section class="card"><h3>Cost recovery floor</h3><p>Every rail: fee >= cost x 1.25 (verified exact, all 8 rails).</p><img src="charts/05_cost_recovery.png" alt="Cost recovery floor"></section>
+<section class="card"><h3>Scaling economics</h3><p>Network value ~ n^2; revenue ~ n. Capture ratio falls as 1/n.</p><img src="charts/06_scaling.png" alt="Scaling economics"></section>
+<section class="card"><h3>Macro: BTC denomination</h3><p>USD-priced: stable. Sat-priced: hidden escalator.</p><img src="charts/07_macro_btc.png" alt="Macro: BTC denomination"></section>
+<section class="card"><h3>Break-even</h3><p>With only the fee stream, break-even at $20k burn needs ~$4.0M/mo volume.</p><img src="charts_v2/05_breakeven.png" alt="Break-even"></section>
+<section class="card"><h3>5-stream build-up (corrected)</h3><p>Only the protocol fee is collectable today; the rest are blocked. Doc's $220.8k is a 2%-era figure.</p><img src="charts_v2/06_five_stream.png" alt="5-stream build-up (corrected)"></section>
+<section class="card"><h3>Sensitivity: revenue vs (rate, elasticity)</h3><p>Revenue rises with rate only when elasticity < 1.</p><img src="charts_v2/07_sensitivity.png" alt="Sensitivity: revenue vs (rate, elasticity)"></section>
+<section class="card"><h3>Full system: one settlement</h3><p>Where a 1,000,000-sat settlement goes.</p><img src="charts/08_full_system_waterfall.png" alt="Full system: one settlement"></section>
+<section class="card"><h3>Decision D-1: split basis</h3><p>50/30/20 on fee F vs on 10%-of-net: a 19.9x difference.</p><img src="charts/09_split_basis.png" alt="Decision D-1: split basis"></section>
+</div>
+<footer>
+Generated 2026-11-14 (v2, 3-pass) &middot; Model: <code>analysis/fee_model_economics.py</code> +
+<code>analysis/fee_model_economics_v2.py</code> &middot; Parity: <code>analysis/parity_check.py</code>
+(1440 rows, 0 mismatches) &middot; Notes: <code>analysis/WORKING_NOTES.md</code>.<br>
+Benchmark take-rate figures are from established public knowledge and were not re-verified
+online this session. Rail cost estimates are a v0 table, not measured telemetry.
+Produced by an AI agent (OpenHands) on behalf of the user.
+</footer></body></html>

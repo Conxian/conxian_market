@@ -22,14 +22,28 @@ import {
   type AttestationCertificate,
   type SlaTemplate,
 } from "./core_types.js";
-import { calculateRailFee } from "./fee_calculator.js";
 import { SlaEngine, type SlaEvaluationResult } from "./sla_engine.js";
 import { BosYieldSplitter, type YieldSplit } from "./bos_yield_splitter.js";
+import type { FeeProduct } from "./fee_product.js";
+import {
+  buildProtocolFeeSettlement,
+  type FeeSettlementConfig,
+  type ProtocolFeeSettlementPlan,
+} from "./protocol_fee_settlement.js";
 import {
   MarketAgnosticRouter,
   type M2mRouteResult,
   type NonCustodialSettlementRequest,
 } from "./market_agnostic_router.js";
+
+/** Fail-closed default: no principal configured, so the plan is not settleable. */
+const UNCONFIGURED_SETTLEMENT: FeeSettlementConfig = {
+  builder: { role: "BUILDER" },
+  vault: { role: "TREASURY_VAULT" },
+  operations: { role: "OPERATIONS" },
+  founders: { role: "FOUNDERS" },
+  ecosystem: { role: "ECOSYSTEM" },
+};
 
 export enum EscrowState {
   Open = "OPEN",
@@ -65,9 +79,18 @@ export interface EscrowReleaseResult {
   jobId: string;
   status: EscrowState;
   grossBudgetSat: bigint;
+  /** The platform's take: 10% of gross on a matched job (ADR-007). */
   feeSat: bigint;
+  /** Builder payout: `gross − take` (90% on a matched job). */
   netPayoutSat: bigint;
+  product: FeeProduct;
   yieldSplit: YieldSplit;
+  /**
+   * The complete recipient instruction set (builder + vault intake + 50/30/20
+   * sweep), so no leg is dropped. `isSettleable` is false while any role
+   * principal is unconfigured (fail-closed).
+   */
+  settlementPlan: ProtocolFeeSettlementPlan;
   m2mRoute: M2mRouteResult;
   slaResult: SlaEvaluationResult;
   releasedAt: number;
@@ -190,12 +213,22 @@ export class JobCardEscrowEngine {
   }
 
   /**
-   * Evaluate SLA & release escrow funds via non-custodial router and 80/10/10 yield split.
+   * Evaluate SLA and release escrow funds.
+   *
+   * A job card is a matched job (ADR-007): the platform take is 10% of gross,
+   * the builder keeps 90%, and the take is split 50/30/20 via TREASURY-VAULT.
+   * The full recipient instruction set is returned in `settlementPlan`, so the
+   * treasury and ecosystem legs are no longer dropped.
    */
   evaluateAndRelease(
     jobId: string,
     currentTimeIso: string,
-    options?: { actualTrustTier?: TrustTier }
+    options?: {
+      actualTrustTier?: TrustTier;
+      settlementConfig?: FeeSettlementConfig;
+      /** Override the matched-job take (basis points). Defaults to 10%. */
+      matchedJobTakeBps?: number;
+    }
   ): EscrowReleaseResult {
     const record = this.escrows.get(jobId);
     if (!record) {
@@ -228,19 +261,34 @@ export class JobCardEscrowEngine {
       actualTrustTier: options?.actualTrustTier || record.tier,
     });
 
-    // Calculate Protocol Fee
-    const feeInfo = calculateRailFee(record.budgetSat, record.tier, record.rail);
-    const feeSat = feeInfo.feeSat;
-    const netPayoutSat = record.budgetSat > feeSat ? record.budgetSat - feeSat : 0n;
+    // Two-product take: a job card is a matched job (10% take, builder 90%).
+    const yieldSplit = BosYieldSplitter.calculateYieldSplit(record.budgetSat, {
+      product: "matched_job",
+      matchedJobTakeBps: options?.matchedJobTakeBps,
+    });
+    const feeSat = yieldSplit.takeSat;
+    const netPayoutSat = yieldSplit.builderSat;
 
-    // Calculate Yield Split (80% Builder, 10% Treasury, 10% Ecosystem)
-    const yieldSplit = BosYieldSplitter.calculateYieldSplit(netPayoutSat);
+    // The complete settlement plan (builder + vault intake + sweep), fail-closed
+    // until the role principals are configured. This is what stops the treasury
+    // and ecosystem legs being dropped.
+    const settlementPlan = buildProtocolFeeSettlement(
+      {
+        settlementId: record.jobId,
+        rail: record.rail,
+        tier: record.tier,
+        grossAmountSat: record.budgetSat,
+        product: "matched_job",
+        matchedJobTakeBps: options?.matchedJobTakeBps,
+      },
+      options?.settlementConfig ?? UNCONFIGURED_SETTLEMENT,
+    );
 
-    // Route Non-Custodial M2M Payment
+    // Route Non-Custodial M2M Payment for the builder's direct payout.
     const m2mRoute = MarketAgnosticRouter.routeM2mSettlement(
       record.clientDid,
       record.agentProviderDid,
-      yieldSplit.builderSat,
+      netPayoutSat,
       record.rail,
       record.preferredProtocol
     );
@@ -251,7 +299,9 @@ export class JobCardEscrowEngine {
       grossBudgetSat: record.budgetSat,
       feeSat,
       netPayoutSat,
+      product: yieldSplit.product,
       yieldSplit,
+      settlementPlan,
       m2mRoute,
       slaResult,
       releasedAt: Date.now(),

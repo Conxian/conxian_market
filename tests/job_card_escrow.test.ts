@@ -113,13 +113,23 @@ describe("JobCardEscrowEngine (Session 54 Candidate #6 & Session 65 Candidate #1
 
     expect(release.status).toBe(EscrowState.Released);
     expect(release.grossBudgetSat).toBe(10_000_000n);
+    expect(release.product).toBe("matched_job");
 
-    expect(release.feeSat).toBe(50_000n);
-    expect(release.netPayoutSat).toBe(9_950_000n);
+    // ADR-007: a job card is a matched job — 10% take, builder keeps 90%.
+    expect(release.feeSat).toBe(1_000_000n);
+    expect(release.netPayoutSat).toBe(9_000_000n);
 
-    expect(release.yieldSplit.builderSat).toBe(7_960_000n);
-    expect(release.yieldSplit.platformTreasurySat).toBe(995_000n);
-    expect(release.yieldSplit.ecosystemStakeholdersSat).toBe(995_000n);
+    expect(release.yieldSplit.builderSat).toBe(9_000_000n);
+    expect(release.yieldSplit.takeSat).toBe(1_000_000n);
+    expect(release.yieldSplit.operationsSat).toBe(500_000n);
+    expect(release.yieldSplit.foundersSat).toBe(300_000n);
+    expect(release.yieldSplit.ecosystemSat).toBe(200_000n);
+
+    // The full settlement plan routes the treasury leg (no dropped legs).
+    expect(release.settlementPlan.instructions.length).toBe(2);
+    expect(release.settlementPlan.vaultSweep.intakeSat).toBe(1_000_000n);
+    expect(release.settlementPlan.vaultSweep.operationsSat).toBe(500_000n);
+    expect(release.settlementPlan.effectiveProtocolTakeBps).toBe(1000); // 10%
 
     expect(release.m2mRoute.isNonCustodial).toBe(true);
     expect(release.m2mRoute.rail).toBe(SettlementRail.EvmErc8183);

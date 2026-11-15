@@ -1,5 +1,13 @@
 # Conxian Ecosystem — Full Dependency & Capability Graph
 
+> ⚠️ **SUPERSEDED (2026-11-14, ADR-007).** The fee/revenue model in this document is
+> **historical**. The accepted model is **two products** — rail (ADR-005 dynamic rate)
+> and matched job (**10% take, builder keeps 90%**) — under **one 50/30/20 split rule on
+> the take**. There is no 2% fee, no 80/10/10, and no 5-stream revenue (no collection
+> path). Numbers below are retained for history. Authoritative:
+> `docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md`.
+
+
 > **Version:** 1.0 | **Session:** 52 | **Date:** 2026-08-03
 > **Purpose:** Single-source graph of all 16 repos, 55 open issues, cross-repo dependencies, and phased implementation roadmap.
 
@@ -36,7 +44,9 @@
 │  ┌──────────────────┐  ┌──────────────────────┐                              │
 │  │    Conxian        │  │   conxian_market      │                              │
 │  │  (218 contracts)  │  │  (SDK bridge/fees)   │                              │
-│  │  9 open issues     │  │  1 open issue         │                              │
+│  │  ARCHIVED — see   │  │  value layer live    │                              │
+│  │  IMPL_TRACKER     │  │  (fee destination    │                              │
+│  │                   │  │   re-homed here)     │                              │
 │  └────────┬──────────┘  └──────────┬───────────┘                              │
 │           │                        │                                           │
 │  LAYER 4 — USER SURFACE                                                        │
@@ -104,7 +114,7 @@
 
 | # | Repo | Title | Revenue Impact |
 |---|------|-------|:-------------:|
-| 488 | Conxian (repo gone) | Protocol Fee Collection — unresolvable | 71% of $21.1K |
+| 488 | market | two-product take collection (ADR-007; model implemented, deploy pending) | **the** collected stream |
 | 496 | Conxian | Partnership Fee Contracts | 15% |
 | 529 | Conxian | Partner usage ledger + split settlement | 10% |
 | 500 | Conxian | Oracle source + DEX wiring | Infrastructure |
@@ -114,6 +124,11 @@
 | 189 | gateway | BitVM3 adapter | Future |
 | 220 | gateway | DLC CET | Future |
 | 245 | gateway | BIP-110 fee market impact | Future |
+
+> **New (2026-11-14, from #356):** #357 fee-product model ✅ · #359 fee report ✅ ·
+> #361 fee headers ✅ · #362 2-of-3 emergency pause ✅ · #363 enable `protocolFeeActive`
+> ⬜ · #364 SAB multisigs ⬜ · #365 `projectRevenue` refit ✅ · #367 x402/MPP scan ✅ ·
+> #369 cost-base reconciliation ✅ · #370 growth plan ✅. MPP bridge = #371.
 
 ---
 
@@ -151,13 +166,29 @@ lib-conxian-core (v0.3.1, 50 SDK modules) ✅ Session 52
 
 ### Chain D: Protocol Fee → Treasury
 ```
-conxian_market (fee_calculator.ts)
-  └─► gateway (billing.rs: ProtocolFeeRecord)
-       └─► Conxian #488 (fee-manager.clar)
-            └─► Conxian #496 (fee-orchestrator.clar: 50/30/20 split)
-                 └─► Treasury (Babylon staking)
+conxian_market (fee_product.ts / fee_calculator.ts)
+  └─► gateway (billing.rs: ProtocolFeeRecord)  + X-Conxian-Fee headers
+       └─► conxian_market contracts/protocol-fee-vault.clar  (TREASURY-VAULT intake)
+            └─► gated 50/30/20 sweep (ops / founders / ecosystem)
+                 └─► Treasury (Babylon staking — Phase D)
 ```
-**Status:** ⚠️ Phase A+B done. Phase C blocked on testnet deploy keys.
+**Status:** ⚠️ Model implemented (ADR-007, #356). **Not deployed** — no fee collected
+until `protocol-fee-vault.clar` ships (#360) and `protocolFeeActive` is enabled (#363).
+The fee destination was **re-homed** from the archived `Conxian/Conxian` into this repo.
+
+### Chain E: x402 / MPP rail (external standard)
+```
+agent (x402 v2 / MPP client)
+  └─► HTTP 402 challenge  ──►  conxian_market x402_v2_wire.ts (transport)
+       └─► no job card  ──► Product A (rail) ──► ADR-005 dynamic fee
+       └─► job card + escrow lock ──► Product B (matched) ──► 10% take ──► Chain D
+```
+**Status:** x402 v2 wire + MCP-402 + replay guard shipped; **MPP bridged**
+(`src/mpp_bridge.ts`, ADR-008, #371) — structural Challenge/Credential/Receipt codecs +
+a fail-closed adapter onto the escrow gate; no signature verification or settlement.
+x402 is a **Linux Foundation** standard with 40 members and **zero protocol fees**;
+MPP is co-authored by **Tempo and Stripe**. Conxian's fee is a **trust-layer** fee. See
+`docs/research/X402_MPP_ECOSYSTEM_2026.md`.
 
 ---
 
@@ -223,14 +254,16 @@ conxian_market (fee_calculator.ts)
 **Unlocks:** Managed + Strict TrustTiers, Premium surcharge revenue (+$5K/mo)
 
 ### Phase 2 — Protocol Fee Activation (CON-1427)
-| Issue | Priority | Effort |
-|-------|:--------:|:------:|
-| #488 Protocol Fee Collection (repo gone — re-file) | 🔴 P0 | L |
-| #496 Partnership Fee Contracts | 🟠 P1 | M |
-| #529 Partner usage ledger + split settlement | 🟠 P1 | M |
-| #500 Oracle source + DEX wiring | 🟡 P2 | M |
+| Issue | Priority | Effort | Status |
+|-------|:--------:|:------:|:-------|
+| #488 two-product take collection (ADR-007) | 🔴 P0 | L | Model **implemented** in `conxian_market` (#356); deploy pending keys |
+| #496 Partnership Fee Contracts | 🟠 P1 | M | |
+| #529 Partner usage ledger + split settlement | 🟠 P1 | M | |
+| #500 Oracle source + DEX wiring | 🟡 P2 | M | |
 
-**Unlocks:** 71% of $21.1K/mo revenue ($15K/mo)
+**Unlocks:** the only collected stream under ADR-007 (see `FEE_MODEL_GROWTH_AND_ALIGNMENT.md` §10).
+
+> The retired 2% fee is **not** the target; the take is 10% (matched) / dynamic (rail).
 
 ### Phase 3 — Gateway Hardening
 | Issue | Priority | Effort |

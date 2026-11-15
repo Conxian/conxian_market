@@ -1,16 +1,38 @@
 import { describe, expect, it } from "vitest";
 import { BosYieldSplitter } from "../src/bos_yield_splitter";
+import { SettlementRail, TrustTier } from "../src/core_types";
 
 describe("BosYieldSplitter", () => {
-  it("calculates accurate 80/10/10 yield split for AI labor transactions", () => {
+  it("calculates the take split for a matched job (10% take, builder keeps 90%)", () => {
     const grossSat = 1_000_000n; // 1M sats
+    // No product/signals given => fail-closed to the matched-job rate.
     const split = BosYieldSplitter.calculateYieldSplit(grossSat);
 
     expect(split.grossAmountSat).toBe(1_000_000n);
-    expect(split.builderSat).toBe(800_000n);               // 80%
-    expect(split.platformTreasurySat).toBe(100_000n);      // 10%
-    expect(split.ecosystemStakeholdersSat).toBe(100_000n); // 10%
-    expect(split.builderSat + split.platformTreasurySat + split.ecosystemStakeholdersSat).toBe(grossSat);
+    expect(split.product).toBe("matched_job");
+    expect(split.builderSat).toBe(900_000n);  // 90%
+    expect(split.takeSat).toBe(100_000n);     // 10%
+    expect(split.operationsSat).toBe(50_000n); // 50% of the take
+    expect(split.foundersSat).toBe(30_000n);   // 30% of the take
+    expect(split.ecosystemSat).toBe(20_000n);  // 20% of the take
+    expect(split.operationsSat + split.foundersSat + split.ecosystemSat).toBe(split.takeSat);
+    expect(split.builderSat + split.takeSat).toBe(grossSat);
+  });
+
+  it("prices a raw rail call with the ADR-005 dynamic fee", () => {
+    const grossSat = 1_000_000n;
+    const split = BosYieldSplitter.calculateYieldSplit(grossSat, {
+      product: "rail",
+      tier: TrustTier.Expedient,
+      rail: SettlementRail.Lightning,
+    });
+    expect(split.product).toBe("rail");
+    // 50 bps of 1,000,000 = 5,000 sat (above the Lightning floor).
+    expect(split.takeSat).toBe(5_000n);
+    expect(split.builderSat).toBe(995_000n);
+    expect(split.operationsSat).toBe(2_500n);
+    expect(split.foundersSat).toBe(1_500n);
+    expect(split.ecosystemSat).toBe(1_000n);
   });
 
   it("has no second fee regime — the protocol fee lives only in fee_calculator (ADR-005)", () => {
@@ -21,14 +43,17 @@ describe("BosYieldSplitter", () => {
     expect(surface.distributeProtocolFee).toBeUndefined();
   });
 
-  it("calculates the 80/10/10 yield split for a protocol-fee-free gross amount", () => {
+  it("applies the ADR-007 matched-job take: 90/10, then 50/30/20 on the take", () => {
     const grossSat = 10_000_000n; // 10M sats
     const split = BosYieldSplitter.calculateYieldSplit(grossSat);
 
-    expect(split.builderSat).toBe(8_000_000n);            // 80%
-    expect(split.platformTreasurySat).toBe(1_000_000n);   // 10%
-    expect(split.ecosystemStakeholdersSat).toBe(1_000_000n); // 10%
-    expect(split.builderSat + split.platformTreasurySat + split.ecosystemStakeholdersSat).toBe(grossSat);
+    expect(split.builderSat).toBe(9_000_000n);        // builder keeps 90%
+    expect(split.takeSat).toBe(1_000_000n);           // platform take 10%
+    expect(split.operationsSat).toBe(500_000n);       // 50% of take
+    expect(split.foundersSat).toBe(300_000n);         // 30% of take
+    expect(split.ecosystemSat).toBe(200_000n);        // 20% of take
+    expect(split.builderSat + split.takeSat).toBe(grossSat);
+    expect(split.operationsSat + split.foundersSat + split.ecosystemSat).toBe(split.takeSat);
   });
 
   it("evaluates founder vesting, performance caps, and emergency limits", () => {
