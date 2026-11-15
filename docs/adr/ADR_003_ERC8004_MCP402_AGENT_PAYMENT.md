@@ -73,6 +73,10 @@ This ADR predates x402 **v2** and the emergence of **MPP**. See
 - The **x402 v2** wire is now shipped (`src/x402_v2_wire.ts`, profile
   `conxian-x402-v2-wire/1`): `PAYMENT-REQUIRED`/`PAYMENT-SIGNATURE`/`PAYMENT-RESPONSE`,
   CAIP-2 networks, decimal atomic amounts.
+- **x402 is a Linux Foundation standard** (x402 Foundation; operational launch
+  2026-07-14; 40 members incl. Google, Stripe, Visa, Mastercard, AWS, Shopify,
+  Cloudflare, Coinbase) and charges **zero protocol fees** — Conxian's fee is a
+  trust-layer fee, not a protocol toll.
 - **MPP (Machine Payments Protocol)** is a backwards-compatible superset of x402 that
   formalises HTTP 402 as an auth scheme and adds `charge`/`session`/`subscription`
   intents and card payments. **Recommendation: bridge, do not re-base** (proposal only;

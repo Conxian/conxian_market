@@ -11,7 +11,7 @@
 | Item | Value |
 |------|-------|
 | Role | Primary value capture — AI labor marketplace |
-| Protocol Fee | dynamic hybrid (ADR-005): volume-decay 0.50%→0.10% + per-rail floor; splits 50% Ops / 30% Founders / 20% Ecosystem. **Destination not deployed; collection off.** |
+| Protocol Fee | ADR-007 two-product: 10% matched-job take (builder keeps 90%) / ADR-005 dynamic rail; take splits 50/30/20 |
 | Escrow | ERC-8183 programmable settlement |
 | Settlement Rails | Lightning, Fedimint, Stacks/ALEX, Babylon, RGB, sBTC, Statechain (Spark), EVM/ERC-8183 |
 | Trust Tiers | Strict (TEE+ZK) / Managed (Enclave) / Expedient (Light) / ObserverOnly (Free) |
@@ -51,9 +51,6 @@ Research chain (in order):
 
 ## P0 Gaps (from cross-repo analysis)
 
-State verified 2026-11-14 against the GitHub API. Market degrades to Expedient
-until `attestationAvailable` flips (enclave-sdk#240/#241 still open).
-
 | # | Gap | Repo | Blocks | State (2026-11-14) |
 |---|-----|------|--------|--------------------|
 | P0-1 | AWS Nitro attestation (#242) | enclave-sdk | Managed/Strict tiers | CLOSED |
@@ -62,7 +59,7 @@ until `attestationAvailable` flips (enclave-sdk#240/#241 still open).
 | P0-4 | CCTP fail-closed (#198) | enclave-sdk | Cross-chain security | CLOSED |
 | P0-5 | Dev sandbox (#480) | Conxian | Builder onboarding | unresolvable — `Conxian/Conxian` no longer exists |
 | P0-6 | Value-op gate (#444) | wallet | Settlement verification | CLOSED |
-| P0-7 | Protocol fee (#488) | Conxian | 5-stream revenue | unresolvable — `Conxian/Conxian` no longer exists |
+| P0-7 | Protocol fee (#488) | conxian_market | two-product take | **re-homed** — `contracts/protocol-fee-vault.clar` (ADR-006); model implemented, deploy pending #360 |
 | P0-8 | CI validation (#1082) | platform | Green CI (BOS Gate 1) | CLOSED |
 
 ## Key Rules

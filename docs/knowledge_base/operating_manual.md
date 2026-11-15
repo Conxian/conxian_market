@@ -1,11 +1,12 @@
 # Conxian Operating Manual: The Business Operating System (BOS)
 
-> **Implementation:** the 80/10/10 split, founder-vesting and treasury-timelock
-> rules in §3 are implemented in `src/bos_yield_splitter.ts` and
-> `src/treasury_report.ts` (AGPL-3.0-or-later moat files), surfaced as
-> `sdk.calculateYieldSplit()`, `sdk.distributeProtocolFee()` (splits a fee; does
-> not compute a rate) and `sdk.evaluateFounderVesting()`. The fee **rate** is
-> **not** in this file — it is the ADR-005 dynamic model in `src/fee_calculator.ts`.
+> ⚠️ **SUPERSEDED (2026-11-14, ADR-007).** The fee/revenue model in this document is
+> **historical**. The accepted model is **two products** — rail (ADR-005 dynamic rate)
+> and matched job (**10% take, builder keeps 90%**) — under **one 50/30/20 split rule on
+> the take**. There is no 2% fee, no 80/10/10, and no 5-stream revenue (no collection
+> path). Numbers below are retained for history. Authoritative:
+> `docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md`.
+
 
 ## 1. Introduction
 This manual documents the standard operating procedures (SOPs) for the Conxian Ecosystem, aligning **Business Doctrine** with **Technical Execution**.
@@ -13,11 +14,16 @@ This manual documents the standard operating procedures (SOPs) for the Conxian E
 ## 2. Commercial Packaging Doctrine
 *Source: Conxian-Business / PR 875*
 
-### A. The Yield Matrix (80/10/10)
-All AI labor transactions in the Marketplace must follow the automated yield split:
-- **80%:** To the Builder (Agent Creator).
-- **10%:** To the Platform (Conxian Treasury).
-- **10%:** To Ecosystem Stakeholders (Governance/Incentives).
+### A. The Yield Matrix (90/10 matched-job take — ADR-007)
+All AI labour transactions in the Marketplace follow the automated split:
+- **Builder:** keeps **90%** of the gross bounty (matched job).
+- **Platform take:** **10%** of the gross bounty, then split **50/30/20**
+  (ops / founders / ecosystem) — a single split rule.
+- **Rail (raw x402/M2M, no job card):** charged the ADR-005 **dynamic rate**
+  (0.50%→0.10% + cost floor), not a take.
+
+> The retired 80/10/10 is **not** applied. Ecosystem is funded from the platform's
+> 50/30/20, **not** as a second deduction on the builder.
 
 ### B. Tiered Service Levels
 Agents should be packaged in three tiers:
@@ -31,10 +37,15 @@ Agents should be packaged in three tiers:
 ### A. Protocol Fee Structure
 | Fee Component | Rate | Allocation |
 |:--------------|:----:|:-----------|
-| **Total Protocol Fee** | ADR-005 dynamic | Single volume-decay rate (0.50%→0.10%) + per-rail flat floor |
-| **Operations Treasury** | 50% | CI/CD, SDKs, Nexus, Audits |
-| **Founder Compensation** | 30% | 4-year vesting schedule |
-| **Ecosystem Growth** | 20% | Grants, Liquidity Mining, Bug Bounties |
+| **Matched-job take** | 10% of gross | Builder keeps 90% |
+| **Rail fee** | ADR-005 dynamic (0.50%→0.10% + floor) | Charged on raw x402/M2M |
+| **Operations Treasury** | 50% of take | CI/CD, SDKs, Nexus, Audits |
+| **Founder Compensation** | 30% of take | 4-year vesting schedule |
+| **Ecosystem Growth** | 20% of take | Grants, Liquidity Mining, Bug Bounties |
+
+> The retired "Total Protocol Fee 2%" and its decay timeline (2.0%→1.5%→1.0%) no
+> longer apply — the rail rate is dynamic (ADR-005) and the matched-job take is flat
+> 10% (ADR-007).
 
 ### B. Fee Rate Schedule (ADR-005)
 | Volume tier (30-day) | Rate |

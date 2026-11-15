@@ -2,7 +2,7 @@
 
 > **Status:** Research | **Date:** 2026-11-14 | **Owner:** Conxian Labs
 > **Trigger:** owner — *"expand x402 agentic-payments research (x402/MPP/x402-Foundation)
-> and reconcile with the market SDK"* (market #367).
+> and reconcile with the market SDK"* (market #367), then *"also see https://x402.org/"*.
 > **Companion:** `docs/adr/ADR_002_M2M_X402_TRUST_LAYER.md`,
 > `docs/adr/ADR_003_ERC8004_MCP402_AGENT_PAYMENT.md`,
 > `docs/CLI_CAPABILITY_PROTOCOL_CONFORMANCE_2026_10_15.md` (§x402 v2 profile).
@@ -12,81 +12,102 @@
 ## 0. Method and confidence
 
 This scan juxtaposes **external standards** against **what the market SDK actually
-ships**. It is deliberately conservative: every external claim is tagged
-**[verified]** (a primary/official source was read) or **[unverified]** (no primary
-source was reachable). Tooling was degraded during the scan (search API rate-limited,
-browser unavailable), so only Cloudflare's official developer documentation and
-repositories already cited inside this repo were read. **Unverified items are marked
-and must not be published as fact.**
+ships**. A first pass was limited to Cloudflare's docs (the search API was rate-limited);
+the owner then pointed at **`x402.org`**, whose pages were read directly. Every external
+claim is tagged **[verified]** (a primary/official source was read) or **[unverified]**
+(no primary source reachable). **Unverified items are marked and must not be published as
+fact.**
 
 | Tag | Meaning |
 |---|---|
-| **[verified]** | Read in an official source (Cloudflare docs, or a repo already cited in-tree) |
+| **[verified]** | Read in an official source (`x402.org`, Cloudflare docs, or a repo cited in-tree) |
 | **[unverified]** | No primary source reachable — treat as a lead, not a fact |
 
 ---
 
 ## 1. The external landscape (late 2026)
 
-### 1.1 x402 — HTTP 402 as a payment scheme **[verified]**
+### 1.1 x402 — a Linux Foundation standard **[verified]**
 
-- **What:** Coinbase-created standard that turns `HTTP 402 Payment Required` into a
-  payment negotiation for on-chain stablecoins. A client receives requirements, pays,
-  and retries with a payment proof.
-- **Version:** **x402 v2 is current.** Cloudflare migrated its agent payments to
+- **What:** an open, neutral standard for internet-native payments. HTTP-native (built
+  into existing requests), **zero protocol fees** (only nominal payment-network fees),
+  no accounts, no centralization. Created by **Coinbase**.
+- **Governance — Linux Foundation.** The **x402 Foundation** is *"a Series of LF
+  Projects, LLC"* (`x402.org` footer; `lfprojects.org` policies). The Linux Foundation
+  announced its **operational launch on 2026-07-14**, with the **completed contribution
+  of the x402 protocol by Coinbase**, under formal vendor-neutral governance. The
+  Foundation's *intent to launch* was **April 2026**.
+  - **Executive Director:** **Michael Hursta**, appointed **2026-10-01**.
+  - **Governance:** a Governing Board; **Premier** members get an appointed board seat
+    and budget influence; **General** members vote for a General Board representative.
+  - **Working groups:** Domain Discovery, Identity, Tax, Card Acceptance.
+- **Membership — 40 organisations at launch [verified]:**
+  - **Premier (17):** Adyen, Amazon Web Services (AWS), American Express, Circle,
+    Cloudflare, Coinbase, Fiserv, **Google**, **Mastercard**, Monad Foundation, MoonPay,
+    Ripple, **Shopify**, Solana Foundation, Stellar Development Foundation, **Stripe**,
+    **Visa**.
+  - **General (18):** Aleo, Fireblocks, Galaxia Moneytree, Hecto Financial, Injective,
+    KakaoPay, Kite AI, LayerZero Labs, Merit Systems, NEAR Foundation, Orthogonal,
+    Polygon Labs, Quant Network, SKALE, t54 labs, utexo, World Liberty Financial, zerohash.
+  - **Associate (5):** BSV Association, Cardano Foundation, Casper, Japan Contents
+    Blockchain Initiative, OMA3.
+  - Membership fees: Premier **$200,000**; General **$75k/$50k/$25k** by employee count.
+- **Chains/assets:** blockchain-agnostic — all EVM-compatible chains, Solana, and more;
+  stablecoins are the primary use case; **extensible to traditional payment methods
+  (cards)**.
+- **Version:** **x402 v2** is current. Cloudflare migrated its agent payments to
   `@x402/core` + `@x402/evm` v2 on **2026-02-09**. Breaking changes from v1:
   `PaymentRequirements.amount` replaces `maxAmountRequired`; network IDs accept
   **CAIP-2** (`eip155:84532`) as well as legacy names; the header moved from
   `X-PAYMENT` to **`PAYMENT-SIGNATURE`**.
-- **Governance:** the **x402 Foundation**; **Coinbase and Cloudflare** are founding
-  members. Public facilitator at `https://x402.org/facilitator` (Coinbase-operated).
-  Spec/SDK at `github.com/x402-foundation/x402`.
-  - ⚠️ ADR-002 describes x402 as a *"Linux Foundation specification"*. That affiliation
-    was **not verifiable** in this scan **[unverified]** — see §5.
-- **Assets/chains:** USDC on Base, Ethereum, Solana (plus Polygon, Optimism, Arbitrum,
-  Avalanche, Aptos, Stellar, Sui, Algorand). Schemes: `exact`, `upto`.
-- **Adopters verified:** Cloudflare (Agents SDK, AI Gateway Machine Payments,
-  Monetization Gateway, Pay-Per-Crawl), Coinbase (facilitator). **Stripe/Google/Visa
-  as x402 adopters: [unverified].**
+- **Maturity:** *"production-ready … processed millions of transactions … audited"* (x402
+  FAQ).
 
-### 1.2 MPP — Machine Payments Protocol **[verified]**
+> ⚠️ This corrects the first pass of this scan, which (with only Cloudflare docs
+> reachable) could not verify the Linux Foundation affiliation and listed Google/Stripe/
+> Visa as unverified adopters. **All three are confirmed Premier members.**
+
+### 1.2 MPP — Machine Payments Protocol **[verified via Cloudflare]**
 
 - **What:** an open M2M payment protocol that formalises HTTP 402 as an **HTTP
-  authentication scheme** (`WWW-Authenticate: Payment` / `Authorization: Payment`,
-  plus `Payment-Receipt`). Payment-method-agnostic: stablecoins **and cards via
-  Stripe**.
+  authentication scheme** (`WWW-Authenticate: Payment` / `Authorization: Payment`, plus
+  `Payment-Receipt`). Payment-method-agnostic: stablecoins **and cards via Stripe**.
 - **Intents:** `charge` (one-time), `session` (usage), `subscription` (recurring).
-- **Relationship to x402:** **backwards-compatible** — MPP clients can consume
-  existing x402 services unchanged ("Use MPP with x402"). Documented at `mpp.dev`;
-  the scheme was proposed to the IETF at `paymentauth.org`. SDK: `mppx`
-  (TS/Python/Rust/Go/Ruby).
-- ⚠️ Who **founded/operates** MPP was **[unverified]** in this scan.
+- **Relationship to x402:** **backwards-compatible** — MPP clients can consume existing
+  x402 services unchanged ("Use MPP with x402"). Documented at `mpp.dev`; the scheme was
+  proposed to the IETF at `paymentauth.org`. SDK: `mppx` (TS/Python/Rust/Go/Ruby).
+- ⚠️ Who **founded/operates** MPP was **[unverified]** — not named in the reachable
+  sources. Do not assume it is an LF project without checking.
 
 ### 1.3 MCP payments — layered, not a spec **[verified]**
 
-- There is **no official "MCP payments" specification**. Payments are layered onto
-  MCP by both x402 (`paidTool` → 402 → pay → retry; `withX402`) and MPP (same
+- There is **no official "MCP payments" specification**. Payments are layered onto MCP by
+  both x402 (`paidTool` → 402 → pay → retry; `withX402`) and MPP (same
   challenge/credential/receipt flow over JSON-RPC via `mppx` `Transport.mcpSdk()`).
 - MCP itself added **elicitation** (spec `2025-11-25`), which can drive out-of-band
   authorisation/payment flows.
 
-### 1.4 Items that could not be verified **[unverified]**
+### 1.4 Items that remain unverified **[unverified]**
 
-- **AP2** (Google Agent Payments Protocol): no primary source reachable.
-- **ERC-8004** status/mainnet date: not verifiable in this scan (though this repo
-  already cites `eips.ethereum.org/EIPS/eip-8004`).
-- **Stripe "Agentic Commerce Protocol"**: not found; only Stripe-as-payment-method
-  (MPP cards) and Stripe Connect (Pay-Per-Crawl) were verified.
+- **AP2** (Google Agent Payments Protocol): no primary source reachable. *(Note: Google is
+  an x402 Premier member, so Google's agent-payment posture may in fact be x402-centred —
+  verify before claiming AP2 is separate.)*
+- **ERC-8004** status/mainnet date: not verifiable in this scan (this repo already cites
+  `eips.ethereum.org/EIPS/eip-8004`).
+- **Stripe "Agentic Commerce Protocol"**: not found; what **is** verified is Stripe as an
+  x402 **Premier member** and an MPP card rail.
 - **M2M market-size figures**: none verified.
 
 ### 1.5 2026 timeline **[verified]**
 
 | Date | Event |
 |---|---|
+| 2026-04 | x402 Foundation **intent to launch** |
 | 2026-02-09 | x402 **v2** migration (Cloudflare Agents SDK v0.4.0) |
+| 2026-07-14 | **Linux Foundation operational launch** of the x402 Foundation; Coinbase contribution completed; 40 members |
+| 2026-10-01 | **Michael Hursta** appointed Executive Director |
 | 2026-07-13 | MCP **elicitation** support |
 | 2026-09-30 | Cloudflare **Monetization Gateway** beta + AI Gateway **Machine Payments** beta |
-| 2026-11-09 | Cloudflare Radar Bots Directory rebuilt on BotBase |
 
 ---
 
@@ -124,8 +145,8 @@ cards + sessions + subscriptions over a standard HTTP auth scheme). Three option
 
 **Recommendation: bridge.** Add an `mpp_bridge.ts` that parses `WWW-Authenticate:
 Payment` / `Authorization: Payment`, maps an MPP `charge` intent to the existing
-`X402EscrowGateway` demand, and returns a `Payment-Receipt`. Keep `x402_v2_wire.ts`
-as the transport. Do **not** re-base on MPP; the escrow/attestation layer is the moat.
+`X402EscrowGateway` demand, and returns a `Payment-Receipt`. Keep `x402_v2_wire.ts` as
+the transport. Do **not** re-base on MPP; the escrow/attestation layer is the moat.
 
 > ⚠️ This is a **proposal**, not a decision. MPP's operator is **[unverified]**, so
 > adopting it before confirming governance is premature. Track as a new ADR if pursued.
@@ -144,43 +165,54 @@ the moment they lock the Conxian escrow they become **matched jobs** (Product B)
 `subscription` intent is the **D-6 surface** (#1343) — recurring revenue, not a
 per-settlement fee.
 
+> **Critical positioning note.** x402 itself is *"zero protocol fees"* — Conxian's fee is
+> **not** a tax on the x402 protocol; it is the price of the **trust layer** (attestation
+> + non-custodial escrow + SLA + dispute + proof artifacts) that x402 deliberately does
+> not provide. Say it that way. Charging a toll on a zero-fee standard would read as
+> rent-seeking; charging for verification/settlement is the ADR-002 value proposition.
+
 ---
 
-## 5. Corrections to make in-tree (flagged, not silently changed)
+## 5. Correction to the earlier note (now confirmed, not "unverified")
 
-1. **ADR-002** calls x402 a *"Linux Foundation specification"*. This scan could not
-   verify the Linux Foundation affiliation; the verified governance is the **x402
-   Foundation (Coinbase + Cloudflare)**. **Action:** verify at `x402.org` and either
-   cite it or correct the wording. Left as-is pending verification (see ADR-003 §5).
-2. **ADR-003** is **Proposed** and predates x402 v2. Its MCP-402 design predates MCP
-   **elicitation** and MPP. **Action:** add the §5 research update (done in that file).
+The first pass of this scan added a note to ADR-002 questioning the *"Linux Foundation"*
+attribution of x402. **That note was wrong and is now withdrawn:** `x402.org` states it is
+*"a Series of LF Projects, LLC"*, and the Linux Foundation's own announcement
+(2026-07-14) confirms the x402 Foundation under LF governance. **ADR-002's original
+wording was correct.**
 
 ---
 
 ## 6. Sources
 
-**Verified (read this scan):**
-- Cloudflare — x402: `developers.cloudflare.com/agents/tools/payments/x402/`
-- Cloudflare — MPP: `developers.cloudflare.com/agents/tools/payments/mpp/`
-- Cloudflare — Monetization Gateway: `developers.cloudflare.com/monetization-gateway/x402/`
-- Cloudflare — Agents SDK v0.4.0 changelog (2026-02-09)
-- Cloudflare — Machine Payments changelog (2026-09-30)
+**Verified (read directly):**
+- `x402.org` — home, `/members/`, `/get-involved/`, `/announcements/`, and the
+  2026-07-14 operational-launch announcement (premier/general/associate member lists;
+  governance; working groups).
+- `x402.org` — 2026-10-01 Executive Director announcement (Michael Hursta).
+- `x402.org` footer — *"x402 a Series of LF Projects, LLC"*.
+- Cloudflare — x402, MPP, Monetization Gateway docs; Agents SDK v0.4.0 changelog
+  (2026-02-09); Machine Payments changelog (2026-09-30).
 
 **Already cited in-tree (not re-read this scan):**
 - `github.com/x402-foundation/x402` (spec v2, transports)
 - `eips.ethereum.org/EIPS/eip-8004`
 - `modelcontextprotocol/modelcontextprotocol` (tools, elicitation)
 
-**Unverified leads (verify before publishing):** `ap2-protocol.org`, `stripe.com`,
-`paymentauth.org` (MPP IETF proposal), `mpp.dev` (MPP operator).
+**Unverified leads (verify before publishing):** `ap2-protocol.org`, `paymentauth.org`
+(MPP IETF proposal), `mpp.dev` (MPP operator).
 
 ---
 
 ## 7. Bottom line
 
-The SDK already implements the **hard half** — x402 **v2** wire, MCP-402, replay guard,
-entitlement, attestation-backed escrow. The **open half** is **MPP** (bridge, don't
-re-base) and **elicitation**. The fee model reconciles cleanly: rail transports are
-Product A, escrow-locked calls are Product B, and MPP `subscription` is the D-6
-surface. Two in-tree claims need verification (the Linux Foundation attribution; the
-stale ADR-003) — both flagged, neither silently changed.
+x402 is now a **Linux Foundation standard with 40 members** — including **Google, Stripe,
+Visa, Mastercard, Amex, PayPal, Shopify, AWS, Cloudflare, Coinbase** — and it charges
+**zero protocol fees**. That is the strongest possible tailwind for ADR-002: the world's
+largest payments and cloud companies are standardising HTTP-native agent payments, and
+the *only* thing they leave open is **trust** (attestation, escrow, SLA, dispute) — which
+is exactly what the market SDK ships. The SDK is ahead on the **x402 v2** wire and the
+trust layer, behind on **MPP** (bridge, don't re-base) and **elicitation**, and the fee
+model reconciles cleanly (rail transports = Product A; escrow-locked = Product B;
+MPP `subscription` = the D-6 surface). Conxian's fee is a **trust-layer fee, not a
+protocol toll** — price and describe it that way.

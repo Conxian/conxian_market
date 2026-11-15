@@ -1,5 +1,13 @@
 # The Fee Model Across the Full System — Spread Analysis
 
+> ⚠️ **SUPERSEDED (2026-11-14, ADR-007).** The fee/revenue model in this document is
+> **historical**. The accepted model is **two products** — rail (ADR-005 dynamic rate)
+> and matched job (**10% take, builder keeps 90%**) — under **one 50/30/20 split rule on
+> the take**. There is no 2% fee, no 80/10/10, and no 5-stream revenue (no collection
+> path). Numbers below are retained for history. Authoritative:
+> `docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md`.
+
+
 > **Status:** Analysis | **Date:** 2026-11-14
 > **Companion:** `FEE_MODEL_ECONOMICS_JUXTAPOSITION.md` (the economics),
 > `TREASURY_ENHANCEMENT_PHASED_PLAN.md` (the delivery plan)

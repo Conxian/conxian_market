@@ -1,5 +1,13 @@
 # Conxian Market: TrustTier Pricing Middleware
 
+> ⚠️ **SUPERSEDED (2026-11-14, ADR-007).** The fee/revenue model in this document is
+> **historical**. The accepted model is **two products** — rail (ADR-005 dynamic rate)
+> and matched job (**10% take, builder keeps 90%**) — under **one 50/30/20 split rule on
+> the take**. There is no 2% fee, no 80/10/10, and no 5-stream revenue (no collection
+> path). Numbers below are retained for history. Authoritative:
+> `docs/adr/ADR_007_TWO_PRODUCT_RATE_MODEL.md`.
+
+
 > **Status:** Active | **Version:** 1.0 | **Last Updated:** 2026-08-01 (Session 48)
 > **Purpose:** Tier detection, fee middleware, and SLA templates for 4-tier pricing model.
 >
@@ -118,10 +126,16 @@ async function detectTrustTier(req: SettlementRequest): Promise<TrustTier> {
 
 ### 3.1 Tier-Based Pricing
 
-The fee **rate** is the ADR-005 dynamic model (`src/fee_calculator.ts`): a single
-volume-decay percentage (0.50%→0.10%) composed with a per-rail flat floor. The
-trust tier governs rail availability; the Managed premium is proposed but not
-wired (`attestationAvailable === false`).
+> ⚠️ **ADR-007:** rail pricing is the single **ADR-005 dynamic schedule**
+> (0.50%→0.10% + cost floor). The "2%" and "+0.5% premium" columns are **retired** —
+> no premium collection path exists. Matched jobs are a **10% take**.
+
+| Tier | Verification | Rail Fee | Premium | Settlement Rails |
+|:----:|:------------|:--------:|:-------:|-----------------|
+| **Strict** | TEE + ZK | ADR-005 dynamic | — (retired) | All rails |
+| **Managed** | Enclave attestation | ADR-005 dynamic | — (retired) | All rails |
+| **Expedient** | Light client | ADR-005 dynamic | — | ALEX, EVM, Fedimint, Lightning |
+| **ObserverOnly** | None | Free | — | None (discovery only) |
 
 | Tier | Verification | Protocol Fee | Premium | Settlement Rails |
 |:----:|:------------|:------------:|:-------:|-----------------|
@@ -133,6 +147,9 @@ wired (`attestationAvailable === false`).
 ### 3.2 Fee Split
 
 The collected fee (whatever the dynamic model returns) splits:
+
+> ⚠️ **ADR-007:** the split rule (50/30/20) applies to the **take**, not a per-tier
+> 2%. There is no premium destination (retired). The table below is historical.
 
 | Tier | Ops (50%) | Founders (30%) | Ecosystem (20%) | Premium Destination |
 |------|:---------:|:--------------:|:---------------:|--------------------|

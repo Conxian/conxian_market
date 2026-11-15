@@ -9,13 +9,15 @@
 
 ## 1. Context & Problem Statement
 
-Autonomous agent-to-agent (M2M) commerce relies increasingly on HTTP 402 Payment Required protocols (such as the x402 specification). However, standard x402 implementations focus primarily on point-to-point payment request and receipt negotiation. They lack three critical enterprise and industrial capabilities:
+Autonomous agent-to-agent (M2M) commerce relies increasingly on HTTP 402 Payment Required protocols (such as the Linux Foundation x402 specification). However, standard x402 implementations focus primarily on point-to-point payment request and receipt negotiation. They lack three critical enterprise and industrial capabilities:
 
-> ⚠️ **Correction note (2026-11-14):** this ADR originally described x402 as a
-> *"Linux Foundation specification"*. The Linux Foundation affiliation could **not
-> be verified** in the 2026-11 scan (`docs/research/X402_MPP_ECOSYSTEM_2026.md` §5);
-> the verified governance is the **x402 Foundation (Coinbase + Cloudflare founding
-> members)**. Verify at `x402.org` before re-asserting the affiliation.
+> **Verified (2026-11-14).** The *"Linux Foundation"* attribution above is **correct**:
+> `x402.org` is *"a Series of LF Projects, LLC"*, and the Linux Foundation announced the
+> **operational launch of the x402 Foundation on 2026-07-14** (Coinbase contributed the
+> protocol; 40 members including Google, Stripe, Visa, Mastercard, AWS, Shopify,
+> Cloudflare, Coinbase). x402 charges **zero protocol fees** — Conxian's fee is a
+> **trust-layer** fee, not a protocol toll. See
+> `docs/research/X402_MPP_ECOSYSTEM_2026.md`.
 
 1. **Hardware Agent Attestation**: Verifying that an autonomous agent is executing within a trusted execution environment (TEE / Nitro / KeyMint).
 2. **Programmable Escrow & SLA Enforcement**: Locking payment bounties in non-custodial escrow (ERC-8183 / CJCS Job Cards) and releasing them only upon verified SLA completion.
