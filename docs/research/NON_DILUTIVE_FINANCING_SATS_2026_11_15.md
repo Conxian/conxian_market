@@ -11,6 +11,17 @@
 
 ---
 
+> **Companion (canonical, private):** the funding-route record and the prepaid-credit
+> program already exist in **`.github-private`**:
+> `docs/funding/ROUTE_ALIGNMENT_2026_11_11.md`,
+> `docs/FUNDING_STRATEGY_2026_11_07.md`,
+> `docs/funding/FUNDER_CRITERIA_AND_BEST_PRACTICES_2026_11_13.md`,
+> `docs/commercial/FOUNDING_TENANT_OFFER.md` + `PRICING_BENCHMARK.md`.
+> **This document does not restate them.** It adds only the *financing* mechanisms
+> (RBF/fee-share, DLC, Lightning liquidity leases) that were not already covered.
+
+---
+
 ## 0. Verdict in one paragraph
 
 The four mechanisms are real and Bitcoin-native, and they fit a zero-custody shop because
@@ -72,34 +83,28 @@ cap; then it reverts 100%.
   shifts volume risk to the lender, which is why the cap is >1×). Structuring a note that
   pays out of revenue can look like a **security** in some jurisdictions — see §4.
 
-### 2.2 Prepaid enterprise credits / anchor-client forward contracts — **recommended**
+### 2.2 Prepaid enterprise credits / anchor-client forward contracts — **already built; do not rebuild**
 
-Sell discounted prepaid Gateway/Nexus credit blocks (6–12 months) in BTC.
+> **Already exists.** The prepaid-credit program is designed and priced in
+> **`.github-private/docs/commercial/FOUNDING_TENANT_OFFER.md`** (Indie $29/mo, Business
+> $99/mo; founding bonus; annual/bulk terms; 1.5× credit ceiling; 12-month expiry;
+> ASC 606/IFRS 15 deferred revenue) with benchmarks in `PRICING_BENCHMARK.md`, and the
+> ledger is **already implemented as `credit_ledger.rs` in the gateway**. **No new
+> primitive or order form is needed here** — use the existing program.
 
-- **Why it fits:** non-dilutive working capital, validates demand, lands in the Ops vault
-  as **deferred revenue**, not debt. Uses the **existing** gateway ladder ($200/mo base +
-  usage; 128k-sat plans; x402 1000 sat/call).
-- **Risk:** you owe the service; if you cannot deliver, it is a refund liability. Discount
-  depth (20–30%) must not exceed gross margin — at a near-$0 cost base it is defensible.
+- **Why it fits:** non-dilutive working capital, validates demand, lands as **deferred
+  revenue**, not debt.
+- **Risk:** you owe the service; discount depth is already bounded by the 1.5× ceiling.
 
-### 2.3 Bitcoin-native grants — **recommended, already in motion**
+### 2.3 Bitcoin-native grants — **already assessed; see the canonical record**
 
-Non-dilutive, paid in sats. Eligibility (primary sources):
-
-- **OpenSats** — "Good for Bitcoin", **Free and Open-Source**, Transparency & Education;
-  "prefer projects that are not readily funded" (https://opensats.org/apply).
-- **HRF Bitcoin Development Fund** — for **human-rights** use of Bitcoin
-  (https://hrf.org/initiatives/bitcoin-development-fund/).
-- **Stacks Endowment Grants** — Getting-Started / Builders / community DeGrants
-  (https://grants.stacks.org/).
-- **Fedimint / RGB** ecosystem funds — for integrating their rails into a router
-  (https://fedimint.org/).
-- **NOT eligible:** **NLnet** — dropped for two hard blockers (EU 60%-of-funds rule and
-  the generative-AI policy). Do not re-file.
-
-> **Expanded map:** `BITCOIN_GRANTS_AND_ECOSYSTEM_FUNDING_EXPANDED_2026_11_15.md` adds
-> Spiral (bitcoin+AI), Brink, Chaincode, Btrust, Vinteum, Qala, RootstockCollective and
-> Citrea, and the **OpenSats Red Team Fund — which reimburses past LLM token costs**.
+> **Already covered — do not restate.** The grant map is canonical in **`.github-private`**:
+> `docs/funding/ROUTE_ALIGNMENT_2026_11_11.md`, `docs/FUNDING_STRATEGY_2026_11_07.md`, and
+> `docs/funding/FUNDER_CRITERIA_AND_BEST_PRACTICES_2026_11_13.md`. Current state:
+> **HRF + Spiral SUBMITTED (2026-11-14)**; **OpenSats SHELVED** (needs ≥2 referees);
+> **Btrust DROPPED** (contributor-shaped); **NLnet DROPPED** (not eligible);
+> **Chaincode NOT a route**; **Brink skip**; **Qala defunct**; **AWS Activate applied**.
+> Any further grant research belongs **there**, not in this repo.
 
 ### 2.4 DLC + Lightning liquidity leases — **only if the need is channel float**
 
@@ -119,10 +124,13 @@ Non-dilutive, paid in sats. Eligibility (primary sources):
 
 ## 3. What to actually do (recommended sequence)
 
-1. **Grants first** (already filed): $24K/yr ask covers the real burn. Cheapest capital.
-2. **Prepaid credits** with 1–3 design partners: validates demand, funds the sprint.
+1. **Grants first** — **HRF + Spiral are already submitted** (2026-11-14); the $24K/yr ask
+   covers the real burn. Cheapest capital. Track in `.github-private/docs/funding/`.
+2. **Prepaid credits** — the program is **already built** (`FOUNDING_TENANT_OFFER.md` +
+   `credit_ledger.rs`); just sell it to 1–3 design partners.
 3. **Small capped fee-share** *only* if 1–2 do not cover it: keep the advance ≤ a few
-   months of Ops flow and the cap ≥1.3×. The primitive is already implemented and tested.
+   months of Ops flow and the cap ≥1.3×. **This is the one genuinely new primitive**
+   (`src/revenue_share_assignment.ts`).
 4. **Liquidity lease / DLC** only when there is a *specific* channel-float or milestone
    need — not as general runway.
 
@@ -136,8 +144,9 @@ Non-dilutive, paid in sats. Eligibility (primary sources):
   jurisdiction-specific counsel before pitching any instrument.** This document is
   research, not legal advice.
 - **ZSE:** no keys, secrets, addresses, or counterparty-identifying financial strategy in
-  Git. Hence the term sheet is a **template with placeholders**; principals are
-  `.conxian-access` **roles**, never hardcoded addresses.
+  Git. **Any term sheet or order form is commercial material and belongs in
+  `.github-private` (private), not this public repo.** Principals are `.conxian-access`
+  **roles**, never hardcoded addresses.
 - **Custody:** all assignments settle **to the OPERATIONS bucket** and route via the
   existing vault sweep; they never encumber the vault itself, the founder vesting escrow,
   or the DAO reserve.
@@ -150,10 +159,10 @@ Non-dilutive, paid in sats. Eligibility (primary sources):
 
 ## 5. Sources (fetched 2026-11-15)
 
-OpenSats (apply), HRF Bitcoin Development Fund, Stacks Endowment Grants, Fedimint,
-Lightning Pool (Lightning Labs), Amboss Magma, Bitcoin Optech DLC topic. Conxian-side
-figures from `FUNDING_AND_ECONOMICS.md`, `FEE_MODEL_FEASIBILITY_AND_SURVIVAL.md`,
-ADR-007, and `src/bos_yield_splitter.ts`.
+Lightning Pool (Lightning Labs), Amboss Magma, Bitcoin Optech DLC topic (the only
+externally-fetched sources; grants and prepaid pricing are the canonical private docs
+cited above). Conxian-side figures from `FUNDING_AND_ECONOMICS.md`,
+`FEE_MODEL_FEASIBILITY_AND_SURVIVAL.md`, ADR-007, and `src/bos_yield_splitter.ts`.
 
 ---
 

@@ -754,3 +754,19 @@ Ran the whole runbook in the sandbox; **all documented claims reproduce**. App =
   Fedimint/RGB. **NLnet NOT eligible.**
 - **Regulatory:** a future-fee-cut note may be a security (FSCA/CIPC, SARS) — counsel
   review is a condition precedent. ZSE → template only, roles not addresses.
+
+## Session 2026-11-15 (later-2) — prepaid credits + expanded grants (durable)
+- **Owner approved items 1,2,4; item 3 (grants) already SUBMITTED** (Zoho Mail 2026-11-15:
+  OpenSats, HRF; Stacks Endowment, Fedimint/RGB). Asked to expand grants + build the
+  prepaid-credit order form.
+- **PR #375 → dev (f49a6fe)**: `src/prepaid_credit_ledger.ts` (prepaidNetPrice,
+  drawDownCredit/drawDownAcrossBlocks oldest-first covered+overage, creditStatement;
+  fail-closed on expiry/exhaustion; 11 tests; exported), `docs/commercial/PREPAID_CREDIT_
+  ORDER_FORM_TEMPLATE.md`, `docs/research/BITCOIN_GRANTS_AND_ECOSYSTEM_FUNDING_EXPANDED_
+  2026_11_15.md`. **529 tests + tsc green.**
+- **Expanded grant map**: OpenSats General + **Red Team Fund (reimburses past LLM token
+  costs!)**, Spiral (funds "bitcoin & AI", grants@spiral.xyz), Brink, Chaincode, Btrust
+  (Global Majority/Africa; 500 BTC from Dorsey+Jay-Z), Vinteum (Brazil), Qala (Africa),
+  Stacks Endowment, RootstockCollective, Citrea, Fedimint, RGB. **NLnet NOT eligible.**
+- **`.openhands/` is gitignored** → memory files are NOT tracked; commits don't include them.
+- Grant pages do NOT publish amounts — never quote a number as if published.
