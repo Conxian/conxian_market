@@ -5,9 +5,9 @@
 > **Date:** 2026-10-10 | **Accepted:** 2026-11-14
 > **Author:** Conxian KB maintenance agent (botshelomokoka)
 > **Deciders:** Conxian Core Maintainers
-> **Scoped by [ADR-007](ADR_007_TWO_PRODUCT_RATE_MODEL.md) (2026-11-14, Proposed):**
+> **Scoped by [ADR-007](ADR_007_TWO_PRODUCT_RATE_MODEL.md) (2026-11-14, Accepted):**
 > the competitive rates in this ADR price the **rail** product (raw, pass-through
-> settlement). Matched jobs are priced separately by the **marketplace** take. The
+> settlement). Matched jobs are priced separately at a **10%** marketplace take. The
 > cost-recovery floor here is unchanged and still applies to the rail product.
 > **Owner directives (2026-10-10):** price from top-tier competitors and learn
 > dynamic patterns; EVM settles on **L2** (low cost); expand research to cover

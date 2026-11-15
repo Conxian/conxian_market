@@ -2,13 +2,13 @@
 
 > **Status:** Accepted | **Date:** 2026-08-03 | **Version:** 1.1 (2026-11-14)
 > **Supersedes:** Gateway #247 allocation diagram; conxian_market #6 RFC
-> **Authoritative for:** Fee *recipients and split* (the matched-job per-settlement split; 50/30/20 treasury split), rounding, custody, exposure caps, pause/exit
+> **Authoritative for:** Fee basis, recipients, percentages, rounding, custody, exposure caps, pause/exit
 > **Amended by [ADR-007](ADR_007_TWO_PRODUCT_RATE_MODEL.md) (2026-11-14, Accepted):**
-> §1.1 (80/10/10) is **reframed** as the *matched-job* product's per-settlement split;
-> §2 (the 2.0% tier table) is **superseded** by the two-product rates; §1.2 (50/30/20) is
-> **retained**. The fee **rate** is ADR-005's (dynamic hybrid), scoped to the **rail**
-> product. The fee **basis** is Option A (#358). Read this ADR together with ADR-007
-> before applying any rate.
+> §1.1 (80/10/10) is **retired** — replaced by the matched-job **90/10** take (builder 90%,
+> platform 10%) with 50/30/20 on the platform's share; §2 (the 2.0% tier table) is
+> **superseded** by the two-product rates; §1.2 (50/30/20) is **retained** as the single
+> split rule for both products. The fee **basis** is Option A (#358). Read this ADR
+> together with ADR-007 before applying any rate.
 
 ---
 
