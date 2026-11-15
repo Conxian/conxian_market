@@ -737,3 +737,20 @@ Ran the whole runbook in the sandbox; **all documented claims reproduce**. App =
 - **Custody design (PR #373)**: separate **custody / authority / process**. Enable the
   system wallet only with a scoped rate-capped role + pause-only emergency + delayed
   two-step admin; migrate to DAO by granting the timelock Proposer role (no redeploy).
+
+## Session 2026-11-15 (later) — non-dilutive financing (durable)
+- **Sats financing primitive LIVE on dev** (#374): `src/revenue_share_assignment.ts` —
+  capped assignment of the **OPERATIONS** bucket of future take to a lender until a cap,
+  then reverts; only OPERATIONS assignable (FOUNDERS/ECOSYSTEM ring-fenced); fail-closed,
+  off by default; `sdk.applyRevenueShareAssignment()`. Research + term-sheet template in
+  `docs/research/NON_DILUTIVE_FINANCING_SATS_2026_11_15.md` / `SAT_REVENUE_SHARE_TERM_
+  SHEET_TEMPLATE.md`.
+- **Grounded fee math (do not repeat the pitch's numbers):** at $1M/mo volume the ADR-007
+  base is **~$5K/mo** (the $21.1K/mo figure is the **retired 2%** model); documented
+  gateway ladder = **$200/mo + usage, 128k-sat plans, x402 1000 sat/call** (not
+  $0.01/relay). Real burn ~$0/mo; filed ask **$24K/yr**. So: grants → prepaid credits →
+  small capped fee-share; Lightning Pool / Amboss Magma / DLC only for channel float.
+- **Grant eligibility:** OpenSats, HRF Bitcoin Development Fund, Stacks Endowment Grants,
+  Fedimint/RGB. **NLnet NOT eligible.**
+- **Regulatory:** a future-fee-cut note may be a security (FSCA/CIPC, SARS) — counsel
+  review is a condition precedent. ZSE → template only, roles not addresses.

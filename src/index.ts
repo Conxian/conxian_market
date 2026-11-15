@@ -311,3 +311,14 @@ export type {
   AssignedLeg,
   AssignmentBucket,
 } from "./revenue_share_assignment.js";
+export {
+  prepaidNetPrice,
+  drawDownCredit,
+  drawDownAcrossBlocks,
+  creditStatement,
+} from "./prepaid_credit_ledger.js";
+export type {
+  PrepaidCreditBlock,
+  CreditDrawdown,
+  CreditStatement,
+} from "./prepaid_credit_ledger.js";
