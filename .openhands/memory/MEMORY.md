@@ -740,33 +740,31 @@ Ran the whole runbook in the sandbox; **all documented claims reproduce**. App =
 
 ## Session 2026-11-15 (later) — non-dilutive financing (durable)
 - **Sats financing primitive LIVE on dev** (#374): `src/revenue_share_assignment.ts` —
-  capped assignment of the **OPERATIONS** bucket of future take to a lender until a cap,
-  then reverts; only OPERATIONS assignable (FOUNDERS/ECOSYSTEM ring-fenced); fail-closed,
-  off by default; `sdk.applyRevenueShareAssignment()`. Research + term-sheet template in
-  `docs/research/NON_DILUTIVE_FINANCING_SATS_2026_11_15.md` / `SAT_REVENUE_SHARE_TERM_
-  SHEET_TEMPLATE.md`.
-- **Grounded fee math (do not repeat the pitch's numbers):** at $1M/mo volume the ADR-007
-  base is **~$5K/mo** (the $21.1K/mo figure is the **retired 2%** model); documented
-  gateway ladder = **$200/mo + usage, 128k-sat plans, x402 1000 sat/call** (not
-  $0.01/relay). Real burn ~$0/mo; filed ask **$24K/yr**. So: grants → prepaid credits →
-  small capped fee-share; Lightning Pool / Amboss Magma / DLC only for channel float.
-- **Grant eligibility:** OpenSats, HRF Bitcoin Development Fund, Stacks Endowment Grants,
-  Fedimint/RGB. **NLnet NOT eligible.**
-- **Regulatory:** a future-fee-cut note may be a security (FSCA/CIPC, SARS) — counsel
-  review is a condition precedent. ZSE → template only, roles not addresses.
+  capped assignment of the OPERATIONS bucket of future take to a lender until a cap, then
+  reverts; only OPERATIONS assignable (FOUNDERS/ECOSYSTEM ring-fenced); fail-closed, off by
+  default; `sdk.applyRevenueShareAssignment()`. Research:
+  `docs/research/NON_DILUTIVE_FINANCING_SATS_2026_11_15.md` (points to the canonical private
+  sources; restates nothing).
+- **Grounded fee math (do NOT repeat the pitch's numbers):** at $1M/mo the ADR-007 base is
+  **~$5K/mo** (the $21.1K/mo figure is the **retired 2%** model); documented gateway ladder =
+  **$200/mo + usage, 128k-sat plans, x402 1000 sat/call**. Real burn ~$0/mo; filed ask $24K/yr.
+- **Grants/prepaid are NOT in conxian_market.** Canonical (PRIVATE): `.github-private/docs/
+  funding/` (ROUTE_ALIGNMENT, FUNDING_STRATEGY, FUNDER_CRITERIA) and `.github-private/docs/
+  commercial/` (FOUNDING_TENANT_OFFER, PRICING_BENCHMARK). Grant state: HRF+Spiral SUBMITTED;
+  OpenSats SHELVED; Btrust/NLnet DROPPED; Chaincode/Brink not routes; Qala defunct.
 
-## Session 2026-11-15 (later-2) — prepaid credits + expanded grants (durable)
-- **Owner approved items 1,2,4; item 3 (grants) already SUBMITTED** (Zoho Mail 2026-11-15:
-  OpenSats, HRF; Stacks Endowment, Fedimint/RGB). Asked to expand grants + build the
-  prepaid-credit order form.
-- **PR #375 → dev (f49a6fe)**: `src/prepaid_credit_ledger.ts` (prepaidNetPrice,
-  drawDownCredit/drawDownAcrossBlocks oldest-first covered+overage, creditStatement;
-  fail-closed on expiry/exhaustion; 11 tests; exported), `docs/commercial/PREPAID_CREDIT_
-  ORDER_FORM_TEMPLATE.md`, `docs/research/BITCOIN_GRANTS_AND_ECOSYSTEM_FUNDING_EXPANDED_
-  2026_11_15.md`. **529 tests + tsc green.**
-- **Expanded grant map**: OpenSats General + **Red Team Fund (reimburses past LLM token
-  costs!)**, Spiral (funds "bitcoin & AI", grants@spiral.xyz), Brink, Chaincode, Btrust
-  (Global Majority/Africa; 500 BTC from Dorsey+Jay-Z), Vinteum (Brazil), Qala (Africa),
-  Stacks Endowment, RootstockCollective, Citrea, Fedimint, RGB. **NLnet NOT eligible.**
-- **`.openhands/` is gitignored** → memory files are NOT tracked; commits don't include them.
-- Grant pages do NOT publish amounts — never quote a number as if published.
+## Session 2026-11-15 (later-2) — CORRECTION: I duplicated canonical work (durable lesson)
+- **Mistake:** #374/#375 re-created grant + prepaid-credit docs that already exist in
+  `.github-private` (FOUNDING_TENANT_OFFER = the prepaid program + gateway `credit_ledger.rs`;
+  ROUTE_ALIGNMENT/FUNDING_STRATEGY/FUNDER_CRITERIA = the grant map). I re-listed SHELVED
+  (OpenSats), DROPPED (Btrust/NLnet), SUBMITTED (Spiral/HRF), non-routes (Chaincode/Brink),
+  and defunct (Qala) programs — and published prepaid pricing marked "Do not commit to a
+  public repo".
+- **Fixed by PR #377 → dev (e96b09f):** removed `docs/commercial/PREPAID_CREDIT_ORDER_FORM_
+  TEMPLATE.md`, `docs/research/BITCOIN_GRANTS_AND_ECOSYSTEM_FUNDING_EXPANDED_*`, `docs/
+  research/SAT_REVENUE_SHARE_TERM_SHEET_TEMPLATE.md`, `src/prepaid_credit_ledger.ts` (+tests).
+  Kept only `src/revenue_share_assignment.ts` + the financing doc. 520 tests green.
+- **HARD RULE:** BEFORE writing any funding/commercial/grant doc, READ (1) `.openhands/memory/
+  MEMORY.md` + daily log, (2) `.github-private/docs/funding/` + `docs/commercial/`. Funding/
+  commercial material belongs in **`.github-private`**, never a public repo. Do not "expand
+  research" on a topic the org already settled.

@@ -11,7 +11,8 @@
  * produces a routing instruction the caller may act on. Off by default: the
  * `assignments` list is optional, and an empty list leaves the bucket intact.
  *
- * See docs/research/NON_DILUTIVE_FINANCING_SATS_2026_11_15.md.
+ * See ADR-007 for the fee split. Financing analysis lives in the private funding hub
+ * (`.github-private`), not in this public repo.
  */
 
 /** Only the OPERATIONS bucket may be assigned (ADR-007 split). */
