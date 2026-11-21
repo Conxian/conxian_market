@@ -411,10 +411,11 @@ For economic decisions, ALWAYS reference in order:
 5. `docs/research/market_enhancement_strategy.md` — Phase 1-3 complete report, 5-stream revenue, before/after
 6. `docs/research/CROSS_REPO_GAP_ANALYSIS_SESSION_48.md` — 60 open issues, 23 code gaps, P0→P2 severity
 7. `docs/knowledge_base/monitoring.md` — sBTC, Fedimint, Babylon, SLA watcher, treasury dashboard
-8. `docs/knowledge_base/sla_bounty_system.md` — CJCS gap cards, auto-bounty templates, reputation
-9. `docs/knowledge_base/trust_tier_pricing.md` — Tier detection, fee calc, rail routing, SLA templates
-10. `docs/knowledge_base/operating_manual.md` — Operations
-11. `docs/GOVERNANCE.md` — Governance rules
+8. `docs/research/CRYPTO_FUNDRAISING_SOURCE_2026_11_14.md` — **Research source (not a funder)** — `crypto-fundraising.info` deal-flow database: comparables, investor targeting, M&A valuation context
+9. `docs/knowledge_base/sla_bounty_system.md` — CJCS gap cards, auto-bounty templates, reputation
+10. `docs/knowledge_base/trust_tier_pricing.md` — Tier detection, fee calc, rail routing, SLA templates
+11. `docs/knowledge_base/operating_manual.md` — Operations
+12. `docs/GOVERNANCE.md` — Governance rules
 
 ### Session 48 Enhancement Status (Phase 1–3 Complete)
 
