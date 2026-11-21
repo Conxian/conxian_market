@@ -22,9 +22,15 @@
 
 ## Current org issue reality
 
+> **Alignment note (2026-11-21):** this list is a Session 76 snapshot with later status
+> annotations. The authoritative list is the live GitHub issue tracker. The `Conxian` repository
+> was deleted, not archived, and no issue links may point at it.
+
 The live issue set shows this direct implementation path is active and relevant:
 
-1. **Conxian/Conxian** — **DEPRECATED / ARCHIVED REFERENCE**: On-chain smart contract development in this repo is frozen to avoid maintenance debt. All settlement routing and value orchestration are handled by `conxian_market` (`@conxian/market-sdk`) via external BYO DeFi protocols.
+1. **`Conxian` (retired)** — **DELETED**: the former Stacks-native protocol repository no longer
+   exists. On-chain smart contract development is retired; settlement routing and value
+   orchestration live in `conxian_market` (`@conxian/market-sdk`) via external BYO DeFi protocols.
 2. **conxian-gateway** — [#306](https://github.com/Conxian/conxian-gateway/issues/306) CLOSED, [#228](https://github.com/Conxian/conxian-gateway/issues/228) CLOSED, [#220](https://github.com/Conxian/conxian-gateway/issues/220) CLOSED; gateway client integration active in market-sdk.
 3. **conxius-platform** — [#1082](https://github.com/Conxian/conxius-platform/issues/1082) CLOSED, [#854](https://github.com/Conxian/conxius-platform/issues/854) CLOSED, [#1223](https://github.com/Conxian/conxius-platform/issues/1223) CLOSED, [#1212](https://github.com/Conxian/conxius-platform/issues/1212) CLOSED
 4. **conxius-enclave-sdk** — [#242](https://github.com/Conxian/conxius-enclave-sdk/issues/242) CLOSED, [#241](https://github.com/Conxian/conxius-enclave-sdk/issues/241) **OPEN**, [#240](https://github.com/Conxian/conxius-enclave-sdk/issues/240) **OPEN**, [#202](https://github.com/Conxian/conxius-enclave-sdk/issues/202) **OPEN**, [#200](https://github.com/Conxian/conxius-enclave-sdk/issues/200) CLOSED, [#267](https://github.com/Conxian/conxius-enclave-sdk/issues/267) CLOSED, [#271](https://github.com/Conxian/conxius-enclave-sdk/issues/271) CLOSED
@@ -59,6 +65,20 @@ The live issue set shows this direct implementation path is active and relevant:
    - Candidate #24 (`Decentralized Systems Production Readiness, Resilient Issue Fallback & Opportunity Engine`): `src/decentralized_systems.ts`, `src/sdk_bridge.ts` (Session 76).
 
 This repo remains focused on the value and orchestration layer while upstream repos resolve enabling infrastructure.
+
+### Open issues at the 2026-11-21 snapshot
+
+| Issue | Title |
+| --- | --- |
+| [#379](https://github.com/Conxian/conxian_market/issues/379) | Track: non-dilutive financing primitive (capped revenue-share assignment) |
+| [#364](https://github.com/Conxian/conxian_market/issues/364) | P2: Provision SAB-TREASURY-MS (3-of-5) and DAO-TREASURY-MS (5-of-7) |
+| [#363](https://github.com/Conxian/conxian_market/issues/363) | P3: Enable protocolFeeActive after a shadow-mode settlement verifies end to end |
+| [#360](https://github.com/Conxian/conxian_market/issues/360) | P0: Deploy TREASURY-VAULT to Stacks testnet (SAB_DEPLOYER_MULTISIG) |
+| [#278](https://github.com/Conxian/conxian_market/issues/278) | P3: Split market into MIT SDK + AGPL settlement/fee enforcement |
+| [#263](https://github.com/Conxian/conxian_market/issues/263) | Ops posture: library-only surface, consumption gap, release automation, staged->main hold |
+| [#252](https://github.com/Conxian/conxian_market/issues/252) | P1: Adopt org-wide business operations evidence contract |
+| [#176](https://github.com/Conxian/conxian_market/issues/176) | P1: Define and verify x402 v2 and agent identity conformance contracts |
+| [#159](https://github.com/Conxian/conxian_market/issues/159) | Real x402 subscription payment pointer + non-zero demand (managed tier) |
 
 ---
 
