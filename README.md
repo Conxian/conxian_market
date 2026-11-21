@@ -37,7 +37,7 @@ The Marketplace SDK is intentionally designed to consume the Conxian org stack a
 
 | Dependency | Status in this Repo | Evidence / Module | Notes |
 |:-----------|:-------------------|:------------------|:------|
-| **Conxian/Conxian** | **Deprecated / Archived Reference** | [src/market_agnostic_router.ts](src/market_agnostic_router.ts) | Custom smart contract development is frozen to eliminate maintenance debt and audit overhead in favor of external BYO DeFi adapters. |
+| **`Conxian`** | **Retired (repository deleted)** | [src/market_agnostic_router.ts](src/market_agnostic_router.ts) | The former Stacks-native protocol repository no longer exists. Custom smart-contract development is retired in favour of external BYO DeFi adapters. |
 | **lib-conxian-core** | **Type alignment** | [src/core_types.ts](src/core_types.ts) | TypeScript mirrors of trust-tier, chain, rail and settlement definitions; no Rust library is loaded here. |
 | **conxian-gateway** | **HTTP client contract** | [src/gateway_client.ts](src/gateway_client.ts) & [src/settlement.ts](src/settlement.ts) | Actual endpoint, authorization, operation evidence and deployment must be verified separately. |
 | **conxian-nexus** | **Registration diagnostic contract** | [src/provider_discovery.ts](src/provider_discovery.ts) | Read-only registrations; no qualified operation or provider health inferred. |
