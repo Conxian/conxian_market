@@ -1,0 +1,13 @@
+# GitLab CI is the primary free build lane; GitHub Actions is billing-locked.
+stages: [test]
+default:
+  interruptible: true
+market:
+  stage: test
+  image: node:24-bookworm-slim
+  cache:
+    key: npm-market-$CI_COMMIT_REF_SLUG
+    paths: [node_modules]
+  script:
+    - npm ci --no-audit --no-fund
+    - npm run build
