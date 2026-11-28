@@ -4,7 +4,7 @@ default:
   interruptible: true
 market:
   stage: test
-  image: node:24-bookworm-slim
+  image: node:26-bookworm-slim
   cache:
     key: npm-market-$CI_COMMIT_REF_SLUG
     paths: [node_modules]
